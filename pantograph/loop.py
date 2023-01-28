@@ -60,7 +60,7 @@ def check_for_candidate(cards, c):
     min_area_points = np.intp(min_area_points)
     total = compute_distance(bounding_points, min_area_points)
 #    print(f"candidate: {total}")
-    if total < 25 and no_overlap(cards, bounding_points):
+    if total < 50 and no_overlap(cards, bounding_points):
         return bounding_points
     else:
         return None
@@ -103,7 +103,7 @@ def loop(backsub, capture):
             if frame is None:
                 break
 
-            mask = backsub.apply(frame, learningRate=0)
+            mask = backsub.apply(frame, learningRate=0.001)
 
             # Morphological opening and closing to improve mask
             kernel = np.ones((5,5),np.uint8)
@@ -129,7 +129,7 @@ def loop(backsub, capture):
                         distance = compute_distance(candidate, saved_candidate)
                         if distance < 10:
                             saved_count = saved_count + 1
-                            if saved_count > 10:
+                            if saved_count > 5:
                                 card = {"box": saved_candidate, "fresh": True}
                                 cards.append(card)
                                 x = saved_candidate[0][0]
