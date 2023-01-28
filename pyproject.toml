@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "pantograph"
+version = "0.1.0"
+description = ""
+authors = ["okonomichiyaki <74801510+okonomichiyaki@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+opencv-python = "^4.7.0.68"
+requests = "^2.28.2"
+python-levenshtein = "^0.20.9"
+google-cloud-vision = "^3.3.1"
+rapidfuzz = "^2.13.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
