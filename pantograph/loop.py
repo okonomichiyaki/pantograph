@@ -6,6 +6,7 @@ import argparse
 from io import StringIO
 from csv import DictReader
 
+import logging
 import io
 import os
 import sys
@@ -14,8 +15,20 @@ from itertools import groupby
 import pantograph.google_vision as vision
 import pantograph.card_search as card_search
 
+
+logger = logging.getLogger("pantograph")
+
+
+def mouse_callback(event,x,y,flags,param):
+    if event == cv.EVENT_LBUTTONDOWN:
+        logger.debug(f"mouse_callback: x={x} y={y}")
+
+
 def loop(detector, capture):
-    show_mask = False
+    show_mask = True
+
+    cv.namedWindow('pantograph')
+    cv.setMouseCallback('pantograph', mouse_callback)
 
     while True:
         ret, frame = capture.read()
@@ -23,11 +36,11 @@ def loop(detector, capture):
         if frame is None:
             break
 
-        (output, mask) = detector.detect(frame)
+        (output, mask, card) = detector.detect(frame)
         if show_mask:
-            cv.imshow('', mask)
+            cv.imshow('pantograph', mask)
         else:
-            cv.imshow('', output)
+            cv.imshow('pantograph', output)
 
         keyboard = cv.waitKey(30)
         # if keyboard != -1:

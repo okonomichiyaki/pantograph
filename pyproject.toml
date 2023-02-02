@@ -12,6 +12,8 @@ requests = "^2.28.2"
 python-levenshtein = "^0.20.9"
 google-cloud-vision = "^3.3.1"
 rapidfuzz = "^2.13.7"
+aiohttp = "^3.8.3"
+aiortc = "^1.4.0"
 
 
 [build-system]
