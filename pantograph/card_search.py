@@ -2,6 +2,7 @@ import requests
 from pathlib import Path
 import json
 from rapidfuzz import process
+from rapidfuzz.distance.Levenshtein import distance
 
 API_URL = "https://netrunnerdb.com/api/2.0/public/"
 
@@ -76,7 +77,7 @@ def get_active_card_titles():
 
 _titles = get_active_card_titles()
 
-def fuzzy_search(text):
-    results = process.extract(text, _titles, limit=5)
-    print(f"fuzzy_search: text={text} results={results}")
+def fuzzy_search(text, titles=_titles):
+    results = process.extract(text, titles, limit=5, scorer=distance)
+    print(f"fuzzy_search: text={repr(text)} results={results}")
     return results[0]
