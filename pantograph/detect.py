@@ -12,6 +12,7 @@ import os
 import sys
 from itertools import groupby
 from collections import deque
+from dataclasses import dataclass
 
 import pantograph.google_vision as vision
 import pantograph.card_search as card_search
@@ -28,12 +29,33 @@ STABILIZE_MIN_FRAMES = 5
 STABILIZE_RATIO = 0.1
 LEARNING_RATE = 0.001
 MIN_CONTOUR_AREA = 10000
+AREA_MARGIN = 5000
 
 logger = logging.getLogger("pantograph")
+
+
+class Card:
+    def __init__(self, title, box_points):
+        self.title = title
+        self.box_points = box_points
+        self.dirty = False
 
 def approx(c):
     epsilon = 0.1*cv.arcLength(c,True)
     return cv.approxPolyDP(c,epsilon,True)
+
+def box_points_dims(box_points):
+    w = box_points[3][0] - box_points[0][0]
+    h = box_points[3][1] - box_points[0][1]
+    return (w,h)
+
+def to_box_points(x,y,w,h):
+    return [
+        np.array((x, y)),
+        np.array((x+w, y)),
+        np.array((x, y+h)),
+        np.array((x+w, y+h))
+    ]
 
 def compute_distance(aa, bb):
     distances = []
@@ -54,30 +76,71 @@ def no_overlap(cards, points):
     ax2 = points[3][0]
     ay2 = points[3][1]
     for card in cards:
-        box = card["box"]
+        box = card.box_points
         bx1 = box[0][0]
         by1 = box[0][1]
         bx2 = box[3][0]
         by2 = box[3][1]
         if ax1 < bx2 and ax2 > bx1 and ay1 < by2 and ay2 > by1:
+            logger.debug(f"marking card={card.title} dirty")
+            card.dirty = True
             return False
     return True
 
+def intersection1d(a0, a1, b0, b1):
+    if a0 >= b0 and a1 <= b1:
+        i = a1 - a0
+    elif a0 < b0 and a1 > b1:
+        i = b1 - b0
+    elif a0 < b0 and a1 > b0:
+        i = a1 - b0
+    elif a1 > b1 and a0 < b1:
+        i = b1 - a0
+    else:
+        i = 0
+    return i
+
+def detect_collapsing(card, points):
+    (card_width,card_height) = box_points_dims(card)
+    (points_width,points_height) = box_points_dims(points)
+    card_area = card_width * card_height
+    points_area = points_width * points_height
+    if points_area > card_area:
+        return False
+    width = intersection1d(card[0][0], card[3][0], points[0][0], points[3][0])
+    height = intersection1d(card[0][1], card[3][1], points[0][1], points[3][1])
+    intersect_area = width * height
+    percent = intersect_area / points_area
+    return percent > 0.80
+
+def is_existing_card(cards, box_points):
+    for card in cards:
+        d = compute_distance(card.box_points, box_points)
+        if d < 10:
+            return True
+        if detect_collapsing(card.box_points, box_points):
+            return True
+    return False
+
+
 def check_for_candidate(cards, c):
+    """
+    Checks to see if the contour is a possible candidate card:
+    Successful if not rotated at any angle, and no overlap with existing cards
+    Returns box points (array of 4 points)
+    """
     x,y,w,h = cv.boundingRect(c)
-    bounding_points = [
-        np.array((x, y)),
-        np.array((x+w, y)),
-        np.array((x, y+h)),
-        np.array((x+w, y+h))
-    ]
-    rect = cv.minAreaRect(c)
-    min_area_points = cv.boxPoints(rect)
-    min_area_points = np.intp(min_area_points)
-    total = compute_distance(bounding_points, min_area_points)
-#    print(f"candidate: {total}")
-    if total < 50 and no_overlap(cards, bounding_points):
-        return bounding_points
+    bounding = to_box_points(x,y,w,h) # bounding: [[x,y], [x,y], [x,y], [x,y]]
+    rect = cv.minAreaRect(c) # rect: ((cx, cy), (w, h), angle)
+    rotated = cv.boxPoints(rect) # rotated: [[x,y], [x,y], [x,y], [x,y]]
+    rotated = np.intp(rotated)
+    total = compute_distance(bounding, rotated)
+    if is_existing_card(cards, bounding):
+#        logger.debug("found existing card")
+        return None
+    # instead of measuring distance, what about just checking the angle ?
+    if no_overlap(cards, bounding) and total < 50:
+        return bounding
     else:
         return None
 
@@ -97,7 +160,7 @@ class Detector:
     def search_click(self, frame, x, y):
         if not self._reference:
             return None
-        (_, _, w, h) = self._reference
+        (w, h) = self._reference
         cropped = frame[y-h:y+h, x-w:x+w]
         cv.imwrite("search-target.jpg", cropped)
         blocks = vision.search("search-target.jpg", x, y)
@@ -128,7 +191,7 @@ class Detector:
         this_ratio = count / size
         self._ratios.append(this_ratio)
         mean_ratio = np.mean(self._ratios)
-        logger.debug(f"stabilizing: {this_ratio} {mean_ratio}")
+        #logger.debug(f"stabilizing: {this_ratio} {mean_ratio}")
         return mean_ratio < STABILIZE_RATIO and len(self._ratios) >= STABILIZE_MIN_FRAMES
 
     def _tighten(self, mask):
@@ -148,13 +211,11 @@ class Detector:
         rect = cv.minAreaRect(c)
         box = cv.boxPoints(rect)
         box = np.intp(box)
-        if no_overlap(self._cards, box):
-            cv.rectangle(output,(x,y),(x+w,y+h),RED,2)
-            cv.drawContours(output,[box],0,BLUE,2)
+        cv.rectangle(output,(x,y),(x+w,y+h),RED,2)
+        cv.drawContours(output,[box],0,BLUE,2)
 
     def _is_locked(self, candidate):
         distance = compute_distance(candidate, self._saved_candidate)
-        logger.debug(f"distance: {distance} saved_count: {self._saved_count}")
         if distance < 10:
             self._saved_count = self._saved_count + 1
             return self._saved_count > 2
@@ -164,33 +225,62 @@ class Detector:
             self._saved_count = None
             return False
 
-    def _update_cards_and_draw(self, output):
-#        fresh_cards = [card for card in self._cards if card["fresh"]]
+    def _update_cards_and_draw(self, frame, output):
+        keep = []
         for card in self._cards:
-#            card["fresh"] = False
-            box = card["box"]
+            if card.dirty:
+                card.dirty = False
+                title = self._find_card_title(frame, card.box_points)
+                if title == card.title:
+                    keep.append(card)
+                else:
+                    logger.debug(f"clearing card: {card.title}")
+            else:
+                keep.append(card)
+        for card in keep:
+            box = card.box_points
             x1 = box[0][0]
             y1 = box[0][1]
             x2 = box[3][0]
             y2 = box[3][1]
             cv.rectangle(output,(x1,y1),(x2,y2),(0,255,0),2)
-#        self._cards = fresh_cards
+        self._cards = keep
+
+    def _find_card_title(self, frame, candidate):
+        x = candidate[0][0]
+        y = candidate[0][1]
+        w = candidate[3][0] - x
+        h = candidate[3][1] - y
+        cropped = frame[y:int(y+(h/2)), x:x+w]
+        if len(cropped) > 0:
+            cv.imwrite("card.jpg", cropped)
+            text = vision.recognize("card.jpg")
+            if len(text) > 0:
+                title = card_search.fuzzy_search(text)
+                return title
+        return None
 
     def _save_card(self, frame):
-        card = {"box": self._saved_candidate, "fresh": True}
-        self._cards.append(card)
-        x = self._saved_candidate[0][0]
-        y = self._saved_candidate[0][1]
-        w = self._saved_candidate[3][0] - x
-        h = self._saved_candidate[3][1] - y
+        title = self._find_card_title(frame, self._saved_candidate)
+        if title:
+            logger.info(f"found a card? {title}")
+            card = Card(title, self._saved_candidate)
+            self._cards.append(card)
+
+    def _within_margin(self, c):
+        """
+        While calibrating returns true if contour area greater than MIN_CONTOUR_AREA
+        After calibration, returns true if contour area within margin of reference
+        """
+        area = cv.contourArea(c)
+        return area > MIN_CONTOUR_AREA
         if self._state == "calibrating":
-            self._reference = (x,y,w,h)
-            self._state = "detecting"
-        cropped = frame[y:int(y+(h/2)), x:x+w]
-        cv.imwrite("card.jpg", cropped)
-        text = vision.recognize("card.jpg")
-        title = card_search.fuzzy_search(text)
-        print(f"found a card? {title}")
+            return area > MIN_CONTOUR_AREA
+        if self._state == "detecting" and self._reference:
+            reference = self._reference[0] * self._reference[1]
+            logger.debug(f"checking margin: {reference}, {area}")
+            return area > (reference - AREA_MARGIN) and area < (reference + AREA_MARGIN)
+        return False
 
     def detect(self, frame):
         output = frame.copy()
@@ -201,14 +291,16 @@ class Detector:
         if self._state == "stabilizing":
             stabilized = self._has_stabilized(mask)
             if stabilized:
-                self._state = "calibrating"
                 logger.info("background stabilized")
+                self._state = "calibrating"
         elif self._state == "calibrating" or self._state == "detecting":
             contours, hierarchy = cv.findContours(mask,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
-            contours = [ approx(c) for c in contours if cv.contourArea(c) > MIN_CONTOUR_AREA ] # min area could be based on calibration
+            # type of contours is tuple (of ndarray)
+            contours = [ approx(c) for c in contours if self._within_margin(c) ] # min area could be based on calibration
             # TODO: sort contours by x/y ?
 
             for c in contours:
+                # type of c is numpy ndarray
                 candidate = check_for_candidate(self._cards, c)
                 if candidate:
                     if not self._saved_candidate:
@@ -216,6 +308,10 @@ class Detector:
                         self._saved_c = c
                         self._saved_count = 0
                     elif self._is_locked(candidate):
+                        if self._state == "calibrating":
+                            self._state = "detecting"
+                            self._reference = box_points_dims(candidate)
+                            logger.info(f"finished calibrating: {self._reference}")
                         self._save_card(frame)
                         self._saved_candidate = None
                         self._saved_c = None
@@ -225,6 +321,6 @@ class Detector:
                 else:
                     self._draw_non_candidate(output, c)
 
-            self._update_cards_and_draw(output)
+            self._update_cards_and_draw(frame, output)
 
         return (self._state, output, mask, None)

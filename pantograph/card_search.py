@@ -1,10 +1,13 @@
 import requests
-from pathlib import Path
 import json
+import logging
+from pathlib import Path
 from rapidfuzz import process
 from rapidfuzz.distance.Levenshtein import distance
 
 API_URL = "https://netrunnerdb.com/api/2.0/public/"
+
+logger = logging.getLogger("pantograph")
 
 def get(url):
     response = requests.get(url)
@@ -79,5 +82,5 @@ _titles = get_active_card_titles()
 
 def fuzzy_search(text, titles=_titles):
     results = process.extract(text, titles, limit=5, scorer=distance)
-    print(f"fuzzy_search: text={repr(text)} results={results}")
-    return results[0]
+    logger.debug(f"fuzzy_search: text={repr(text)} results={results}")
+    return results[0][0]
