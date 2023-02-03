@@ -1,4 +1,3 @@
-from __future__ import print_function
 import cv2 as cv
 import numpy as np
 import argparse
@@ -177,7 +176,7 @@ class Detector:
             if d < distance:
                 distance = d
                 closest = block
-        print(closest)
+            logger.debug(f"search_click: closest={closest}")
         return None
 
     def _has_stabilized(self, mask):
@@ -246,12 +245,8 @@ class Detector:
             cv.rectangle(output,(x1,y1),(x2,y2),(0,255,0),2)
         self._cards = keep
 
-    def _find_card_title(self, frame, candidate):
-        x = candidate[0][0]
-        y = candidate[0][1]
-        w = candidate[3][0] - x
-        h = candidate[3][1] - y
-        cropped = frame[y:int(y+(h/2)), x:x+w]
+
+    def _recognize(self, cropped):
         if len(cropped) > 0:
             cv.imwrite("card.jpg", cropped)
             text = vision.recognize("card.jpg")
@@ -259,6 +254,29 @@ class Detector:
                 title = card_search.fuzzy_search(text)
                 return title
         return None
+
+    def _crop_card_title(self, image, w, h):
+        return image[0:int(h/8), int(w/6):w]
+
+    def _find_card_title(self, frame, candidate):
+        x = candidate[0][0]
+        y = candidate[0][1]
+        w = candidate[3][0] - x
+        h = candidate[3][1] - y
+        whole = frame[y:y+h,x:x+w]
+        if h > w: # portrait
+            cropped = whole[0:int(h/4),0:w]
+            return self._recognize(cropped)
+        else:
+            rotate1 = cv.rotate(whole, cv.ROTATE_90_CLOCKWISE)
+            rotate2 = cv.rotate(whole, cv.ROTATE_90_COUNTERCLOCKWISE)
+            cropped1 = self._crop_card_title(rotate1, w, h)
+            cropped2 = self._crop_card_title(rotate2, w, h)
+            cv.imwrite("card1.jpg", cropped1)
+            text1 = vision.recognize("card1.jpg")
+            cv.imwrite("card2.jpg", cropped2)
+            text2 = vision.recognize("card2.jpg")
+            return card_search.fuzzy_search_multiple([text1, text2])
 
     def _save_card(self, frame):
         title = self._find_card_title(frame, self._saved_candidate)

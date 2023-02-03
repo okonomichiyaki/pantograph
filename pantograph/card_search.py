@@ -80,7 +80,17 @@ def get_active_card_titles():
 
 _titles = get_active_card_titles()
 
+def _extract(text, titles):
+    return process.extract(text, titles, limit=5, scorer=distance)
+
 def fuzzy_search(text, titles=_titles):
-    results = process.extract(text, titles, limit=5, scorer=distance)
+    results = _extract(text, titles)
     logger.debug(f"fuzzy_search: text={repr(text)} results={results}")
+    return results[0][0]
+
+def fuzzy_search_multiple(texts, titles=_titles):
+    results = [_extract(text, titles) for text in texts]
+    results = [result[0] for result in results]
+    results = sorted(results, key=lambda result: result[0])
+    logger.debug(f"fuzzy_search_multiple: texts={repr(texts)} results={results}")
     return results[0][0]
