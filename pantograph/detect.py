@@ -94,6 +94,29 @@ class Detector:
         self._state = "stabilizing"
         self._ratios = deque(maxlen=STABILIZE_MIN_FRAMES)
 
+    def search_click(self, frame, x, y):
+        if not self._reference:
+            return None
+        (_, _, w, h) = self._reference
+        cropped = frame[y-h:y+h, x-w:x+w]
+        cv.imwrite("search-target.jpg", cropped)
+        blocks = vision.search("search-target.jpg", x, y)
+
+        closest = None
+        distance = np.inf
+        for block in blocks:
+            (text, (bx,by,bw,bh)) = block
+            cx = bx + int(bw / 2)
+            cy = by + int(bh / 2)
+            a = np.array((cx,cy))
+            b = np.array((x,y))
+            d = np.linalg.norm(a-b)
+            if d < distance:
+                distance = d
+                closest = block
+        print(closest)
+        return None
+
     def _has_stabilized(self, mask):
         """
         Returns true if the background has stabilized. Accommodate for messy initial frames
@@ -204,4 +227,4 @@ class Detector:
 
             self._update_cards_and_draw(output)
 
-        return (output, mask, None)
+        return (self._state, output, mask, None)

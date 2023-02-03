@@ -19,13 +19,15 @@ import pantograph.card_search as card_search
 logger = logging.getLogger("pantograph")
 
 
-def mouse_callback(event,x,y,flags,param):
-    if event == cv.EVENT_LBUTTONDOWN:
-        logger.debug(f"mouse_callback: x={x} y={y}")
-
 
 def loop(detector, capture):
     show_mask = True
+    last_frame = None
+
+    def mouse_callback(event,x,y,flags,param):
+        if event == cv.EVENT_LBUTTONDOWN and (last_frame is not None):
+            logger.debug(f"mouse_callback: x={x} y={y}")
+            detector.search_click(last_frame, x, y)
 
     cv.namedWindow('pantograph')
     cv.setMouseCallback('pantograph', mouse_callback)
@@ -36,7 +38,8 @@ def loop(detector, capture):
         if frame is None:
             break
 
-        (output, mask, card) = detector.detect(frame)
+        last_frame = frame
+        (state, output, mask, card) = detector.detect(frame)
         if show_mask:
             cv.imshow('pantograph', mask)
         else:
