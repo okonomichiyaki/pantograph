@@ -86,11 +86,17 @@ def _extract(text, titles):
 def fuzzy_search(text, titles=_titles):
     results = _extract(text, titles)
     logger.debug(f"fuzzy_search: text={repr(text)} results={results}")
-    return results[0][0]
+    if len(results) > 0:
+        return results[0][0]
+    else:
+        return None
 
 def fuzzy_search_multiple(texts, titles=_titles):
     results = [_extract(text, titles) for text in texts]
     results = [result[0] for result in results]
     results = sorted(results, key=lambda result: result[0])
     logger.debug(f"fuzzy_search_multiple: texts={repr(texts)} results={results}")
-    return results[0][0]
+    if len(results) > 0:
+        return results[0][0]
+    else:
+        return None
