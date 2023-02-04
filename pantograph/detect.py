@@ -30,6 +30,8 @@ LEARNING_RATE = 0.001
 MIN_CONTOUR_AREA = 10000
 AREA_MARGIN = 5000
 
+FEATURE_SAVE_IMAGES = False
+
 logger = logging.getLogger("pantograph")
 
 
@@ -38,6 +40,16 @@ class Card:
         self.title = title
         self.box_points = box_points
         self.dirty = False
+
+card_idx = 0
+def get_card_filename():
+    global card_idx
+    if FEATURE_SAVE_IMAGES:
+        filename = f"card{card_idx}.jpg"
+        card_idx = card_idx + 1
+        return filename
+    else:
+        return "card.jpg"
 
 def approx(c):
     epsilon = 0.1*cv.arcLength(c,True)
@@ -255,8 +267,9 @@ class Detector:
 
     def _recognize(self, cropped):
         if len(cropped) > 0:
-            cv.imwrite("card.jpg", cropped)
-            text = vision.recognize("card.jpg")
+            filename = get_card_filename()
+            cv.imwrite(filename, cropped)
+            text = vision.recognize(filename)
             if len(text) > 0:
                 title = card_search.fuzzy_search(text)
                 return title
@@ -271,6 +284,8 @@ class Detector:
         w = candidate[3][0] - x
         h = candidate[3][1] - y
         whole = frame[y:y+h,x:x+w]
+        if FEATURE_SAVE_IMAGES:
+            cv.imwrite(get_card_filename(), whole)
         if h > w: # portrait
             cropped = self._crop_card_title(whole, w, h)
             return self._recognize(cropped)
@@ -281,8 +296,9 @@ class Detector:
             crops = [c for c in crops if len(c) > 0]
             texts = []
             for crop in crops:
-                cv.imwrite("card.jpg", crop)
-                text = vision.recognize("card.jpg")
+                filename = get_card_filename()
+                cv.imwrite(filename, crop)
+                text = vision.recognize(filename)
                 if len(text) > 0:
                     texts.append(text)
             return card_search.fuzzy_search_multiple(texts)
