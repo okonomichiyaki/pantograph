@@ -25,6 +25,9 @@ def main():
     parser.add_argument(
         "--port", type=int, default=8080, help="Port for HTTP server (default: 8080)"
     )
+    parser.add_argument(
+        "--camera", type=int, default=0, help="Camera device number"
+    )
     args = parser.parse_args()
 
     backsub = cv.createBackgroundSubtractorMOG2()
@@ -35,7 +38,7 @@ def main():
     if args.web:
         web.run(args, detector)
     else:
-        capture = cv.VideoCapture(1)
+        capture = cv.VideoCapture(args.camera)
         if not capture.isOpened():
             print("Cannot open camera")
             exit()
