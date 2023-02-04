@@ -168,6 +168,18 @@ class Detector:
         self._state = "stabilizing"
         self._ratios = deque(maxlen=STABILIZE_MIN_FRAMES)
 
+
+    def lookup_click(self, x, y):
+        for card in self._locked_cards:
+            box = card.box_points
+            x1 = box[0][0]
+            y1 = box[0][1]
+            x2 = box[3][0]
+            y2 = box[3][1]
+            if x > x1 and x < x2 and y > y1 and y < y2:
+                logger.debug(f"lookup_click: card={card.title}")
+                return
+
     def search_click(self, frame, x, y):
         if not self._reference:
             return None
