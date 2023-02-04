@@ -147,7 +147,8 @@ class Detector:
 
     def __init__(self, backsub):
         self._backsub = backsub
-        self._cards = []
+        self._locked_cards = []
+        self._stale_cards = []
         self._reference = None
         self._saved_candidate = None
         self._saved_c = None
@@ -224,27 +225,33 @@ class Detector:
             self._saved_count = None
             return False
 
+    def _draw_card(self, output, card, color):
+        box = card.box_points
+        x1 = box[0][0]
+        y1 = box[0][1]
+        x2 = box[3][0]
+        y2 = box[3][1]
+        cv.rectangle(output,(x1,y1),(x2,y2),color,2)
+
     def _update_cards_and_draw(self, frame, output):
         keep = []
-        for card in self._cards:
+        for card in self._locked_cards:
             if card.dirty:
                 card.dirty = False
                 title = self._find_card_title(frame, card.box_points)
                 if title == card.title:
+                    logger.debug(f"keep card={card.title}")
                     keep.append(card)
                 else:
-                    logger.debug(f"clearing card: {card.title}")
+                    logger.debug(f"stale card={card.title}")
+                    self._stale_cards.append(card)
             else:
                 keep.append(card)
         for card in keep:
-            box = card.box_points
-            x1 = box[0][0]
-            y1 = box[0][1]
-            x2 = box[3][0]
-            y2 = box[3][1]
-            cv.rectangle(output,(x1,y1),(x2,y2),(0,255,0),2)
-        self._cards = keep
-
+            self._draw_card(output, card, GREEN)
+        for card in self._stale_cards:
+            self._draw_card(output, card, FUSCHIA)
+        self._locked_cards = keep
 
     def _recognize(self, cropped):
         if len(cropped) > 0:
@@ -265,7 +272,7 @@ class Detector:
         h = candidate[3][1] - y
         whole = frame[y:y+h,x:x+w]
         if h > w: # portrait
-            cropped = whole[0:int(h/4),0:w]
+            cropped = self._crop_card_title(whole, w, h)
             return self._recognize(cropped)
         else:
             directions = [cv.ROTATE_90_CLOCKWISE, cv.ROTATE_90_COUNTERCLOCKWISE]
@@ -283,9 +290,9 @@ class Detector:
     def _save_card(self, frame):
         title = self._find_card_title(frame, self._saved_candidate)
         if title:
-            logger.info(f"found a card? {title}")
+            logger.info(f"found card={title}")
             card = Card(title, self._saved_candidate)
-            self._cards.append(card)
+            self._locked_cards.append(card)
 
     def _within_margin(self, c):
         """
@@ -302,6 +309,16 @@ class Detector:
             return area > (reference - AREA_MARGIN) and area < (reference + AREA_MARGIN)
         return False
 
+    def _check_stale_cards(self, frame):
+        keep = []
+        for card in self._stale_cards:
+            title = self._find_card_title(frame, card.box_points)
+            if title == card.title:
+                logger.debug(f"refreshed card={card.title}")
+                keep.append(card)
+        self._locked_cards.extend(keep)
+        self._stale_cards = []
+
     def detect(self, frame):
         output = frame.copy()
 
@@ -316,12 +333,14 @@ class Detector:
         elif self._state == "calibrating" or self._state == "detecting":
             contours, hierarchy = cv.findContours(mask,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
             # type of contours is tuple (of ndarray)
-            contours = [ approx(c) for c in contours if self._within_margin(c) ] # min area could be based on calibration
-            # TODO: sort contours by x/y ?
+            contours = [ approx(c) for c in contours if self._within_margin(c) ]
+
+            if len(contours) == 0 and len(self._stale_cards) > 0:
+                self._check_stale_cards(frame)
 
             for c in contours:
                 # type of c is numpy ndarray
-                candidate = check_for_candidate(self._cards, c)
+                candidate = check_for_candidate(self._locked_cards, c)
                 if candidate:
                     if not self._saved_candidate:
                         self._saved_candidate = candidate
