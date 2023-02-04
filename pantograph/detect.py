@@ -268,15 +268,17 @@ class Detector:
             cropped = whole[0:int(h/4),0:w]
             return self._recognize(cropped)
         else:
-            rotate1 = cv.rotate(whole, cv.ROTATE_90_CLOCKWISE)
-            rotate2 = cv.rotate(whole, cv.ROTATE_90_COUNTERCLOCKWISE)
-            cropped1 = self._crop_card_title(rotate1, w, h)
-            cropped2 = self._crop_card_title(rotate2, w, h)
-            cv.imwrite("card1.jpg", cropped1)
-            text1 = vision.recognize("card1.jpg")
-            cv.imwrite("card2.jpg", cropped2)
-            text2 = vision.recognize("card2.jpg")
-            return card_search.fuzzy_search_multiple([text1, text2])
+            directions = [cv.ROTATE_90_CLOCKWISE, cv.ROTATE_90_COUNTERCLOCKWISE]
+            rotations = [cv.rotate(whole, d) for d in directions]
+            crops = [self._crop_card_title(r, w, h) for r in rotations]
+            crops = [c for c in crops if len(c) > 0]
+            texts = []
+            for crop in crops:
+                cv.imwrite("card.jpg", crop)
+                text = vision.recognize("card.jpg")
+                if len(text) > 0:
+                    texts.append(text)
+            return card_search.fuzzy_search_multiple(texts)
 
     def _save_card(self, frame):
         title = self._find_card_title(frame, self._saved_candidate)
