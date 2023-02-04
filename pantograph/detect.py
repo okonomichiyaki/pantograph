@@ -163,7 +163,6 @@ class Detector:
         self._stale_cards = []
         self._reference = None
         self._saved_candidate = None
-        self._saved_c = None
         self._saved_count = 0
 
         self._state = "stabilizing"
@@ -233,7 +232,6 @@ class Detector:
             return self._saved_count > 2
         else:
             self._saved_candidate = None
-            self._saved_c = None
             self._saved_count = None
             return False
 
@@ -360,7 +358,6 @@ class Detector:
                 if candidate:
                     if not self._saved_candidate:
                         self._saved_candidate = candidate
-                        self._saved_c = c
                         self._saved_count = 0
                     elif self._is_locked(candidate):
                         if self._state == "calibrating":
@@ -369,7 +366,6 @@ class Detector:
                             logger.info(f"finished calibrating: {self._reference}")
                         self._save_card(frame)
                         self._saved_candidate = None
-                        self._saved_c = None
                         self._saved_count = 0
                     else:
                         self._draw_candidate(output, c, YELLOW)
