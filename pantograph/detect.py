@@ -17,13 +17,6 @@ import pantograph.google_vision as vision
 import pantograph.card_search as card_search
 
 
-BLUE = (255,0,0)
-GREEN = (0,255,0)
-RED = (0,0,255)
-YELLOW = (0,255,255)
-FUSCHIA = (255,0,255)
-
-
 STABILIZE_MIN_FRAMES = 5
 STABILIZE_RATIO = 0.1
 LEARNING_RATE = 0.001
@@ -33,6 +26,16 @@ AREA_MARGIN = 5000
 FEATURE_SAVE_IMAGES = False
 
 logger = logging.getLogger("pantograph")
+
+
+class AppState:
+    def __init__(self, mask, candidate_contour, non_candidates, locked_cards, stale_cards, state):
+        self.mask = mask
+        self.candidate_contour = candidate_contour
+        self.non_candidates = non_candidates
+        self.locked_cards = locked_cards
+        self.stale_cards = stale_cards
+        self.state = state
 
 
 class Card:
@@ -225,18 +228,6 @@ class Detector:
         mask[mask < 255] = 0
         return mask
 
-    def _draw_candidate(self, output, c, color):
-        x,y,w,h = cv.boundingRect(c)
-        cv.rectangle(output,(x,y),(x+w,y+h),color,2)
-
-    def _draw_non_candidate(self, output, c):
-        x,y,w,h = cv.boundingRect(c)
-        rect = cv.minAreaRect(c)
-        box = cv.boxPoints(rect)
-        box = np.intp(box)
-        cv.rectangle(output,(x,y),(x+w,y+h),RED,2)
-        cv.drawContours(output,[box],0,BLUE,2)
-
     def _is_locked(self, candidate):
         distance = compute_distance(candidate, self._saved_candidate)
         if distance < 10:
@@ -247,32 +238,14 @@ class Detector:
             self._saved_count = None
             return False
 
-    def _draw_card(self, output, card, color):
-        box = card.box_points
-        x1 = box[0][0]
-        y1 = box[0][1]
-        x2 = box[3][0]
-        y2 = box[3][1]
-        cv.rectangle(output,(x1,y1),(x2,y2),color,2)
-
-    def _update_cards_and_draw(self, frame, output):
+    def _update_cards(self, frame, output):
         keep = []
         for card in self._locked_cards:
             if card.dirty:
                 card.dirty = False
-                title = self._find_card_title(frame, card.box_points)
-                if title == card.title:
-                    logger.debug(f"keep card={card.title}")
-                    keep.append(card)
-                else:
-                    logger.debug(f"stale card={card.title}")
-                    self._stale_cards.append(card)
+                self._stale_cards.append(card)
             else:
                 keep.append(card)
-        for card in keep:
-            self._draw_card(output, card, GREEN)
-        for card in self._stale_cards:
-            self._draw_card(output, card, FUSCHIA)
         self._locked_cards = keep
 
     def _recognize(self, cropped):
@@ -351,6 +324,9 @@ class Detector:
         mask = self._backsub.apply(frame, learningRate=LEARNING_RATE)
         mask = self._tighten(mask)
 
+        candidate_contour = None
+        non_candidates = []
+
         if self._state == "stabilizing":
             stabilized = self._has_stabilized(mask)
             if stabilized:
@@ -380,10 +356,10 @@ class Detector:
                         self._saved_candidate = None
                         self._saved_count = 0
                     else:
-                        self._draw_candidate(output, c, YELLOW)
+                        candidate_contour = c
                 else:
-                    self._draw_non_candidate(output, c)
+                    non_candidates.append(c)
 
-            self._update_cards_and_draw(frame, output)
+            self._update_cards(frame, output)
 
-        return (self._state, output, mask, None)
+        return AppState(mask, candidate_contour, non_candidates, self._locked_cards, self._stale_cards, self._state)

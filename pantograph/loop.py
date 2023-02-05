@@ -12,17 +12,22 @@ import os
 import sys
 from itertools import groupby
 
+import collections
+import queue
+import threading
+
 import pantograph.google_vision as vision
 import pantograph.card_search as card_search
+from pantograph.drawing import draw
 
 
 logger = logging.getLogger("pantograph")
 
 
-
 def loop(detector, capture):
     show_mask = True
     last_frame = None
+    old_state = None
 
     def mouse_callback(event,x,y,flags,param):
         if event == cv.EVENT_LBUTTONDOWN and (last_frame is not None):
@@ -33,18 +38,38 @@ def loop(detector, capture):
     cv.namedWindow('pantograph')
     cv.setMouseCallback('pantograph', mouse_callback)
 
+    inq = queue.Queue()
+    outq = collections.deque(maxlen=1)
+
+    def worker():
+        while True:
+            frame = inq.get()
+            app_state = detector.detect(frame)
+            outq.append(app_state)
+
+    threading.Thread(target=worker, daemon=True).start()
+
     while True:
         ret, frame = capture.read()
 
         if frame is None:
             break
 
-        last_frame = frame
-        (state, output, mask, card) = detector.detect(frame)
-        if show_mask:
-            cv.imshow('pantograph', mask)
-        else:
-            cv.imshow('pantograph', output)
+        inq.put(frame)
+        output = frame.copy()
+        try:
+            new_state = outq.pop()
+            old_state = new_state
+            if show_mask:
+                output = new_state.mask
+            else:
+                draw(new_state, output)
+        except IndexError:
+            logger.debug("timed out")
+            if old_state:
+                draw(old_state, output)
+
+        cv.imshow('pantograph', output)
 
         keyboard = cv.waitKey(30)
         # if keyboard != -1:
