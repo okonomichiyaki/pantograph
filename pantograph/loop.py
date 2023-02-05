@@ -32,8 +32,9 @@ def loop(detector, capture):
     def mouse_callback(event,x,y,flags,param):
         if event == cv.EVENT_LBUTTONDOWN and (last_frame is not None):
             logger.debug(f"mouse_callback: x={x} y={y}")
-            #detector.search_click(last_frame, x, y)
-            detector.lookup_click(x, y)
+            title = detector.search_click(last_frame, x, y)
+            logger.debug(f"search_click: {title}")
+            #detector.lookup_click(x, y)
 
     cv.namedWindow('pantograph')
     cv.setMouseCallback('pantograph', mouse_callback)
@@ -70,6 +71,7 @@ def loop(detector, capture):
                 draw(old_state, output)
 
         cv.imshow('pantograph', output)
+        last_frame = frame
 
         keyboard = cv.waitKey(30)
         # if keyboard != -1:

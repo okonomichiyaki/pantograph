@@ -186,25 +186,12 @@ class Detector:
     def search_click(self, frame, x, y):
         if not self._reference:
             return None
-        (w, h) = self._reference
-        cropped = frame[y-h:y+h, x-w:x+w]
-        cv.imwrite("search-target.jpg", cropped)
-        blocks = vision.search("search-target.jpg", x, y)
 
-        closest = None
-        distance = np.inf
-        for block in blocks:
-            (text, (bx,by,bw,bh)) = block
-            cx = bx + int(bw / 2)
-            cy = by + int(bh / 2)
-            a = np.array((cx,cy))
-            b = np.array((x,y))
-            d = np.linalg.norm(a-b)
-            if d < distance:
-                distance = d
-                closest = block
-            logger.debug(f"search_click: closest={closest}")
-        return None
+        (w, h) = self._reference
+        cropped = frame[int(y-h/8):int(y+h/8), int(x-w/2):int(x+w/2)]
+        title = self._recognize(cropped)
+
+        return title
 
     def _has_stabilized(self, mask):
         """
