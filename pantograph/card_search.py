@@ -4,10 +4,18 @@ import logging
 from pathlib import Path
 from rapidfuzz import process
 from rapidfuzz.distance.Levenshtein import distance
+from dataclasses import dataclass
 
 API_URL = "https://netrunnerdb.com/api/2.0/public/"
+IMG_URL = "https://static.nrdbassets.com/v1/large/{code}.jpg"
 
 logger = logging.getLogger("pantograph")
+
+@dataclass
+class NrdbCard:
+    title: str
+    code: int
+    img_url: str
 
 def get(url):
     response = requests.get(url)
@@ -71,23 +79,32 @@ def get_active_packs():
     packs = get_all_packs()
     return [ pack for pack in packs if pack["cycle_code"] in active_cycles ]
 
-def get_active_card_titles():
+def get_active_cards():
     cards = get_all_cards()
     active_packs = get_active_packs()
     active_pack_codes = [ pack["code"] for pack in active_packs ]
-    titles = [ card["title"] for card in cards if card["pack_code"] in active_pack_codes ]
-    return titles
+    cards = [ card for card in cards if card["pack_code"] in active_pack_codes ]
+    result = {}
+    for card in cards:
+        title = card["title"]
+        code = card["code"]
+        img_url = IMG_URL.replace("{code}", code)
+        result[title] = NrdbCard(title, code, img_url)
+    return result
 
-_titles = get_active_card_titles()
+_cards = get_active_cards()
+_titles = _cards.keys()
 
 def _extract(text, titles):
     return process.extract(text, titles, limit=5, scorer=distance)
 
 def fuzzy_search(text, titles=_titles):
     results = _extract(text, titles)
-    logger.debug(f"fuzzy_search: text={repr(text)} results={results}")
     if len(results) > 0:
-        return results[0][0]
+        title = results[0][0]
+        card = _cards[title]
+        logger.debug(f"fuzzy_search: text={repr(text)} card={card} results={results}")
+        return card
     else:
         return None
 
@@ -95,8 +112,10 @@ def fuzzy_search_multiple(texts, titles=_titles):
     results = [_extract(text, titles) for text in texts]
     results = [result[0] for result in results]
     results = sorted(results, key=lambda result: result[0])
-    logger.debug(f"fuzzy_search_multiple: texts={repr(texts)} results={results}")
     if len(results) > 0:
-        return results[0][0]
+        title = results[0][0]
+        card = _cards[title]
+        logger.debug(f"fuzzy_search_multiple: texts={repr(texts)} card={card} results={results}")
+        return card
     else:
         return None

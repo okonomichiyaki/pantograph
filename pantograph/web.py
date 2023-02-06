@@ -14,13 +14,22 @@ from aiortc import MediaStreamTrack, RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaBlackhole, MediaPlayer, MediaRecorder, MediaRelay
 
 from pantograph.detect import Detector
+from pantograph.drawing import draw
 
 ROOT = os.path.dirname(__file__)
 
-logger = logging.getLogger("pc")
+logger = logging.getLogger("pantograph")
 pcs = set()
 relay = MediaRelay()
 channel = None
+
+
+def create_message(message_type, details=None):
+    payload = {"type": message_type, "details": details}
+    logger.debug(f"payload={payload}")
+    encoded = json.dumps(payload)
+    logger.debug(f"encoded={encoded}")
+    return encoded
 
 class VideoTransformTrack(MediaStreamTrack):
     """
@@ -34,20 +43,39 @@ class VideoTransformTrack(MediaStreamTrack):
         self.track = track
         backsub = cv.createBackgroundSubtractorMOG2()
         self.detector = Detector(backsub)
-
+        self._height = 0
 
     async def recv(self):
         global channel
         frame = await self.track.recv()
-        img = frame.to_ndarray(format="bgr24")
-        (output, mask, card) = self.detector.detect(img)
-        new_frame = VideoFrame.from_ndarray(output, format="bgr24")
-        new_frame.pts = frame.pts
-        new_frame.time_base = frame.time_base
-        if channel and card:
-            channel.send(card)
-        return new_frame
-
+        try:
+            img = frame.to_ndarray(format="bgr24")
+            height, width = img.shape[:2]
+            if height != self._height and height > self._height:
+                logger.debug(f"video warming up: {width}x{height}")
+                self._height = height
+                channel.send(create_message("warmup", height))
+            if height != self._height and height < self._height:
+                logger.debug(f"video degrading: {width}x{height}")
+                self._height = height
+                channel.send(create_message("degrade", height))
+            if height == 1080:
+                output = img.copy()
+                state = self.detector.detect(img)
+                draw(state, output)
+                new_frame = VideoFrame.from_ndarray(output, format="bgr24")
+                new_frame.pts = frame.pts
+                new_frame.time_base = frame.time_base
+                if state.change and len(state.locked_cards) > 0:
+                    cards = [card.to_dict() for card in state.locked_cards]
+                    logger.debug(f"cards={cards}")
+                    message = create_message("cards", cards)
+                    logger.debug(f"message={message}")
+                    channel.send(message)
+                return new_frame
+        except Exception as e:
+            logger.error(f"recv caught exception: {e}")
+        return frame
 
 async def index(request):
     content = open(os.path.join(ROOT, "index.html"), "r").read()

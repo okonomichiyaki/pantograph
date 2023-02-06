@@ -29,20 +29,30 @@ logger = logging.getLogger("pantograph")
 
 
 class AppState:
-    def __init__(self, mask, candidate_contour, non_candidates, locked_cards, stale_cards, state):
+    def __init__(self, mask, candidate_contour, non_candidates, locked_cards, stale_cards, state, change):
         self.mask = mask
         self.candidate_contour = candidate_contour
         self.non_candidates = non_candidates
         self.locked_cards = locked_cards
         self.stale_cards = stale_cards
         self.state = state
+        self.change = change
 
 
 class Card:
-    def __init__(self, title, box_points):
+    def __init__(self, title, code, box_points):
         self.title = title
+        self.code = code
         self.box_points = box_points
         self.dirty = False
+
+    def to_dict(self):
+        d = {}
+        d["title"] = self.title
+        d["code"] = self.code
+        (x,y,w,h) = box_points_dims(self.box_points)
+        d["box"] = (x.item(),y.item(),w.item(),h.item())
+        return d
 
 card_idx = 0
 def get_card_filename():
@@ -59,9 +69,11 @@ def approx(c):
     return cv.approxPolyDP(c,epsilon,True)
 
 def box_points_dims(box_points):
+    x = box_points[0][0]
+    y = box_points[0][1]
     w = box_points[3][0] - box_points[0][0]
     h = box_points[3][1] - box_points[0][1]
-    return (w,h)
+    return (x,y,w,h)
 
 def to_box_points(x,y,w,h):
     return [
@@ -115,8 +127,8 @@ def intersection1d(a0, a1, b0, b1):
     return i
 
 def detect_collapsing(card, points):
-    (card_width,card_height) = box_points_dims(card)
-    (points_width,points_height) = box_points_dims(points)
+    (_,_,card_width,card_height) = box_points_dims(card)
+    (_,_,points_width,points_height) = box_points_dims(points)
     card_area = card_width * card_height
     points_area = points_width * points_height
     if points_area > card_area:
@@ -187,11 +199,9 @@ class Detector:
         if not self._reference:
             return None
 
-        (w, h) = self._reference
+        (_,_,w,h) = self._reference
         cropped = frame[int(y-h/8):int(y+h/8), int(x-w/2):int(x+w/2)]
-        title = self._recognize(cropped)
-
-        return title
+        return self._recognize(cropped)
 
     def _has_stabilized(self, mask):
         """
@@ -241,14 +251,13 @@ class Detector:
             cv.imwrite(filename, cropped)
             text = vision.recognize(filename)
             if len(text) > 0:
-                title = card_search.fuzzy_search(text)
-                return title
+                return card_search.fuzzy_search(text)
         return None
 
     def _crop_card_title(self, image, w, h):
         return image[0:int(h/8), int(w/6):w]
 
-    def _find_card_title(self, frame, candidate):
+    def _find_card(self, frame, candidate):
         x = candidate[0][0]
         y = candidate[0][1]
         w = candidate[3][0] - x
@@ -266,18 +275,21 @@ class Detector:
             crops = [c for c in crops if len(c) > 0]
             texts = []
             for crop in crops:
-                filename = get_card_filename()
-                cv.imwrite(filename, crop)
-                text = vision.recognize(filename)
-                if len(text) > 0:
-                    texts.append(text)
+                if len(crop) > 0:
+                    filename = get_card_filename()
+                    cv.imwrite(filename, crop)
+                    text = vision.recognize(filename)
+                    if len(text) > 0:
+                        texts.append(text)
             return card_search.fuzzy_search_multiple(texts)
 
     def _save_card(self, frame):
-        title = self._find_card_title(frame, self._saved_candidate)
-        if title:
-            logger.info(f"found card={title}")
-            card = Card(title, self._saved_candidate)
+        card = self._find_card(frame, self._saved_candidate)
+        if card:
+            logger.info(f"found card={card}")
+            title = card.title
+            code = card.code
+            card = Card(title, code, self._saved_candidate)
             self._locked_cards.append(card)
 
     def _within_margin(self, c):
@@ -290,18 +302,19 @@ class Detector:
         if self._state == "calibrating":
             return area > MIN_CONTOUR_AREA
         if self._state == "detecting" and self._reference:
-            reference = self._reference[0] * self._reference[1]
+            (_,_,w,h) = self._reference
+            reference = w*h
             logger.debug(f"checking margin: {reference}, {area}")
             return area > (reference - AREA_MARGIN) and area < (reference + AREA_MARGIN)
         return False
 
     def _check_stale_cards(self, frame):
         keep = []
-        for card in self._stale_cards:
-            title = self._find_card_title(frame, card.box_points)
-            if title == card.title:
-                logger.debug(f"refreshed card={card.title}")
-                keep.append(card)
+        for stale_card in self._stale_cards:
+            card = self._find_card(frame, stale_card.box_points)
+            if card and card.title == stale_card.title:
+                logger.debug(f"refreshed card={stale_card.title}")
+                keep.append(stale_card)
         self._locked_cards.extend(keep)
         self._stale_cards = []
 
@@ -313,6 +326,7 @@ class Detector:
 
         candidate_contour = None
         non_candidates = []
+        previous_cards = set([card.title for card in self._locked_cards])
 
         if self._state == "stabilizing":
             stabilized = self._has_stabilized(mask)
@@ -320,6 +334,7 @@ class Detector:
                 logger.info("background stabilized")
                 self._state = "calibrating"
         elif self._state == "calibrating" or self._state == "detecting":
+
             contours, hierarchy = cv.findContours(mask,cv.RETR_EXTERNAL,cv.CHAIN_APPROX_SIMPLE)
             # type of contours is tuple (of ndarray)
             contours = [ approx(c) for c in contours if self._within_margin(c) ]
@@ -349,4 +364,8 @@ class Detector:
 
             self._update_cards(frame, output)
 
-        return AppState(mask, candidate_contour, non_candidates, self._locked_cards, self._stale_cards, self._state)
+        current_cards = set([card.title for card in self._locked_cards])
+        any_change = False
+        if previous_cards != current_cards:
+            any_change = True
+        return AppState(mask, candidate_contour, non_candidates, self._locked_cards, self._stale_cards, self._state, any_change)

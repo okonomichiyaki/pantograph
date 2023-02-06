@@ -15,9 +15,9 @@ function createPeerConnection() {
         sdpSemantics: 'unified-plan'
     };
 
-    if (document.getElementById('use-stun').checked) {
-        config.iceServers = [{urls: ['stun:stun.l.google.com:19302']}];
-    }
+    // if (document.getElementById('use-stun').checked) {
+    //     config.iceServers = [{urls: ['stun:stun.l.google.com:19302']}];
+    // }
 
     pc = new RTCPeerConnection(config);
 
@@ -68,24 +68,12 @@ function negotiate() {
         });
     }).then(function() {
         var offer = pc.localDescription;
-        var codec;
-
-        codec = document.getElementById('audio-codec').value;
-        if (codec !== 'default') {
-            offer.sdp = sdpFilterCodec('audio', codec, offer.sdp);
-        }
-
-        codec = document.getElementById('video-codec').value;
-        if (codec !== 'default') {
-            offer.sdp = sdpFilterCodec('video', codec, offer.sdp);
-        }
 
         document.getElementById('offer-sdp').textContent = offer.sdp;
         return fetch('/offer', {
             body: JSON.stringify({
                 sdp: offer.sdp,
                 type: offer.type,
-                video_transform: document.getElementById('video-transform').value
             }),
             headers: {
                 'Content-Type': 'application/json'
@@ -119,74 +107,58 @@ function start() {
         }
     }
 
-    if (document.getElementById('use-datachannel').checked) {
-        var parameters = JSON.parse(document.getElementById('datachannel-parameters').value);
+    var parameters = {'ordered': true};
 
-        dc = pc.createDataChannel('chat', parameters);
-        dc.onclose = function() {
-            clearInterval(dcInterval);
-            dataChannelLog.textContent += '- close\n';
-        };
-        dc.onopen = function() {
-            dataChannelLog.textContent += '- open\n';
-            dcInterval = setInterval(function() {
-                var message = 'ping ' + current_stamp();
-                dataChannelLog.textContent += '> ' + message + '\n';
-                dc.send(message);
-            }, 1000);
-        };
-        dc.onmessage = function(evt) {
-            dataChannelLog.textContent += '< ' + evt.data + '\n';
+    dc = pc.createDataChannel('chat', parameters);
+    dc.onclose = function() {
+        clearInterval(dcInterval);
+        dataChannelLog.textContent += '- close\n';
+    };
+    dc.onopen = function() {
+        dataChannelLog.textContent += '- open\n';
+        dcInterval = setInterval(function() {
+            var message = 'ping ' + current_stamp();
+            dataChannelLog.textContent += '> ' + message + '\n';
+            dc.send(message);
+        }, 1000);
+    };
+    dc.onmessage = function(evt) {
+        dataChannelLog.textContent += '< ' + evt.data + '\n';
 
-            if (evt.data.substring(0, 4) === 'pong') {
-                var elapsed_ms = current_stamp() - parseInt(evt.data.substring(5), 10);
-                dataChannelLog.textContent += ' RTT ' + elapsed_ms + ' ms\n';
-            } else {
-                console.log(evt.data);
+        if (evt.data.substring(0, 4) === 'pong') {
+            var elapsed_ms = current_stamp() - parseInt(evt.data.substring(5), 10);
+            dataChannelLog.textContent += ' RTT ' + elapsed_ms + ' ms\n';
+        } else {
+            console.log(evt.data);
+            var data = JSON.parse(evt.data);
+            if (data["type"] === "cards") {
+                window.cards = data["details"];
             }
-        };
-    }
-
-    var constraints = {
-        audio: document.getElementById('use-audio').checked,
-        video: false
+        }
     };
 
-    if (document.getElementById('use-video').checked) {
-        var resolution = document.getElementById('video-resolution').value;
-        if (resolution) {
-            resolution = resolution.split('x');
-            constraints.video = {
-                width: parseInt(resolution[0], 0),
-                height: parseInt(resolution[1], 0)
-            };
-        } else {
-            constraints.video = true;
-        }
-        var device = document.getElementById('video-device').value;
-        if (device !== 'default') {
-            constraints.video = {
-                deviceId: device
-            };
-        }
-
+    var constraints = {};
+    var device = document.getElementById('video-device').value;
+    if (device !== 'loading') {
+        constraints.video = { // is having both device ID and width/height meaningful?
+            deviceId: device,
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
+        };
     }
 
-    if (constraints.audio || constraints.video) {
-        if (constraints.video) {
-            document.getElementById('media').style.display = 'block';
-        }
-        navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
-            stream.getTracks().forEach(function(track) {
-                pc.addTrack(track, stream);
-            });
-            return negotiate();
-        }, function(err) {
-            alert('Could not acquire media: ' + err);
+    document.getElementById('media').style.display = 'block';
+    navigator.mediaDevices.getUserMedia(constraints).then(function(stream) {
+        stream.getTracks().forEach(function(track) {
+            var h = track.getSettings().height;
+            var w = track.getSettings().width;
+            console.log("w="+w+",h="+h);
+            pc.addTrack(track, stream);
         });
-    } else {
-        negotiate();
-    }
+        return negotiate();
+    }, function(err) {
+        alert('Could not acquire media: ' + err);
+    });
 
     document.getElementById('stop').style.display = 'inline-block';
 }
@@ -280,17 +252,60 @@ function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
 }
 
+
 window.addEventListener("load", (event) => {
+    var media = document.getElementById('media');
+    media.addEventListener('mousemove', (event) => {
+        var scale = 1920 / event.target.clientWidth;
+        var x = event.offsetX * scale;
+        var y = event.offsetY * scale;
+        //console.log("mousemove: "+x+","+y);
+        if (window.cards && window.cards.length > 0) {
+            var found = false;
+            var container = document.getElementById('card-container');
+            for (var i = 0; i < window.cards.length; i++) {
+                var card = window.cards[i];
+                var box = card["box"];
+                var left = box[0];
+                var top = box[1];
+                var right = left + box[2];
+                var bottom = top + box[3];
+                if (x >= left && x <= right && y <= bottom && y >= top) {
+                    console.log("hover: " + card["title"]);
+                    var img = document.createElement('img');
+                    var size = "large";
+                    img.src = "https://static.nrdbassets.com/v1/" + size + "/" + card["code"] + ".jpg";
+                    container.replaceChildren();
+                    container.appendChild(img);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                container.replaceChildren();
+            }
+        }
+
+    });
     (async () => {
-        await navigator.mediaDevices.getUserMedia({audio: true, video: true});
+        await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: {width:4096,height:2160}
+        });
         let devices = await navigator.mediaDevices.enumerateDevices();
         var deviceSelect = document.getElementById('video-device');
+        if (devices.length > 0) {
+            deviceSelect.remove(0);
+        }
         for (var i = 0; i < devices.length; i++) {
             var device = devices[i];
             if (device.kind === "videoinput") {
                 console.log(device.label);
                 deviceSelect.options.add(new Option(device.label, device.deviceId));
             }
+        }
+        if (devices.length > 0) {
+            document.getElementById('start').style.display = 'inline-block';
         }
     })();
 });
