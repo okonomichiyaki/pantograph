@@ -1,121 +1,124 @@
 import requests
 import json
 import logging
+import imagehash
+import time
+import sys
+
 from pathlib import Path
 from rapidfuzz import process
 from rapidfuzz.distance.Levenshtein import distance
 from dataclasses import dataclass
+from PIL import Image
+import numpy as np
 
-API_URL = "https://netrunnerdb.com/api/2.0/public/"
-IMG_URL = "https://static.nrdbassets.com/v1/large/{code}.jpg"
+from pantograph.nrdb import get_active_cards
+
 
 logger = logging.getLogger("pantograph")
 
-@dataclass
-class NrdbCard:
-    title: str
-    code: int
-    img_url: str
-
-def get(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.text
-    else:
-        return None
-
-def load_or_request(url, filename):
-    file = Path(filename)
-    if file.is_file():
-        with open(filename, 'r', encoding="utf-8") as f:
-            return json.load(f)
-    else:
-        text = get(url)
-        if not text:
-            return None
-        with open(filename, 'w', encoding="utf-8") as f:
-            f.write(text)
-        return json.loads(text)
-
-def fetch(base, path, tail):
-    filename = "data/" + path + tail
-    url = base + path + tail
-    Path("data/" + path).mkdir(parents=True, exist_ok=True)
-    return load_or_request(url, filename)
-
-def get_card(code):
-    path = "card/"
-    tail = str(code)
-    data = fetch(API_URL, path, tail)
-    return data["data"][0]
-
-def get_all_cards():
-    path = ""
-    tail = "cards"
-    data = fetch(API_URL, path, tail)
-    return data["data"]
-
-def get_pack(code):
-    path = "pack/"
-    tail = str(code)
-    data = fetch(API_URL, path, tail)
-    return data["data"][0]
-
-def get_all_cycles():
-    filename = "data/cycles"
-    url = API_URL + "cycles"
-    data = load_or_request(url, filename)
-    return data["data"]
-
-def get_all_packs():
-    filename = "data/packs"
-    url = API_URL + "packs"
-    data = load_or_request(url, filename)
-    return data["data"]
-
-def get_active_packs():
-    cycles = get_all_cycles()
-    active_cycles = [ cycle["code"] for cycle in cycles if not cycle["rotated"] ]
-    packs = get_all_packs()
-    return [ pack for pack in packs if pack["cycle_code"] in active_cycles ]
-
-def get_active_cards():
-    cards = get_all_cards()
-    active_packs = get_active_packs()
-    active_pack_codes = [ pack["code"] for pack in active_packs ]
-    cards = [ card for card in cards if card["pack_code"] in active_pack_codes ]
-    result = {}
-    for card in cards:
-        title = card["title"]
-        code = card["code"]
-        img_url = IMG_URL.replace("{code}", code)
-        result[title] = NrdbCard(title, code, img_url)
-    return result
-
-_cards = get_active_cards()
-_titles = _cards.keys()
 
 def _extract(text, titles):
     return process.extract(text, titles, limit=5, scorer=distance)
 
-def fuzzy_search(text, titles=_titles):
+def fuzzy_search(text, titles, cards):
     results = _extract(text, titles)
     if len(results) > 0:
         title = results[0][0]
-        card = _cards[title]
+        card = cards[title]
         logger.debug(f"fuzzy_search: text={repr(text)} card={card} results={results}")
         return card
     else:
         return None
 
-def fuzzy_search_multiple(texts, titles=_titles):
+def fuzzy_search_multiple(texts, titles, cards):
     results = [_extract(text, titles) for text in texts]
     results = [result[0] for result in results]
     results = sorted(results, key=lambda result: result[0])
     if len(results) > 0:
         title = results[0][0]
-        card = _cards[title]
+        card = cards[title]
         logger.debug(f"fuzzy_search_multiple: texts={repr(texts)} card={card} results={results}")
         return card
     else:
         return None
+
+def combined_hash(img):
+    p = imagehash.phash(img)
+    c = imagehash.colorhash(img)
+    return (p,c)
+
+def diff_hash(a, b):
+    pdiff = a[0] - b[0]
+    cdiff = a[1] - b[1]
+    return pdiff + cdiff
+
+def build_image_hash_db(imagesdir, cards, hashfunc=imagehash.phash):
+    start = time.perf_counter()
+
+    path = Path(imagesdir)
+    if '~' in imagesdir:
+        path = path.expanduser()
+    filenames = path.glob('**/*.jpg')
+    hashes = []
+    for f in sorted(filenames):
+        try:
+            hash = hashfunc(Image.open(f))
+            code = int(f.name[0:-4])
+            data = cards[code]
+            hashes.append((hash, data))
+        except Exception as e:
+            logging.error(f"Caught exception computing hash for {f}: ", e)
+            continue
+
+    elapsed = time.perf_counter() - start
+    logger.info(f"built hash database in {elapsed}")
+    return hashes
+
+def search_by_image_hash(imgpath, hashes, hashfunc=imagehash.phash):
+    start = time.perf_counter()
+
+    target = hashfunc(Image.open(imgpath))
+    results = sorted(hashes, key=lambda h: diff_hash(target, h[0]))
+    best = results[:5]
+    best = [ b[1].title for b in best ]
+    logger.debug(f"best results: {best}")
+
+    return results[0][1]
+    # closest = (np.inf, None)
+    # for hash in hashes:
+    #     other = hash[0]
+    #     data = hash[1]
+    #     diff = other - target
+    #     if diff < closest[0]:
+    #         closest = (diff, data)
+
+    # elapsed = time.perf_counter() - start
+    # logger.debug(f"found closest {closest} in {elapsed}")
+    # return closest[1]
+
+class CardSearch:
+    def __init__(self, cards, imgdir, hashfunc=combined_hash):
+        self.cards = cards
+        self.titles = [ card.get_simple_title() for card in cards.values() ]
+        if imgdir:
+            self.hashes = build_image_hash_db(imgdir, cards, hashfunc=hashfunc)
+            self._hashfunc = hashfunc
+
+    def image_search(self, imgpath):
+        if self.hashes:
+            return search_by_image_hash(imgpath, self.hashes, hashfunc=self._hashfunc)
+        else:
+            logger.error("No image hash database created")
+            return None
+
+    def text_search(self, text):
+        return fuzzy_search(text, self.titles, self.cards)
+
+    def text_search_multiple(self, texts):
+        return fuzzy_search_multiple(texts, self.titles, self.cards)
+
+# TODO: NRDB API code take data dir param
+def init_card_search(datadir=None, imagesdir=None):
+    cards = get_active_cards()
+    return CardSearch(cards, imagesdir)

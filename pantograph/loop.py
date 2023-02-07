@@ -82,3 +82,4 @@ def loop(detector, capture):
             break
         if keyboard == 109: # m key
             show_mask = not show_mask
+ 

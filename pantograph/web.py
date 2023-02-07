@@ -19,9 +19,12 @@ from pantograph.drawing import draw
 ROOT = os.path.dirname(__file__)
 
 logger = logging.getLogger("pantograph")
+
+
 pcs = set()
 relay = MediaRelay()
 channel = None
+card_search = None
 
 
 def create_message(message_type, details=None):
@@ -38,15 +41,16 @@ class VideoTransformTrack(MediaStreamTrack):
 
     kind = "video"
 
-    def __init__(self, track):
+    def __init__(self, track, card_search):
         super().__init__()  # don't forget this!
         self.track = track
         backsub = cv.createBackgroundSubtractorMOG2()
-        self.detector = Detector(backsub)
+        self.detector = Detector(backsub, card_search)
         self._height = 0
 
     async def recv(self):
         global channel
+        global card_search
         frame = await self.track.recv()
         try:
             img = frame.to_ndarray(format="bgr24")
@@ -59,7 +63,8 @@ class VideoTransformTrack(MediaStreamTrack):
                 logger.debug(f"video degrading: {width}x{height}")
                 self._height = height
                 channel.send(create_message("degrade", height))
-            if height == 1080:
+            if height >= 720:
+#            if height == 1080:
                 output = img.copy()
                 state = self.detector.detect(img)
                 draw(state, output)
@@ -121,7 +126,7 @@ async def offer(request):
         log_info("Track %s received", track.kind)
 
         if track.kind == "video":
-            pc.addTrack(VideoTransformTrack(relay.subscribe(track)))
+            pc.addTrack(VideoTransformTrack(relay.subscribe(track), card_search))
 
         @track.on("ended")
         async def on_ended():
@@ -149,7 +154,9 @@ async def on_shutdown(app):
     pcs.clear()
 
 
-def run(args, detector):
+def run(args, cs):
+    global card_search
+    card_search = cs
     app = web.Application()
     app.on_shutdown.append(on_shutdown)
     app.router.add_get("/", index)

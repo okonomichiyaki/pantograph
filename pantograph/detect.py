@@ -14,7 +14,7 @@ from collections import deque
 from dataclasses import dataclass
 
 import pantograph.google_vision as vision
-import pantograph.card_search as card_search
+import pantograph.images as images
 
 
 STABILIZE_MIN_FRAMES = 5
@@ -23,7 +23,7 @@ LEARNING_RATE = 0.001
 MIN_CONTOUR_AREA = 10000
 AREA_MARGIN = 5000
 
-FEATURE_SAVE_IMAGES = False
+FEATURE_SAVE_IMAGES = True
 
 logger = logging.getLogger("pantograph")
 
@@ -172,8 +172,9 @@ def check_for_candidate(cards, c):
 
 class Detector:
 
-    def __init__(self, backsub):
+    def __init__(self, backsub, card_search):
         self._backsub = backsub
+        self._card_search = card_search
         self._locked_cards = []
         self._stale_cards = []
         self._reference = None
@@ -248,10 +249,11 @@ class Detector:
     def _recognize(self, cropped):
         if len(cropped) > 0:
             filename = get_card_filename()
+            cropped = images.clahe(cropped)
             cv.imwrite(filename, cropped)
             text = vision.recognize(filename)
             if len(text) > 0:
-                return card_search.fuzzy_search(text)
+                return self._card_search.text_search(text)
         return None
 
     def _crop_card_title(self, image, w, h):
@@ -263,8 +265,9 @@ class Detector:
         w = candidate[3][0] - x
         h = candidate[3][1] - y
         whole = frame[y:y+h,x:x+w]
-        if FEATURE_SAVE_IMAGES:
-            cv.imwrite(get_card_filename(), whole)
+        whole = images.clahe(whole)
+        filename = get_card_filename()
+        cv.imwrite(filename, whole)
         if h > w: # portrait
             cropped = self._crop_card_title(whole, w, h)
             return self._recognize(cropped)
@@ -281,7 +284,7 @@ class Detector:
                     text = vision.recognize(filename)
                     if len(text) > 0:
                         texts.append(text)
-            return card_search.fuzzy_search_multiple(texts)
+            return self._card_search.text_search_multiple(texts)
 
     def _save_card(self, frame):
         card = self._find_card(frame, self._saved_candidate)
