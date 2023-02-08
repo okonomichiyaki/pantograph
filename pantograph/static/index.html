@@ -39,6 +39,10 @@
     .flex-child:first-child {
         margin-right: 20px;
     }
+
+     #output {
+         display: none;
+     }
     </style>
 </head>
 <body>
@@ -56,6 +60,7 @@
 <div class="flex-container">
     <div id="media" style="display: none" class="flex-child">
         <video id="video" autoplay="true" playsinline="true"></video>
+        <canvas id="output" width="1280" height="720"></canvas>
     </div>
     <div id="card-container" class="flex-child"></div>
 </div>
@@ -86,6 +91,6 @@
 
 </div>
 
-<script src="client.js"></script>
+<script src="webrtc.js"></script>
 </body>
 </html>

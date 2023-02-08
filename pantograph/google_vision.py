@@ -8,10 +8,7 @@ client = vision.ImageAnnotatorClient()
 logger = logging.getLogger("pantograph")
 
 
-def _text_detection(path):
-    with io.open(path, "rb") as image_file:
-        content = image_file.read()
-    image = vision.Image(content=content)
+def _text_detection(image):
     try:
         start = time.perf_counter()
         response = client.text_detection(image=image)
@@ -25,8 +22,17 @@ def _text_detection(path):
         logger.error(f"Google Cloud Vision client threw exception {e}")
         return None
 
+def recognize_bytes(content):
+    image = vision.Image(content=content)
+    response = _text_detection(image)
+    annotation = response.full_text_annotation
+    return annotation.text
+
 def recognize(path):
-    response = _text_detection(path)
+    with io.open(path, "rb") as image_file:
+        content = image_file.read()
+    image = vision.Image(content=content)
+    response = _text_detection(image)
     annotation = response.full_text_annotation
     return annotation.text
 
