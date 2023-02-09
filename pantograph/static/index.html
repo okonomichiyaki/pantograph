@@ -59,7 +59,8 @@
 
 <div class="flex-container">
     <div id="media" style="display: none" class="flex-child">
-        <video id="video" autoplay="true" playsinline="true"></video>
+        <video id="local-video" autoplay="true" playsinline="true"></video>
+        <video id="remote-video" autoplay="true" playsinline="true"></video>
         <canvas id="output" width="1280" height="720"></canvas>
     </div>
     <div id="card-container" class="flex-child"></div>
@@ -91,6 +92,8 @@
 
 </div>
 
-<script src="webrtc.js"></script>
+<script src="adapter.js"></script>
+<script src="pantograph.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
 </body>
 </html>

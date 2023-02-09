@@ -1,4 +1,5 @@
-import pantograph.cli
+import pantograph.flask as web
 
 if __name__ == "__main__":
-    pantograph.cli.main()
+#    pantograph.cli.main()
+    web.run()
