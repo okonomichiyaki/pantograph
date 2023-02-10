@@ -9,10 +9,11 @@ import logging
 import threading
 import time
 
-import pantograph.google_vision as vision
 from pantograph.card_search import init_card_search
+from pantograph.click_search import search
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("pantograph")
 
 room='StoneshipChartRoom'
 
@@ -45,11 +46,10 @@ def create_app():
         json = request.get_json()
         data = json['image']
         response = urllib.request.urlopen(data)
-        text = vision.recognize_bytes(response.file.read())
-        lines = text.split("\n")
-        lines = [ line for line in lines if len(line) > 2 ]
-        if len(lines) > 0:
-            card = card_search.text_search(lines[0])
+        img_bytes = response.file.read()
+        texts = search(img_bytes)
+        if len(texts) > 0:
+            card = card_search.text_search_multiple(texts)
             return jsonify([{'title': card.title, 'code': card.code}])
         else:
             return jsonify([])

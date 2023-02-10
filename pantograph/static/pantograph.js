@@ -221,7 +221,7 @@ window.addEventListener("load", (event) => {
             // crop the video feed:
             let output = document.getElementById('output');
             let ctx = output.getContext('2d');
-            output.getContext('2d').drawImage(target, 0, 0, output.width, output.height);
+            ctx.drawImage(target, 0, 0, output.width, output.height);
             let imageData = ctx.getImageData(x - w / 2, y - h / 2, w, h);
             let crop = document.createElement("canvas");
             crop.width = w;

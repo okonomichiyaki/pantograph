@@ -1,51 +1,52 @@
+<!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>pantograph: paper netrunner over webcam</title>
-    <style>
-    button {
-        //padding: 8px 16px;
-    }
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>pantograph: paper netrunner over webcam</title>
+        <style>
+         button {
+             //padding: 8px 16px;
+         }
 
-    pre {
-        overflow-x: hidden;
-        overflow-y: auto;
-    }
+         pre {
+             overflow-x: hidden;
+             overflow-y: auto;
+         }
 
-    video {
-        width: 100%;
-    }
+         video {
+             width: 100%;
+         }
 
-    .option {
-        margin-bottom: 8px;
-    }
+         .option {
+             margin-bottom: 8px;
+         }
 
-    #media {
-        width: 1280px;
-    }
+         #media {
+             width: 1280px;
+         }
 
-    .debug {
-        display: none;
-    }
+         .debug {
+             display: none;
+         }
 
-    .flex-container {
-        display: flex;
-    }
+         .flex-container {
+             display: flex;
+         }
 
-    .flex-child {
-    }
+         .flex-child {
+         }
 
-    .flex-child:first-child {
-        margin-right: 20px;
-    }
+         .flex-child:first-child {
+             margin-right: 20px;
+         }
 
-     #output {
-         display: none;
-     }
-    </style>
-</head>
-<body>
+         #output {
+             display: none;
+         }
+        </style>
+    </head>
+    <body>
 
 <div class="controls">
     <label for="video-device">Video device:</label>
