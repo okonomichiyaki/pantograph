@@ -33,7 +33,10 @@ COPY poetry.lock pyproject.toml ./
 # [OPTIONAL] Validate the project is properly configured
 RUN poetry check
 
-# Install Dependencies
+# Install OpenCV dependencies
+RUN apt-get update && apt-get install ffmpeg libsm6 libxext6  -y
+
+# Install dependencies
 RUN poetry install --no-interaction --no-cache --without dev
 
 # Copy Application
