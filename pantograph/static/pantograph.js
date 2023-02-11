@@ -222,6 +222,8 @@ window.addEventListener("load", (event) => {
             let output = document.getElementById('output');
             let ctx = output.getContext('2d');
             ctx.drawImage(target, 0, 0, output.width, output.height);
+            ctx.strokeStyle = "rgb(0, 255, 0)";
+            ctx.strokeRect(x - w / 2, y - h / 2, w, h);
             let imageData = ctx.getImageData(x - w / 2, y - h / 2, w, h);
             let crop = document.createElement("canvas");
             crop.width = w;
