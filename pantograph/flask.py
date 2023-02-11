@@ -9,7 +9,7 @@ import logging
 import threading
 import time
 
-from pantograph.card_search import init_card_search
+from pantograph.fuzzy_search import FuzzySearch
 from pantograph.click_search import search
 
 logging.basicConfig(level=logging.DEBUG)
@@ -20,7 +20,7 @@ room='StoneshipChartRoom'
 def create_app():
     app = Flask(__name__, static_url_path='', static_folder='static')
     auth = HTTPBasicAuth()
-    card_search = init_card_search()
+    fuzzy = FuzzySearch()
 
     users = {
         "corp": generate_password_hash("bluesun"),
@@ -49,7 +49,7 @@ def create_app():
         img_bytes = response.file.read()
         texts = search(img_bytes)
         if len(texts) > 0:
-            card = card_search.text_search_multiple(texts)
+            card = fuzzy.search_multiple(texts)
             return jsonify([{'title': card.title, 'code': card.code}])
         else:
             return jsonify([])

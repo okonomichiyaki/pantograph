@@ -6,6 +6,7 @@ from pathlib import Path
 
 API_URL = "https://netrunnerdb.com/api/2.0/public/"
 IMG_URL = "https://static.nrdbassets.com/v1/large/{code}.jpg"
+CORP_FACTIONS = ["NBN", "Jinteki", "Haas-Bioroid", "Weyland Consortium"]
 
 @dataclass
 class NrdbCard:
@@ -15,12 +16,24 @@ class NrdbCard:
     side_code: str
     type_code: str
 
-    def get_simple_title(self):
+    def get_titles(self):
         if ':' in self.title and self.type_code == 'identity':
             parts = self.title.split(':')
-            return parts[0]
+            parts = [ part.strip() for part in parts ]
+            if parts[0] in CORP_FACTIONS:
+                return [parts[1]]
+            else:
+                return parts
         else:
-            return self.title
+            return [self.title]
+
+def from_hash(card):
+    title = card["title"]
+    code = card["code"]
+    img_url = IMG_URL.replace("{code}", code)
+    type_code = card["type_code"]
+    side_code = card["side_code"]
+    return NrdbCard(title, int(code), img_url, side_code, type_code)
 
 def get(url):
     response = requests.get(url)
@@ -88,16 +101,4 @@ def get_active_cards():
     cards = get_all_cards()
     active_packs = get_active_packs()
     active_pack_codes = [ pack["code"] for pack in active_packs ]
-    cards = [ card for card in cards if card["pack_code"] in active_pack_codes ]
-    result = {}
-    for card in cards:
-        title = card["title"]
-        code = card["code"]
-        img_url = IMG_URL.replace("{code}", code)
-        type_code = card["type_code"]
-        side_code = card["side_code"]
-        nc = NrdbCard(title, int(code), img_url, side_code, type_code)
-        result[title] = nc
-        result[nc.get_simple_title()] = nc
-        result[int(code)] = nc
-    return result
+    return [ from_hash(card) for card in cards if card["pack_code"] in active_pack_codes ]

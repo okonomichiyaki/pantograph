@@ -1,26 +1,35 @@
 import pytest
+import logging
 
-from pantograph.card_search import fuzzy_search
+from pantograph.fuzzy_search import FuzzySearch
+from pantograph.nrdb import NrdbCard
+
+logging.basicConfig(level=logging.DEBUG)
 
 def test_fuzzy_search_makers_eye():
     # text="N\nTHE MAKER'S EVE\nNSTELL"
     # text="2\nTHE MAKER'S ETE\nSPORT"
     text = "2\nTHE MAKER'S F\nScant "
     makers = 'The Maker\'s Eye'
-    choices=['Synthetic Systems: The World Re-imagined', makers]
-    result = fuzzy_search(text, titles=choices)
-    assert result[0] == makers
+    titles=['Synthetic Systems: The World Re-imagined', makers]
+    fuzzy = FuzzySearch([NrdbCard(title, 123, None, None, None) for title in titles])
+    result = fuzzy.search(text)
+    assert result.title == makers
 
 def test_fuzzy_search_zenit():
     text = "884\nZENIT CHIP IZ-2M)"
     zenit = "Zenit Chip JZ-2MJ"
-    choices = ['Brain Chip', 'Security Chip', 'Friday Chip', zenit, 'Unity']
-    result = fuzzy_search(text, titles=choices)
-    assert result[0] == zenit
+    titles = ['Brain Chip', 'Security Chip', 'Friday Chip', zenit, 'Unity']
+    fuzzy = FuzzySearch([NrdbCard(title, 123, None, None, None) for title in titles])
+    logger = logging.getLogger("pantograph")
+    logger.debug(fuzzy.cards)
+    result = fuzzy.search(text)
+    assert result.title == zenit
 
 def test_fuzzy_search_wake_implant():
     text="WAKE IMPLANT VIA-IRI"
     wake="WAKE Implant v2A-JRJ"
-    choices=["Imp", "Wake Up Call", wake]
-    result = fuzzy_search(text, titles=choices)
-    assert result[0] == wake
+    titles=["Imp", "Wake Up Call", wake]
+    fuzzy = FuzzySearch([NrdbCard(title, 123, None, None, None) for title in titles])
+    result = fuzzy.search(text)
+    assert result.title == wake

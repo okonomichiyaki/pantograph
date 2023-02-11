@@ -2,7 +2,7 @@ import argparse
 import logging
 import io
 
-import pantograph.fuzzy_search as fuzzy_search
+from pantograph.fuzzy_search import FuzzySearch
 from pantograph.click_search import search
 
 def main():
@@ -22,14 +22,14 @@ def main():
         logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger("pantograph")
 
-    fuzzy = fuzzy_search.init()
+    fuzzy = FuzzySearch()
 
     if (args.image):
         filename = args.image
         with io.open(filename, "rb") as image_file:
             image_bytes = image_file.read()
         texts = search(image_bytes)
-        card = fuzzy.text_search_multiple(texts)
+        card = fuzzy.search_multiple(texts)
         if card:
             print(f"{card.title} [{card.code}]")
         else:
