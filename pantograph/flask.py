@@ -3,21 +3,33 @@ from flask_socketio import SocketIO, join_room, leave_room
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from io import BytesIO
+import requests
 import urllib
 import logging
 import threading
 import time
+from io import BytesIO
+from urllib.request import urlopen
+import base64
 
 from pantograph.fuzzy_search import FuzzySearch
 from pantograph.click_search import search
 
-logging.basicConfig(level=logging.DEBUG)
+import os
+
 logger = logging.getLogger("pantograph")
 
 room='StoneshipChartRoom'
 
+def data_uri_to_base64(uri):
+    with urlopen(uri) as response:
+        data = response.read()
+    a = base64.b64encode(bstr).decode('ascii')
+    return (bstr, a)
+
 def create_app():
+    logging.basicConfig(level=logging.DEBUG)
+
     app = Flask(__name__, static_url_path='', static_folder='static')
     auth = HTTPBasicAuth()
     fuzzy = FuzzySearch()
@@ -44,9 +56,9 @@ def create_app():
     @auth.login_required
     def recognize():
         json = request.get_json()
-        data = json['image']
-        response = urllib.request.urlopen(data)
-        img_bytes = response.file.read()
+        data_uri = json['image']
+        with urlopen(data_uri) as response:
+            img_bytes = response.file.read()
         texts = search(img_bytes)
         if len(texts) > 0:
             card = fuzzy.search_multiple(texts)

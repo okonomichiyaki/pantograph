@@ -1,11 +1,11 @@
-from google.cloud import vision
 import io
 import logging
 import time
 import math
+import requests
 import numpy as np
-
-client = vision.ImageAnnotatorClient()
+import os
+import base64
 
 logger = logging.getLogger("pantograph")
 
@@ -15,20 +15,19 @@ class Block:
         self.text = " ".join(self.words)
         upper_left = vertices[0]
         lower_right = vertices[2]
-        self.x = upper_left.x
-        self.y = upper_left.y
-        self.w = lower_right.x - self.x
-        self.h = lower_right.y - self.y
-        self.vertices = vertices
-        self.points = [ [v.x, v.y] for v in vertices ]
+        self.x = upper_left['x']
+        self.y = upper_left['y']
+        self.w = lower_right['x'] - self.x
+        self.h = lower_right['y'] - self.y
+        self.points = [ [v['x'], v['y']] for v in vertices ]
 
     @property
     def rotation(self):
         dist = np.inf
         closest = -1
         for i in range(4):
-            v = self.vertices[i]
-            d = math.hypot(v.x, v.y)
+            v = self.points[i] #self.vertices[i]
+            d = math.hypot(v[0], v[1])
             if d < dist:
                 dist = d
                 closest = i
@@ -47,44 +46,55 @@ class Block:
     def lower_right(self):
         return (self.x + self.w, self.y + self.h)
 
-def _text_detection(image):
+def recognize_base64(b64):
+    start = time.perf_counter()
+
     try:
-        start = time.perf_counter()
-        response = client.text_detection(image=image)
+        key = os.environ.get('VISION_API_KEY')
+        if key is None:
+            logger.error(f"No vision api key found")
+            return []
+        url = f"https://vision.googleapis.com/v1/images:annotate?key={key}"
+        annotate_image_request = {"requests": [{"image": {"content": b64},"features": [{"type": "TEXT_DETECTION"}]}]}
+        r = requests.post(url, json=annotate_image_request)
+        if r.status_code == 200:
+            json = r.json()
+            return _collect_blocks_json(json)
+    finally:
         elapsed = time.perf_counter() - start
         logger.debug("received response from google vision in %.2f", elapsed)
-        if response.error.message:
-            logger.error(f"Google Cloud Vision client returned error {response.error.message}")
-            return None
-        return response
+
+def _collect_blocks_json(response):
+    try:
+        responses = response['responses']
+        if len(responses) < 1:
+            logger.debug(f"Vision API returned empty list of responses: {response}")
+            return []
+        r = responses[0]
+        annotation = r['fullTextAnnotation']
+        blocks = []
+        for page in annotation['pages']:
+            for block in page['blocks']:
+                for paragraph in block['paragraphs']:
+                    words = []
+                    for word in paragraph['words']:
+                        chars = []
+                        for symbol in word['symbols']:
+                            chars.append(symbol['text'])
+                        words.append("".join(chars))
+                    vertices = paragraph['boundingBox']['vertices']
+                    block = Block(words, vertices)
+                    blocks.append(block)
+        return blocks
     except Exception as e:
-        logger.error(f"Google Cloud Vision client threw exception {e}")
-        return None
+        logger.error(f"caught exception parsing response: {response} {e}")
+        return []
 
-def _collect_blocks(response):
-    annotation = response.full_text_annotation
-    blocks = []
-    for page in annotation.pages:
-        for block in page.blocks:
-            for paragraph in block.paragraphs:
-                words = []
-                for word in paragraph.words:
-                    chars = []
-                    for symbol in word.symbols:
-                        chars.append(symbol.text)
-                    words.append("".join(chars))
-                vertices = paragraph.bounding_box.vertices
-                block = Block(words, vertices)
-                blocks.append(block)
-    return blocks
-
-def recognize_bytes(content):
-    image = vision.Image(content=content)
-    response = _text_detection(image)
-    annotation = response.full_text_annotation
-    return _collect_blocks(response)
+def recognize_bytes(data):
+    b64 = base64.b64encode(data).decode('ascii')
+    return recognize_base64(b64)
 
 def recognize_file(path):
-    with io.open(path, "rb") as image_file:
-        content = image_file.read()
-    return recognize_bytes(content)
+    with open(path, "rb") as image_file:
+        data = image_file.read()
+        return recognized_bytes(data)

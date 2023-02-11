@@ -61,10 +61,10 @@ def get_texts(rotation, blocks, areas):
     logger.debug(f"filtered texts: {filtered}")
     return filtered
 
-def search(img_bytes: bytes):
+def search(img_bytes):
     # TODO: only write if debug mode
-    with open('card.jpg', 'wb') as f:
-        f.write(img_bytes)
+    # with open('card.jpg', 'wb') as f:
+    #     f.write(img_bytes)
     blocks = vision.recognize_bytes(img_bytes)
     img = cv.imdecode(np.frombuffer(img_bytes, np.uint8), -1)
     (w,h,*_) = img.shape
