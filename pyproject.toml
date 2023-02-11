@@ -27,3 +27,8 @@ pytest = "^7.2.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"
+log_cli_format = "%(message)s"
