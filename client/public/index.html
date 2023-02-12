@@ -40,7 +40,7 @@
          height: 100%;
      }
      nav {
-         height: 10%;
+         /* background-color: coral; */
      }
      .main {
          height: 90%;
@@ -48,6 +48,7 @@
          /* main content has left (remote video) and right (local video, card display) panels in a flex row container */
          display: flex;
          flex-direction: row;
+         align-items: center;
      }
      /* give everything some breathing room */
      .main div {
@@ -55,15 +56,15 @@
      }
      /* left panel gets a flex value >1 to take up remaining space after right panel */
      .left-panel {
-         flex: 2;
-         height: 90%;
+         flex: 2 1 auto;
+         height: 100%;
          /* background-color: yellowgreen; */
      }
      /* right panel is a column flex container for local video plus card display */
      .right-panel {
          display: flex;
          flex-direction: column;
-         height: 90%;
+         height: 100%;
          /* background-color: steelblue; */
 
          /* default of align-items is stretch
@@ -73,6 +74,9 @@
      }
      .local {
          width: 360px;
+     }
+     .remote {
+         width: 1280px;
      }
      .card {
          margin-top: 10px;
