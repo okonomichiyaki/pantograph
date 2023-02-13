@@ -2,6 +2,7 @@ from flask import Flask, send_file, request, jsonify
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_cors import CORS
 
 import requests
 import urllib
@@ -31,6 +32,7 @@ def create_app():
     logging.basicConfig(level=logging.DEBUG)
 
     app = Flask(__name__, static_url_path='', static_folder='static')
+    CORS(app,resources={r"/*":{"origins":"*"}})
     auth = HTTPBasicAuth()
     fuzzy = FuzzySearch()
 
@@ -69,7 +71,8 @@ def create_app():
     return app
 
 app = create_app()
-socketio = SocketIO(app)
+# socketio = SocketIO(app)
+socketio = SocketIO(app,cors_allowed_origins="*")
 
 connections = {}
 

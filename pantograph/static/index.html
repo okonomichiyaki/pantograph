@@ -4,70 +4,151 @@
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>pantograph: paper netrunner over webcam</title>
+
+        <!-- Pico CSS -->
+        <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
+
         <style>
-         button {
-             //padding: 8px 16px;
+         #output {
+             display: none;
          }
-
-         pre {
-             overflow-x: hidden;
-             overflow-y: auto;
-         }
-
-         video {
-             width: 100%;
-         }
-
-         .option {
-             margin-bottom: 8px;
-         }
-
-         #media {
-             width: 1280px;
-         }
-
          .debug {
              display: none;
          }
 
-         .flex-container {
+         /*** Override some styles from Pico (probably can be customized via SASS?) ***/
+
+         h1,h2 {
+             --typography-spacing-vertical: 0;
+         }
+         h1 {
+             --font-size:1.5rem;
+         }
+         h1 img {
+             max-width: 50px;
+         }
+         h2 {
+             --font-size:0.75rem;
+         }
+
+         /*** Pantograph styles ***/
+
+         * {
+             --font-family: monospace;
+         }
+         html, body, .container-fluid {
+             height: 100%;
+         }
+         nav {
+             /* background-color: coral; */
+         }
+         .main {
+             height: 90%;
+             width: 100%;
+             /* main content has left (remote video) and right (local video, card display) panels in a flex row container */
              display: flex;
+             flex-direction: row;
+             align-items: center;
+         }
+         .main div {
+             padding: 5px;
+         }
+         /* left panel gets a flex value >1 to take up remaining space after right panel */
+         .left-panel {
+             flex: 2 1 auto;
+             height: 100%;
+             /* background-color: yellowgreen; */
+         }
+         /* right panel is a column flex container for local video plus card display */
+         .right-panel {
+             display: flex;
+             flex-direction: column;
+             height: 100%;
+             /* background-color: steelblue; */
+
+             /* default of align-items is stretch
+                changed to center horiz in panel, and maintains aspect ratio of card images
+                (https://stackoverflow.com/a/44030846/352061) */
+             align-items: center;
+         }
+         #local-video {
+             width: 360px;
+         }
+         #remote-video {
+             width: 1280px;
+         }
+         .card {
+             margin-top: 10px;
+             border-radius: 14px;
+             flex-shrink: 2;
+
+             /* makes shrink work as expected (https://stackoverflow.com/a/66689926/352061) */
+             min-height: 0;
+         }
+         .card-search-results {
+             flex-shrink: 2;
+             min-height: 0;
          }
 
-         .flex-child {
-         }
-
-         .flex-child:first-child {
-             margin-right: 20px;
-         }
-
-         #output {
-//             display: none;
+         /* align status sub-components vertically */
+         .status {
+             /* override to add spacing in status spinner when in nav */
+             --spacing: 1rem;
+             height: 100%;
+             display: flex;
+             align-items: center;
+             justify-content: center;
          }
         </style>
     </head>
     <body>
-
-<div class="controls">
-    <label for="video-device">Video device:</label>
-    <select id="video-device">
-        <option value="loading" selected>Loading...</option>
-    </select>
-</div>
-
-<button id="start" style="display: none" onclick="start()">Start</button>
-<button id="stop" style="display: none" onclick="stop()">Stop</button>
-
-<div class="flex-container">
-    <div id="media" style="display: none" class="flex-child">
-        <video id="local-video" autoplay="true" playsinline="true"></video>
-        <video id="remote-video" autoplay="true" playsinline="true"></video>
-        <canvas id="output" width="1280" height="720"></canvas>
-    </div>
-    <div id="card-container" class="flex-child"></div>
-</div>
+        <div class="container-fluid">
+            <nav>
+                <ul>
+                    <li>
+                        <h1>pantograph <img src="Pantograph.webp" alt=""/></h1>
+                    </li>
+                </ul>
+                <ul>
+                    <li>
+                        <div class="status">
+                            <span aria-busy="true">connecting...</span>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="#" role="button">logout</a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="main">
+                <div class="left-panel">
+                    <!-- <img id="remote-video" src="remote.png" alt="placeholder"/> -->
+                    <video id="remote-video" autoplay="true" playsinline="true"></video>
+                    <nav>
+                        <ul>
+                            <li>
+                                <a href="#" role="button" id="call">call</a>
+                            </li>
+                            <li>
+                                <div class="controls">
+                                    <select id="video-device" defaultValue="loading">
+                                        <option value="loading">loading...</option>
+                                    </select>
+                                </div>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                <div class="right-panel">
+                    <!-- <img id="local-video" src="local.png" alt="placeholder"/> -->
+                    <video id="local-video" autoplay="true" playsinline="true"></video>
+                    <img class="card" src="https://static.nrdbassets.com/v1/large/33069.jpg" alt="Time Bomb" />
+                </div>
+            </div>
+        </div>
 
 <div class="debug">
+<canvas id="output" width="1280" height="720"></canvas>
 <h2>State</h2>
 <p>
     ICE gathering state: <span id="ice-gathering-state"></span>
@@ -94,7 +175,13 @@
 </div>
 
 <script src="adapter.js"></script>
-<script src="pantograph.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
+        integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
+        crossorigin="anonymous"></script>
+
+<script type="module" src="webrtc.js"></script>
+<script type="module" src="utils.js"></script>
+<script type="module" src="pantograph.js"></script>
+
 </body>
 </html>

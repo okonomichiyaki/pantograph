@@ -1,9 +1,12 @@
+import { createPeerConnection, offer, answer } from "./webrtc.js";
+import { getCookies } from "./utils.js";
+
 class State {
-    static Connecting = new State('Connecting', 'Connecting to server');
-    static Waiting = new State('Waiting', 'Waiting for opponent');
-    static Ready = new State('Ready', 'Ready to start call');
-    static Offered = new State('Offered', 'Sent offer, waiting for answer');
-    static Answered = new State('Answered', 'Received answer');
+    static Connecting = new State('Connecting', 'connecting to server...');
+    static Waiting = new State('Waiting', 'waiting for opponent...');
+    static Ready = new State('Ready', 'ready to start call...');
+    static Offered = new State('Offered', 'sent offer, waiting for answer...');
+    static Answered = new State('Answered', 'received answer...');
 
     constructor(name, description) {
         this.name = name;
@@ -11,6 +14,9 @@ class State {
     }
     toString() {
         return `State.${this.name}`;
+    }
+    isBusy() {
+        return true;
     }
 }
 
@@ -21,109 +27,10 @@ function getState() {
 function changeState(newState) {
     console.log(`Changing state: ${window.state} -> ${newState}`);
     window.state = newState;
-}
-
-function getCookies() {
-    const cookies = document.cookie.split('; ');
-    console.log(cookies);
-    const results = {};
-    for (let i = 0; i < cookies.length; i++) {
-        let cookie = cookies[i];
-        let pair = cookie.split('=');
-        results[pair[0]] = pair[1];
-    }
-    return results;
-}
-
-function createPeerConnection(socket) {
-    let pc = new RTCPeerConnection({
-        iceServers: [
-            {
-                urls: "stun:relay.metered.ca:80",
-            },
-            {
-                urls: "turn:relay.metered.ca:80",
-                username: "47055218784c4fa15c43fbcd",
-                credential: "WWCMN1njUvk5Pcdb",
-            },
-            {
-                urls: "turn:relay.metered.ca:443",
-                username: "47055218784c4fa15c43fbcd",
-                credential: "WWCMN1njUvk5Pcdb",
-            },
-            {
-                urls: "turn:relay.metered.ca:443?transport=tcp",
-                username: "47055218784c4fa15c43fbcd",
-                credential: "WWCMN1njUvk5Pcdb",
-            },
-        ],
-    });
-    pc.addEventListener('icecandidate', e => {
-//        console.log('icecandidate', e);
-        socket.emit('icecandidate', e.candidate);
-    });
-    pc.addEventListener('iceconnectionstatechange', e => {
-        console.log('icecandidatestatechange', e);
-    });
-    pc.ontrack = function(e) {
-        console.log('ontrack', e);
-        let remoteVideo = document.getElementById('remote-video');
-        if (remoteVideo.srcObject) {
-            return;
-        }
-        remoteVideo.srcObject = new MediaStream([e.track]);
-        //remoteVideo.srcObject = e.streams[0];
-        remoteVideo.play();
-    };
-    return pc;
-}
-
-async function answer(data, socket) {
-    let video = document.getElementById('local-video');
-    let stream = video.srcObject;
-    const tracks = stream.getVideoTracks();
-    if (tracks.length < 1) {
-        console.log("Failed to find video tracks");
-        return;
-    }
-    let pc = createPeerConnection(socket);
-    window.pc = pc;
-    await pc.setRemoteDescription(data);
-    pc.addTrack(tracks[0]);
-    try {
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        const json = JSON.stringify(answer);
-        console.log("Successfully created answer and set local description: ", json);
-        socket.emit('answer', answer);
-    } catch (e) {
-        console.log("Caught exception", e);
-    }
-}
-
-async function offer(socket) {
-    let video = document.getElementById('local-video');
-    let stream = video.srcObject;
-    const tracks = stream.getVideoTracks();
-    if (tracks.length < 1) {
-        console.log("Failed to find video tracks");
-        return;
-    }
-    let pc = createPeerConnection(socket);
-    pc.addTrack(tracks[0]);
-    try {
-        const offer = await pc.createOffer({
-            offerToReceiveAudio: 0,
-            offerToReceiveVideo: 1,
-        });
-        await pc.setLocalDescription(offer);
-        const json = JSON.stringify(offer);
-        console.log("Successfully created offer and set local description: ", json);
-        socket.emit('offer', offer);
-        changeState(State.Offered);
-        window.pc = pc;
-    } catch (e) {
-        console.log("Caught exception", e);
+    const status = document.querySelectorAll('.status span');
+    if (status.length > 0) {
+        status[0].innerHTML = newState.description;
+        status[0].setAttribute('aria-busy', newState.isBusy());
     }
 }
 
@@ -131,6 +38,7 @@ window.addEventListener("load", (event) => {
     window.state = State.Connecting;
     let cookies = getCookies();
     let username = cookies["username"];
+    console.log("username="+username);
 
     var socket = io();
     socket.on('connect', function() {
@@ -145,7 +53,11 @@ window.addEventListener("load", (event) => {
         console.log('offer: ', data);
         changeState(State.Offered);
         await start();
-        await answer(data, socket);
+        const pc = await answer(data, socket);
+        if (pc != null) {
+            window.pc = pc;
+            changeState(State.Answered);
+        }
     });
     socket.on('answer', async function(data) {
         console.log('answer: ', data);
@@ -183,7 +95,7 @@ window.addEventListener("load", (event) => {
             }
         }
         if (devices.length > 0) {
-            document.getElementById('start').style.display = 'inline-block';
+//            document.getElementById('start').style.display = 'inline-block';
         }
     })();
 
@@ -203,13 +115,18 @@ window.addEventListener("load", (event) => {
         let stream = await navigator.mediaDevices.getUserMedia(constraints);
         localVideo.srcObject = stream;
         localVideo.play();
-        document.getElementById('media').style.display = 'block';
-        document.getElementById('stop').style.display = 'inline-block';
+        // document.getElementById('media').style.display = 'block';
+        // document.getElementById('stop').style.display = 'inline-block';
 
         if (getState() === State.Ready) {
-            await offer(socket);
+            const pc = await offer(socket);
+            if (pc != null) {
+                changeState(State.Offered);
+                window.pc = pc;
+            } else {
+                // TODO: change state to error
+            }
         }
-
 
         let click = function(event) {
             let x = event.offsetX;
@@ -272,5 +189,8 @@ window.addEventListener("load", (event) => {
     window.stop = function() {
         // TODO
     };
+
+    const callBtn = document.getElementById('call');
+    callBtn.onclick = start;
 
 });
