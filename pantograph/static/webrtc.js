@@ -22,21 +22,26 @@ export function createPeerConnection(socket) {
         ],
     });
     pc.addEventListener('icecandidate', e => {
-//        console.log('icecandidate', e);
+        // console.log('icecandidate', e);
         socket.emit('icecandidate', e.candidate);
     });
     pc.addEventListener('iceconnectionstatechange', e => {
-        console.log('icecandidatestatechange', e);
+        // console.log('icecandidatestatechange', e);
     });
     pc.ontrack = function(e) {
-        console.log('ontrack', e);
+        // console.log('ontrack', e);
         let remoteVideo = document.getElementById('remote-video');
         if (remoteVideo.srcObject) {
             return;
         }
         remoteVideo.srcObject = new MediaStream([e.track]);
-        //remoteVideo.srcObject = e.streams[0];
         remoteVideo.play();
+        remoteVideo.addEventListener( "loadedmetadata", function (e) {
+            var width = this.videoWidth,
+                height = this.videoHeight;
+            console.log(`remote video: ${width}x${height}`);
+        }, false );
+        document.body.classList.add('remote-playing');
     };
     return pc;
 }
@@ -46,7 +51,7 @@ export async function answer(data, socket) {
     let stream = video.srcObject;
     const tracks = stream.getVideoTracks();
     if (tracks.length < 1) {
-        console.log("Failed to find video tracks");
+        console.log("Failed to find local video tracks");
         return null;
     }
     let pc = createPeerConnection(socket);
@@ -56,11 +61,11 @@ export async function answer(data, socket) {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         const json = JSON.stringify(answer);
-        console.log("Successfully created answer and set local description: ", json);
+        console.log("Successfully created answer and set local description. Sending answer: ", json);
         socket.emit('answer', answer);
         return pc;
     } catch (e) {
-        console.log("Caught exception", e);
+        console.log("Caught exception handling answer:", e);
     }
     return null;
 }

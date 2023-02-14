@@ -1,5 +1,6 @@
 import { createPeerConnection, offer, answer } from "./webrtc.js";
-import { getCookies } from "./utils.js";
+import { getCookies, getQueryParams, getComputedDims, cropFromVideo } from "./utils.js";
+import { handleClick } from "./card_search.js";
 
 class State {
     static Connecting = new State('Connecting', 'connecting to server...');
@@ -66,7 +67,9 @@ window.addEventListener("load", (event) => {
     });
     socket.on('icecandidate', async function(data) {
         console.log('icecandidate: ', data);
-        window.pc.addIceCandidate(data);
+        if (window.pc) {
+            window.pc.addIceCandidate(data);
+        }
     });
     socket.on('join', function(data) {
         if (data['username'] !== username) {
@@ -95,13 +98,11 @@ window.addEventListener("load", (event) => {
             }
         }
         if (devices.length > 0) {
-//            document.getElementById('start').style.display = 'inline-block';
+            // TODO: can status update acquired permissions and found devices here
         }
     })();
 
     window.start = async function() {
-        let localVideo = document.getElementById('local-video');
-        let remoteVideo = document.getElementById('remote-video');
         var device = document.getElementById('video-device').value;
         var constraints = {};
         if (device !== 'loading') {
@@ -113,10 +114,15 @@ window.addEventListener("load", (event) => {
         }
 
         let stream = await navigator.mediaDevices.getUserMedia(constraints);
+        // TODO: can enable a "stop" button here
+        let localVideo = document.getElementById('local-video');
         localVideo.srcObject = stream;
         localVideo.play();
-        // document.getElementById('media').style.display = 'block';
-        // document.getElementById('stop').style.display = 'inline-block';
+        localVideo.addEventListener( "loadedmetadata", function (e) {
+            var width = this.videoWidth,
+                height = this.videoHeight;
+            console.log(`local video: ${width}x${height}`);
+        }, false );
 
         if (getState() === State.Ready) {
             const pc = await offer(socket);
@@ -127,63 +133,8 @@ window.addEventListener("load", (event) => {
                 // TODO: change state to error
             }
         }
-
-        let click = function(event) {
-            let x = event.offsetX;
-            let y = event.offsetY;
-            const w = 300;
-            const h = 300;
-
-            let target = event.target;
-            // crop the video feed:
-            let output = document.getElementById('output');
-            let ctx = output.getContext('2d');
-            ctx.drawImage(target, 0, 0, output.width, output.height);
-            ctx.strokeStyle = "rgb(0, 255, 0)";
-            ctx.strokeRect(x - w / 2, y - h / 2, w, h);
-            let imageData = ctx.getImageData(x - w / 2, y - h / 2, w, h);
-            let crop = document.createElement("canvas");
-            crop.width = w;
-            crop.height = h;
-            let cropctx = crop.getContext("2d");
-            cropctx.rect(0, 0, w, h);
-            cropctx.fillStyle = 'white';
-            cropctx.fill();
-            cropctx.putImageData(imageData, 0, 0);
-
-            // POST to server:
-            const data = crop.toDataURL();
-            const json = {'image': data};
-            const options = {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(json)
-            };
-            fetch('/recognize', options)
-                .then(response => response.json())
-                .then(response => {
-                    console.log(response);
-                    let container = document.getElementById('card-container');
-                    container.replaceChildren();
-                    if (response.length > 0) {
-                        let card = response[0];
-                        // update card image:
-                        var img = document.createElement('img');
-                        var size = "large";
-                        img.src = "https://static.nrdbassets.com/v1/" + size + "/" + card.code + ".jpg";
-                        container.appendChild(img);
-                    } else {
-                        let unknown = document.createElement('p');
-                        unknown.innerHTML = "?";
-                        container.appendChild(unknown);
-                    }
-                })
-                .catch(err => console.error(err));
-        };
-        localVideo.addEventListener('click', click);
-        remoteVideo.addEventListener('click', click);
+//        document.body.classList.remove('waiting');
+        document.body.classList.add('local-playing');
     };
 
     window.stop = function() {
@@ -193,4 +144,18 @@ window.addEventListener("load", (event) => {
     const callBtn = document.getElementById('call');
     callBtn.onclick = start;
 
+    let primary = document.getElementById('primary-container');
+    let children = primary.children;
+    for (let i = 0; i < children.length; i++) {
+        let child = children[i];
+        console.log(child);
+        child.addEventListener('click', handleClick);
+    }
+
+    const params = getQueryParams();
+    for (const [k ,v] of Object.entries(params)) {
+        if (k.includes("debug") && v === "true") {
+            document.body.classList.add(k);
+        }
+    }
 });
