@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>pantograph</title>
+        <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
+        <link rel="stylesheet" href="base.css">
+        <link rel="stylesheet" href="nav.css">
+    </head>
+    <body class="waiting">
+        <div class="container-fluid">
+            <nav>
+                <ul>
+                    <li>
+                        <a href="/"><h1>pantograph <img src="Pantograph.webp" alt=""/></h1></a>
+                    </li>
+                </ul>
+            </nav>
+            <div style="width: 50%">
+                <p>Made with 💖 by <a href="https://github.com/okonomichiyaki/">@okonomichiyaki</a> (source code will eventually be released under a permissive license)</p>
+                <p>Netrunner and Android are trademarks of Fantasy Flight Games and/or Wizards of the Coast. Card images are copyrighted by Fantasy Flight Games and/or Null Signal Games. This is website is not affiliated with either Fantasy Flight Games, Wizards of the Coast, or Null Signal Games.</p>
+
+
+                <h2>How does it work?</h2>
+                <p>When you click on your opponent's video feed, an image is sent to the backend, which then uses optical character recognition (via Google's Cloud Vision API) and a fuzzy text search to find the title of the card.</p>
+                <p>(no image recognition is involved. if you are proficient in either computer vision or machine learning and are interested in collaborating, please get in touch! TODO )</p>
+
+                <h2>What data is stored or collected?</h2>
+                <p>The software does not collect or store any data on a long term basis or use any cookies. When you create a room, some data is stored to enable connecting to your opponent, but this data is deleted after X minutes of inactivity. The video feeds are sent peer-to-peer, but in some cases may be rerouted through a <a href="https://www.metered.ca/tools/openrelay/">third party</a>.</p>
+                <p>The image used for card detection (a 300 pixel square portion of the video) is sent to Google, who probably uses it for training their machine learning systems.</p>
+
+                <h2>Why won't it recognize my cards?</h2>
+                <p>You need a web cam capable of capturing at least 720p video, and it will work better with 1080p if available. Aside from camera quality, the best way to improve the accuracy is to play in a well lit space with a perpendicular overhead camera angle. The best lighting condition is bright and well lit but using indirect lighting, or a diffuse light source like a ring light. Direct light and glare that washes out the text on cards will hinder recognition. Matte card sleeves, not glossy, will be more effective</p>
+                <p>See this page (TODO) for some examples of successful play testing conditions to compare to your setup.</p>
+
+                <h2>Why is it called Pantograph?</h2>
+                <p><a href="https://netrunnerdb.com/en/card/30023">Pantograph</a> is <a href="https://netrunnerdb.com/en/card/30019">Tāo Salonga</a>'s console, and Tāo's subtitle is "telepresence magician"</a>. It's an indirect nod to the app that inspired it.</p>
+            </div>
+        </div>
+    </body>
+</html>
