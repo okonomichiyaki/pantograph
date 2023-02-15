@@ -43,7 +43,7 @@ def create_app():
         if not room:
             return ("no room found", 404) # TODO render HTML
         if nickname:
-            logger.debug(f"user {nickname} initial load into room {room_id}")
+            logger.info(f"user {nickname} loaded room {room_id} as host")
         # TODO check if there are already two people in the room,
         # and if so send the spectator page
         r = send_file("static/app.html")
@@ -57,7 +57,7 @@ def create_app():
         side = json.get("side")
         fmt = json.get("format")
         room = store.create_room(nickname, side, fmt)
-        logger.debug(f"created room: {room}")
+        logger.info(f"created room: {room}")
         return jsonify(room)
 
     @app.route("/recognize", methods=["POST"])
@@ -120,7 +120,7 @@ def handle_join(data):
 
 @socketio.on("connect")
 def handle_connect(data):
-    logger.info(f"connect: [{request.sid}] {data}")
+    logger.info(f"connect: [{request.sid}]")
     store.set_connection(request.sid)
 
 @socketio.on("disconnect")
