@@ -64,12 +64,14 @@ def create_app():
     @auth.login_required
     def recognize():
         json = request.get_json()
-        data_uri = json["image"]
+        data_uri = json.get("image")
+        side = json.get("side")
+        fmt = json.get("fmt")
         with urlopen(data_uri) as response:
             img_bytes = response.file.read()
         texts = search(img_bytes)
         if len(texts) > 0:
-            card = fuzzy.search_multiple(texts)
+            card = fuzzy.search_multiple(texts, side, fmt)
             return jsonify([{"title": card.title, "code": card.code}])
         else:
             return jsonify([])

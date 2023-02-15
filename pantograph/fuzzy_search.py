@@ -11,6 +11,7 @@ from rapidfuzz.distance.Levenshtein import distance
 from dataclasses import dataclass
 
 from pantograph.nrdb import get_active_cards
+from pantograph.utils import flatmap
 
 logger = logging.getLogger("pantograph")
 
@@ -25,11 +26,17 @@ class FuzzySearch:
             self._init_cards(active_cards)
         else:
             self.cards = None
-            self.titles = None
+            self._titles = None
 
     def _get_titles(self, cards, fmt):
-        titles = [ card.get_titles() for card in cards if fmt in card.fmts ]
-        return list(itertools.chain.from_iterable(titles))
+        cards = [ c for c in cards if fmt in c.fmts ]
+        runner = [ c for c in cards if c.side_code == "runner" ]
+        corp = [ c for c in cards if c.side_code == "corp" ]
+        return {
+            "runner": flatmap(lambda c: c.get_titles(), runner),
+            "corp": flatmap(lambda c: c.get_titles(), corp),
+            "both": flatmap(lambda c: c.get_titles(), cards)
+        }
 
     def _init_cards(self, cards):
         result = {}
@@ -41,7 +48,7 @@ class FuzzySearch:
         self.cards = result
         standard = self._get_titles(cards, "standard")
         startup = self._get_titles(cards, "startup")
-        self.titles = {
+        self._titles = {
             "standard": standard,
             "startup": startup
         }
@@ -61,9 +68,13 @@ class FuzzySearch:
     def _extract(self, text, titles):
         return process.extract(text, titles, limit=5, scorer=distance)
 
-    def search(self, text, fmt="startup"):
+    def search(self, text, side=None, fmt=None):
+        if side is None:
+            side = "both"
+        if fmt is None:
+            fmt = "startup"
         self._fetch_and_init()
-        results = self._extract(text, self.titles[fmt])
+        results = self._extract(text, self._titles[fmt][side])
         if len(results) > 0:
             title = results[0][0]
             card = self.cards[title]
@@ -72,9 +83,13 @@ class FuzzySearch:
         else:
             return None
 
-    def search_multiple(self, texts, fmt="startup"):
+    def search_multiple(self, texts, side=None, fmt=None):
+        if side is None:
+            side = "both"
+        if fmt is None:
+            fmt = "startup"
         self._fetch_and_init()
-        results = [self._extract(text, self.titles[fmt]) for text in texts]
+        results = [self._extract(text, self._titles[fmt][side]) for text in texts]
         results = [result[0] for result in results]
         results = sorted(results, key=lambda result: result[1])
         if len(results) > 0:
