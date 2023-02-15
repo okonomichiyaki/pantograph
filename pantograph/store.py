@@ -26,14 +26,14 @@ def delete_connection(sid):
     connections[sid] = None
 
 def create_room(nickname, side, fmt):
-    id = str(uuid.uuid4())
-    member = {"nickname": nickname, "side": side}
+    room_id = str(uuid.uuid4())
+    member = {"nickname": nickname, "side": side, "role": "host", "room_id": room_id}
     members = {nickname: member}
-    rooms[id] = {"members": members, "format": fmt, "id": id}
-    return rooms[id]
+    rooms[room_id] = {"members": members, "format": fmt, "id": room_id}
+    return rooms[room_id]
 
-def get_room(id):
-    return rooms.get(id)
+def get_room(room_id):
+    return rooms.get(room_id)
 
 def join_room(sid, room_id, nickname, side):
     room = rooms.get(room_id)
@@ -45,15 +45,15 @@ def join_room(sid, room_id, nickname, side):
     connections[sid] = member
     return room
 
-def get_from_room(id, key):
-    room = rooms.get(id)
+def get_from_room(room_id, key):
+    room = rooms.get(room_id)
     if room:
         return room.get(key)
     else:
         return None
 
-def set_on_room(id, key, val):
-    room = rooms.get(id)
+def set_on_room(room_id, key, val):
+    room = rooms.get(room_id)
     if room:
         room[key] = val
         return (key, val)
