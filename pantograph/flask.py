@@ -7,8 +7,10 @@ import logging
 from urllib.request import urlopen
 
 from pantograph.fuzzy_search import FuzzySearch
-from pantograph.click_search import search
+from pantograph.click_search import search, Calibration
 import pantograph.store as store
+
+from dataclasses import dataclass
 
 logger = logging.getLogger("pantograph")
 
@@ -65,11 +67,16 @@ def create_app():
     def recognize():
         json = request.get_json()
         data_uri = json.get("image")
+        calibration = json.get("calibration")
+        if calibration:
+            calibration = Calibration(calibration["w"], calibration["h"])
+        else:
+            calibration = Calibration(100, 200)
         side = json.get("side")
-        fmt = json.get("fmt")
+        fmt = json.get("format")
         with urlopen(data_uri) as response:
             img_bytes = response.file.read()
-        texts = search(img_bytes)
+        texts = search(img_bytes, calibration)
         if len(texts) > 0:
             card = fuzzy.search_multiple(texts, side, fmt)
             return jsonify([{"title": card.title, "code": card.code}])

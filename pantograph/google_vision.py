@@ -15,11 +15,11 @@ class Block:
         self.text = " ".join(self.words)
         upper_left = vertices[0]
         lower_right = vertices[2]
-        self.x = upper_left['x']
-        self.y = upper_left['y']
-        self.w = lower_right['x'] - self.x
-        self.h = lower_right['y'] - self.y
-        self.points = [ [v['x'], v['y']] for v in vertices ]
+        self.x = upper_left.get("x", 0)
+        self.y = upper_left.get("y", 0)
+        self.w = lower_right.get("x", 0) - self.x
+        self.h = lower_right.get("y", 0) - self.y
+        self.points = [ [v.get("x", 0), v.get("y", 0)] for v in vertices ]
 
     @property
     def rotation(self):
@@ -50,7 +50,7 @@ def recognize_base64(b64):
     start = time.perf_counter()
 
     try:
-        key = os.environ.get('VISION_API_KEY')
+        key = os.environ.get("VISION_API_KEY")
         if key is None:
             logger.error(f"No vision api key found")
             return []
@@ -66,23 +66,23 @@ def recognize_base64(b64):
 
 def _collect_blocks_json(response):
     try:
-        responses = response['responses']
+        responses = response["responses"]
         if len(responses) < 1:
             logger.debug(f"Vision API returned empty list of responses: {response}")
             return []
         r = responses[0]
-        annotation = r['fullTextAnnotation']
+        annotation = r["fullTextAnnotation"]
         blocks = []
-        for page in annotation['pages']:
-            for block in page['blocks']:
-                for paragraph in block['paragraphs']:
+        for page in annotation["pages"]:
+            for block in page["blocks"]:
+                for paragraph in block["paragraphs"]:
                     words = []
-                    for word in paragraph['words']:
+                    for word in paragraph["words"]:
                         chars = []
-                        for symbol in word['symbols']:
-                            chars.append(symbol['text'])
+                        for symbol in word["symbols"]:
+                            chars.append(symbol["text"])
                         words.append("".join(chars))
-                    vertices = paragraph['boundingBox']['vertices']
+                    vertices = paragraph["boundingBox"]["vertices"]
                     block = Block(words, vertices)
                     blocks.append(block)
         return blocks
@@ -91,7 +91,7 @@ def _collect_blocks_json(response):
         return []
 
 def recognize_bytes(data):
-    b64 = base64.b64encode(data).decode('ascii')
+    b64 = base64.b64encode(data).decode("ascii")
     return recognize_base64(b64)
 
 def recognize_file(path):

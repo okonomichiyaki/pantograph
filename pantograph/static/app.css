@@ -22,22 +22,22 @@ canvas#crop {
     justify-self: center;
 }
 
-img.placeholder {
+video.placeholder {
     display: none;
 }
-.img-debug img.placeholder {
+.demo video.placeholder {
     display: block;
 }
-.img-debug #remote-placeholder {
+.demo div.placeholder {
     display: none;
 }
-.img-debug #local-placeholder {
+.demo div.placeholder {
     display: none;
 }
-.img-debug #remote-video {
+.demo #remote-video {
     display: none;
 }
-.img-debug #local-video {
+.demo #local-video {
     display: none;
 }
 
@@ -47,6 +47,8 @@ img.placeholder {
 .video {
     display: none;
 }
+
+/* when local/remote video is playing, hide matching placeholder and reveal video */
 .remote-playing #remote-placeholder {
     display: none;
 }
@@ -96,12 +98,6 @@ html, body, .container-fluid {
 #primary-container {
     flex-grow: 2;
 }
-#primary-container .video {
-    width: 100%;
-    height: 100%;
-    align-items: center;
-    justify-content: center;
-}
 
 .right-panel {
     /* background-color: steelblue; */
@@ -131,10 +127,11 @@ html, body, .container-fluid {
     align-items: center;
     justify-content: center;
 }
-.video.placeholder {
+div.placeholder {
     font-size: 100px;
     background-color: grey;
     height: 100%;
+    width: 100%;
 }
 
 .card {
@@ -159,4 +156,32 @@ html, body, .container-fluid {
 /* control visibility for host/guest */
 .guest .host-visible {
     display: none
+}
+
+#calibration-canvas {
+    display: none;
+    position: absolute;
+    z-index: 20;
+    height: 100%;
+    left: 0;
+    top: 0;
+}
+
+#primary-container {
+    position: relative;
+    margin: 0 auto;
+    display: inline-block;
+    left: 0;
+    top: 0;
+    width: 100%;
+}
+
+#primary-container .video {
+    height: 100%;
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    align-items: center;
+    justify-content: center;
 }

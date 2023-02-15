@@ -1,4 +1,5 @@
 import { prepareModal } from './modals.js';
+import { calibrate } from './calibration.js';
 
 function createNewRoom(json) {
     if (!json) {
@@ -19,7 +20,14 @@ function createNewRoom(json) {
         .then(response => {
             const id = response["id"];
             console.log("created a new room: " + id);
-            window.location.href = `/app/${id}?nickname=${nickname}&side=${side}`;
+            let path =  `/app/${id}`;
+            let params = `nickname=${nickname}&side=${side}`;
+            if (window.location.search.includes('debug')) {
+                params = window.location.search + '&' + params;
+            } else {
+                params = '?' + params;
+            }
+            window.location.href = path + params;
         })
         .catch(err => console.error(err));
 }

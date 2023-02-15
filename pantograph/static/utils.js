@@ -36,9 +36,17 @@ export function getComputedDims(e) {
     return null;
 }
 
+export function getVideoDims(video) {
+    let vw = 0, vh = 0;
+    if (video.nodeName === "VIDEO") {
+        vw = video.videoWidth;
+        vh = video.videoHeight;
+    }
+    return {vw, vh};
+}
+
 export function cropFromVideo(video, x, y, w, h) {
-    const vw = video.videoWidth;
-    const vh = video.videoHeight;
+    const {vw, vh} = getVideoDims(video);
     if (vw === 0 || vh === 0) {
         return null;
     }

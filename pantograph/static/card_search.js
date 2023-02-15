@@ -1,3 +1,25 @@
+import { getComputedDims, cropFromVideo, getVideoDims } from "./utils.js";
+
+function getCalibration(vw, vh) {
+    if (window.calibration) {
+        let calibration = window.calibration.ratio;
+        let w = vw * calibration.w;
+        let h = vh * calibration.h;
+        return {w, h};
+    } else {
+        return null;
+    }
+}
+
+function debugCalibration(canvas, ctx, vw, vh) {
+    let {w, h} = getCalibration(vw, vh);
+    let x = canvas.width / 2 - w / 2;
+    let y = canvas.height / 2 - h / 2;
+    ctx.strokeStyle = "deeppink";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x, y, w, h);
+}
+
 export function handleClick(event) {
     // crop a 300x300 square from the video feed around the mouse click:
 
@@ -8,29 +30,33 @@ export function handleClick(event) {
 
     const target = event.target;
     const {w: targetw, h: targeth} = getComputedDims(target);
+    const {vw, vh} = getVideoDims(target);
 
     console.log(`click: ${event.target} ${x},${y}`);
-    console.log(`target: (computed) ${targetw}x${targeth}, (video) ${target.videoWidth}x${target.videoHeight}`);
+    console.log(`target: (computed) ${targetw}x${targeth}, (video) ${vw}x${vh}`);
 
     // scale the x,y to match the element coords with video coords:
-    const calcx = (x / targetw) * target.videoWidth;
-    const calcy = (y / targeth) * target.videoHeight;
+    const calcx = (x / targetw) * vw;
+    const calcy = (y / targeth) * vh;
     const rx = calcx - w / 2;
     const ry = calcy - h / 2;
 
     console.log(`rect: ${rx},${ry},${w},${h}`);
 
     const imageData = cropFromVideo(target, rx, ry, w, h);
+    if (imageData === null) {
+        console.log("got null from video crop, clicked on:", event.target);
+        return;
+    }
     const crop = document.getElementById('crop');
-    const cropctx = crop.getContext("2d");
-    cropctx.rect(0, 0, w, h);
-    cropctx.fillStyle = 'white';
-    cropctx.fill();
-    cropctx.putImageData(imageData, 0, 0);
+    const ctx = crop.getContext("2d");
+    ctx.clearRect(0, 0, crop.width, crop.height);
+    ctx.putImageData(imageData, 0, 0);
+    debugCalibration(crop, ctx, vw, vh);
 
     // POST to server:
     const data = crop.toDataURL();
-    const json = {'image': data};
+    const json = {image: data, calibration: getCalibration(vw, vh)};
     const options = {
         method: 'POST',
         headers: {
@@ -55,9 +81,7 @@ export function handleClick(event) {
                 container.appendChild(img);
             } else {
                 const unknown = document.createElement('div');
-                //const p = document.createElement('p');
                 unknown.innerHTML = "❓";
-                //unknown.appendChild(p);
                 unknown.id = "unknown-card";
                 container.appendChild(unknown);
             }

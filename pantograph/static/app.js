@@ -1,6 +1,7 @@
 import { createPeerConnection, offer, answer } from "./webrtc.js";
-import { getCookies, getQueryParams, getComputedDims, cropFromVideo } from "./utils.js";
+import { getCookies, getQueryParams, getComputedDims } from "./utils.js";
 import { showModal } from './modals.js';
+import { calibrate } from './calibration.js';
 import { handleClick } from "./card_search.js";
 
 class Status {
@@ -38,6 +39,17 @@ function changeStatus(newStatus) {
     }
 }
 
+async function showShareModal(params) {
+    const input = document.getElementById('share-link-input');
+    const location = window.location;
+    const newurl = location.protocol + '//' + location.host + location.pathname;
+    if (window.history.replaceState && !params['debug']) {
+        window.history.replaceState({path: newurl}, '', newurl);
+    }
+    input.value = newurl;
+    await showModal('share-link-modal');
+}
+
 window.addEventListener("load", async (event) => {
     window.state = Status.Connecting;
 
@@ -45,27 +57,23 @@ window.addEventListener("load", async (event) => {
     console.log(`found room from location: ${roomId}`);
 
     // this is a hack to avoid cookies (for now?):
-    let nickname = getQueryParams('nickname');
-    let side = getQueryParams('side');
+    const params = getQueryParams();
+    let nickname = params['nickname'];
+    let side = params['side'];
     let role = null;
 
-    // either we got here from creating a room (query param contains nickname)...
+    // either we got here from creating a room (nickname query param)...
     if (nickname) {
-        document.body.classList.add('host');
         role = 'host';
-        var newurl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-        window.history.replaceState({path: newurl}, '', newurl);
-        const input = document.getElementById('share-link-input');
-        input.value = newurl;
-        await showModal('share-link-modal');
+        await showShareModal(params);
     } else {
         // ... or we got here from a shared link
-        document.body.classList.add('guest');
         role = 'guest';
         let json = await showModal('join-room-modal', ['nickname']);
         nickname = json['nickname'];
         side = json['side'];
     }
+    document.body.classList.add(role);
 
     var socket = io();
     socket.on('connect', function() {
@@ -171,7 +179,7 @@ window.addEventListener("load", async (event) => {
                 // TODO: change state to error
             }
         }
-        //        document.body.classList.remove('waiting'); // TODO: still relevant?
+        //document.body.classList.remove('waiting'); // TODO: still relevant?
         document.body.classList.add('local-playing');
     };
 
@@ -182,14 +190,23 @@ window.addEventListener("load", async (event) => {
     const callBtn = document.getElementById('call');
     callBtn.onclick = start;
 
-    let primary = document.getElementById('primary-container');
-    let children = primary.children;
+    const calibrateBtn = document.getElementById('calibrate');
+    calibrateBtn.onclick = async (e) => {
+        let under = document.querySelector('#remote-video');
+        let dims = getComputedDims(under);
+        let canvas = document.getElementById('calibration-canvas');
+        // canvas.style.height = dims.h + "px";
+        canvas.style.display = "unset";
+        window.calibration = await calibrate(canvas, dims.w, dims.h);
+        canvas.style.display = "none";
+    };
+
+    let children = document.querySelectorAll('#primary-container .video');
     for (let i = 0; i < children.length; i++) {
         let child = children[i];
         child.addEventListener('click', handleClick);
     }
 
-    const params = getQueryParams();
     for (const [k ,v] of Object.entries(params)) {
         if (k.includes("debug") && v === "true") {
             document.body.classList.add(k);

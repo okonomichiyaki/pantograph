@@ -4,7 +4,7 @@
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>pantograph</title>
-        <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.*/css/pico.min.css">
         <link rel="stylesheet" href="/base.css">
         <link rel="stylesheet" href="/app.css">
         <link rel="stylesheet" href="/nav.css">
@@ -19,6 +19,9 @@
                 </ul>
                 <ul>
                     <li>
+                        <a href="#" role="button" id="calibrate" class="">calibrate</a>
+                    </li>
+                    <li>
                         <div class="status">
                             <span aria-busy="true">connecting...</span>
                         </div>
@@ -31,9 +34,10 @@
             <div class="main">
                 <div class="left-panel">
                     <div id="primary-container">
+                        <canvas style="cursor: crosshair;" id="calibration-canvas" width="", height=""></canvas>
                         <div id="remote-placeholder" class="video placeholder">🎦</div>
-                        <img class="placeholder" src="/remote.png" alt="placeholder"/>
-                        <video id="remote-video" class="video" autoplay="true" playsinline="true" />
+                        <!-- <video src="/runner-720p.mov" class="video placeholder" autoplay="true" playsinline="true" ></video> -->
+                        <video id="remote-video" class="video" autoplay="true" playsinline="true"></video>
                     </div>
                     <nav>
                         <ul>
@@ -52,8 +56,8 @@
                 </div>
                 <div class="right-panel">
                     <div id="secondary-container">
-                        <div id="local-placeholder" class="video placeholder">🎦</div>
-                        <img class="placeholder" src="/local.png" alt="placeholder"/>
+                        <div id="local-placeholder"  class="video placeholder">🎦</div>
+                        <!-- <video src="/corp-720p.mov" class="video placeholder" autoplay="true" playsinline="true" ></video> -->
                         <video id="local-video" class="video" autoplay="true" playsinline="true"></video>
                     </div>
                     <div id="card-container">
@@ -100,7 +104,7 @@
             </dialog>
 
             <div id="debug">
-                <h2>Debugging:</h2>p
+                <h2>Debugging:</h2>
                 <canvas id="crop" width="300" height="300"></canvas>
                 <h3>State</h3>
                 <p>

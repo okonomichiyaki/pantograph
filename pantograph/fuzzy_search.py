@@ -63,7 +63,7 @@ class FuzzySearch:
         active_cards = get_active_cards()
         self._init_cards(active_cards)
 
-        logger.debug(f"initialized fuzzy card search in {time.perf_counter() - start}")
+        logger.info(f"initialized fuzzy card search in {time.perf_counter() - start}")
 
     def _extract(self, text, titles):
         return process.extract(text, titles, limit=5, scorer=distance)
@@ -78,7 +78,7 @@ class FuzzySearch:
         if len(results) > 0:
             title = results[0][0]
             card = self.cards[title]
-            logger.debug(f"fuzzy_search: text={repr(text)} card={card} results={results}")
+            logger.info(f"fuzzy_search: text={repr(text)} card={card} results={results}")
             return card
         else:
             return None
@@ -95,7 +95,7 @@ class FuzzySearch:
         if len(results) > 0:
             title = results[0][0]
             card = self.cards[title]
-            logger.debug(f"fuzzy_search_multiple: texts={repr(texts)} card={card} results={results}")
+            logger.info(f"fuzzy_search_multiple: texts={repr(texts)} card={card} results={results}")
             return card
         else:
             return None
