@@ -3,12 +3,12 @@ import { getCookies, getQueryParams, getComputedDims, cropFromVideo } from "./ut
 import { showModal } from './modals.js';
 import { handleClick } from "./card_search.js";
 
-class State {
-    static Connecting = new State('Connecting', 'connecting to server', true);
-    static Waiting = new State('Waiting', 'waiting for opponent', true);
-    static Ready = new State('Ready', 'ready to start call', false);
-    static Offered = new State('Offered', 'sent offer, waiting for answer', true);
-    static Answered = new State('Answered', 'received answer', false);
+class Status {
+    static Connecting = new Status('Connecting', 'connecting to server', true);
+    static Waiting = new Status('Waiting', 'waiting for opponent', true);
+    static Ready = new Status('Ready', 'ready to start call', false);
+    static Offered = new Status('Offered', 'sent offer, waiting for answer', true);
+    static Answered = new Status('Answered', 'received answer', false);
 
     constructor(name, description, busy) {
         this.name = name;
@@ -16,29 +16,29 @@ class State {
         this.busy = busy;
     }
     toString() {
-        return `State.${this.name}`;
+        return `Status.${this.name}`;
     }
     isBusy() {
         return this.busy;
     }
 }
 
-function getState() {
+function getStatus() {
     return window.state;
 }
 
-function changeState(newState) {
-    console.log(`Changing state: ${window.state} -> ${newState}`);
-    window.state = newState;
+function changeStatus(newStatus) {
+    console.log(`Changing state: ${window.state} -> ${newStatus}`);
+    window.state = newStatus;
     const status = document.querySelector('.status span');
     if (status) {
-        status.innerHTML = newState.description;
-        status.setAttribute('aria-busy', newState.isBusy());
+        status.innerHTML = newStatus.description;
+        status.setAttribute('aria-busy', newStatus.isBusy());
     }
 }
 
 window.addEventListener("load", async (event) => {
-    window.state = State.Connecting;
+    window.state = Status.Connecting;
 
     // either we got here from creating a room (query param contains nickname)...
     let roomId = window.location.pathname.replace('/app/', '');
@@ -46,7 +46,7 @@ window.addEventListener("load", async (event) => {
     let nickname = getQueryParams('nickname');
     if (nickname) {
         var newurl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-        window.history.replaceState({path: newurl}, '', newurl);
+        window.history.replaceStatus({path: newurl}, '', newurl);
         const input = document.getElementById('share-link-input');
         input.value = newurl;
         await showModal('share-link-modal');
@@ -62,7 +62,7 @@ window.addEventListener("load", async (event) => {
     socket.on('connect', function() {
         console.log('connect');
         socket.emit('join', {nickname: nickname, id: roomId});
-        changeState(State.Waiting);
+        changeStatus(Status.Waiting);
     });
     socket.on('disconnect', function() {
         console.log('disconnect');
@@ -70,17 +70,17 @@ window.addEventListener("load", async (event) => {
     });
     socket.on('offer', async function(data) {
         console.log('offer: ', data);
-        changeState(State.Offered);
+        changeStatus(Status.Offered);
         await start();
         const pc = await answer(data, socket);
         if (pc != null) {
             window.pc = pc;
-            changeState(State.Answered);
+            changeStatus(Status.Answered);
         }
     });
     socket.on('answer', async function(data) {
         console.log('answer: ', data);
-        changeState(State.Answered);
+        changeStatus(Status.Answered);
         window.pc.setRemoteDescription(data);
     });
     socket.on('icecandidate', async function(data) {
@@ -99,7 +99,7 @@ window.addEventListener("load", async (event) => {
             return nickname !== member['nickname'];
         });
         if (other) {
-            changeState(State.Ready);
+            changeStatus(Status.Ready);
         }
     });
 
@@ -149,10 +149,10 @@ window.addEventListener("load", async (event) => {
             console.log(`local video: ${width}x${height}`);
         }, false );
 
-        if (getState() === State.Ready) {
+        if (getStatus() === Status.Ready) {
             const pc = await offer(socket);
             if (pc != null) {
-                changeState(State.Offered);
+                changeStatus(Status.Offered);
                 window.pc = pc;
             } else {
                 // TODO: change state to error
