@@ -4,3 +4,6 @@ h1 {
 div#buttons {
     width: 25%;
 }
+h1 img {
+    max-width: 200px;
+}

@@ -5,16 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>pantograph</title>
         <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
-        <link rel="stylesheet" href="base.css">
-        <link rel="stylesheet" href="app.css">
-        <link rel="stylesheet" href="nav.css">
+        <link rel="stylesheet" href="/base.css">
+        <link rel="stylesheet" href="/app.css">
+        <link rel="stylesheet" href="/nav.css">
     </head>
     <body class="waiting">
         <div class="container-fluid">
             <nav>
                 <ul>
                     <li>
-                        <h1>pantograph <img src="Pantograph.webp" alt=""/></h1>
+                        <h1>pantograph <img src="/logo.png" alt=""/></h1>
                     </li>
                 </ul>
                 <ul>
@@ -24,7 +24,7 @@
                         </div>
                     </li>
                     <li>
-                        <a href="#" role="button">logout</a>
+                        <!-- <a href="#" role="button">logout</a> -->
                     </li>
                 </ul>
             </nav>
@@ -32,7 +32,7 @@
                 <div class="left-panel">
                     <div id="primary-container">
                         <div id="remote-placeholder" class="video placeholder">🎦</div>
-                        <img class="placeholder" src="remote.png" alt="placeholder"/>
+                        <img class="placeholder" src="/remote.png" alt="placeholder"/>
                         <video id="remote-video" class="video" autoplay="true" playsinline="true" />
                     </div>
                     <nav>
@@ -53,7 +53,7 @@
                 <div class="right-panel">
                     <div id="secondary-container">
                         <div id="local-placeholder" class="video placeholder">🎦</div>
-                        <img class="placeholder" src="local.png" alt="placeholder"/>
+                        <img class="placeholder" src="/local.png" alt="placeholder"/>
                         <video id="local-video" class="video" autoplay="true" playsinline="true"></video>
                     </div>
                     <div id="card-container">
@@ -61,8 +61,46 @@
                 </div>
             </div>
 
+            <dialog id="join-room-modal">
+                <article>
+                    <header>
+                        join room
+                    </header>
+                    <form name="joinRoom">
+                        <label for="nickname">
+                            choose a nickname for yourself:
+                            <input type="text" id="nickname" name="nickname" placeholder="nickname" required>
+                        </label>
+                        <fieldset>
+                            <legend>which side will you play?</legend>
+                            <label for="runner">
+                                <input type="radio" id="runner" name="side" value="runner">
+                                runner
+                            </label>
+                            <label for="corp">
+                                <input type="radio" id="corp" name="side" value="corp">
+                                corp
+                            </label>
+                        </fieldset>
+                    </form>
+                    <footer>
+                        <a href="#confirm" role="button" class="confirm-modal">Confirm</a>
+                    </footer>
+                </article>
+            </dialog>
+
+            <dialog id="share-link-modal">
+                <article>
+                    <p>share this link with your opponent:</p>
+                    <input id="share-link-input" type="text" value="" readonly>
+                    <footer>
+                        <a href="#confirm" role="button" class="confirm-modal">okay</a>
+                    </footer>
+                </article>
+            </dialog>
+
             <div id="debug">
-                <h2>Debugging:</h2>
+                <h2>Debugging:</h2>p
                 <canvas id="crop" width="300" height="300"></canvas>
                 <h3>State</h3>
                 <p>
@@ -83,13 +121,15 @@
                 <pre id="answer-sdp"></pre>
             </div>
         </div>
-        <script src="adapter.js"></script>
+
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
                 integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
                 crossorigin="anonymous"></script>
-        <script type="module" src="webrtc.js"></script>
-        <script type="module" src="utils.js"></script>
-        <script type="module" src="card_search.js"></script>
-        <script type="module" src="pantograph.js"></script>
+
+        <script src="/adapter.js"></script>
+        <script type="module" src="/webrtc.js"></script>
+        <script type="module" src="/utils.js"></script>
+        <script type="module" src="/card_search.js"></script>
+        <script type="module" src="/app.js"></script>
 </body>
 </html>

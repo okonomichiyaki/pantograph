@@ -2,173 +2,128 @@ from flask import Flask, send_file, request, jsonify
 from flask_socketio import SocketIO, join_room, leave_room
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_cors import CORS
 
-import requests
-import urllib
 import logging
-import threading
-import time
-from io import BytesIO
 from urllib.request import urlopen
-import base64
 
 from pantograph.fuzzy_search import FuzzySearch
 from pantograph.click_search import search
-
-import os
+import pantograph.store as store
 
 logger = logging.getLogger("pantograph")
 
-room='StoneshipChartRoom'
-
-def data_uri_to_base64(uri):
-    with urlopen(uri) as response:
-        data = response.read()
-    a = base64.b64encode(bstr).decode('ascii')
-    return (bstr, a)
-
 def create_app():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
-    app = Flask(__name__, static_url_path='', static_folder='static')
-    CORS(app,resources={r"/*":{"origins":"*"}})
+    app = Flask(__name__, static_url_path="", static_folder="static")
     auth = HTTPBasicAuth()
     fuzzy = FuzzySearch()
 
     users = {
-        "corp": generate_password_hash("bluesun"),
-        "runner": generate_password_hash("redteam")
+        "webcamrunner":
+        "pbkdf2:sha256:260000$5jRTOf7JzuA7uBj8$4bc7bed99d160de7c3c5ab88d43488c9467dd9459198f33e9f601b59e0dede02"
     }
 
     @auth.verify_password
-    def verify_password(username, password):
-        if username in users and \
-                check_password_hash(users.get(username), password):
-            return username
+    def verify_password(nickname, password):
+        if nickname in users and \
+                check_password_hash(users.get(nickname), password):
+            return nickname
 
     @app.route("/")
     @auth.login_required
     def index():
-        r = send_file('static/index.html')
-        r.set_cookie('username', auth.username())
+        return send_file("static/index.html")
+
+    @app.route("/app/<room_id>")
+    @auth.login_required
+    def main_app(room_id):
+        nickname = request.args.get("nickname")
+        room = store.get_room(room_id)
+        if not room:
+            return ("no room found", 404) # TODO render HTML
+        if nickname:
+            logger.debug(f"user {nickname} initial load into room {room_id}")
+        # TODO check if there are already two people in the room,
+        # and if so send the spectator page
+        r = send_file("static/app.html")
         return r
+
+    @app.route("/room", methods=["POST"])
+    @auth.login_required
+    def room():
+        json = request.get_json()
+        nickname = json.get("nickname")
+        side = json.get("side")
+        fmt = json.get("format")
+        room = store.create_room(nickname, side, fmt)
+        logger.debug(f"created room: {room}")
+        return jsonify(room)
 
     @app.route("/recognize", methods=["POST"])
     @auth.login_required
     def recognize():
         json = request.get_json()
-        data_uri = json['image']
+        data_uri = json["image"]
         with urlopen(data_uri) as response:
             img_bytes = response.file.read()
         texts = search(img_bytes)
         if len(texts) > 0:
             card = fuzzy.search_multiple(texts)
-            return jsonify([{'title': card.title, 'code': card.code}])
+            return jsonify([{"title": card.title, "code": card.code}])
         else:
             return jsonify([])
 
     return app
 
 app = create_app()
-# socketio = SocketIO(app)
-socketio = SocketIO(app,cors_allowed_origins="*")
+socketio = SocketIO(app)
 
-connections = {}
-
-def ping():
-    global connections
-    while True:
-        time.sleep(1)
-        keys = connections.keys()
-        if len(keys) < 1:
-            continue
-        for key in keys:
-            connection = connections[key]
-            if not connection or not connection['username']:
-                continue
-            username = connection['username']
-            print("sent message to " + username)
-            socketio.send("-> " + username, to=key)
-
-t = threading.Thread(target=ping)
-t.daemon = True
-#t.start()
-
-def get_other_connection(room, sid):
-    global connections
-    keys = connections.keys()
-    if len(keys) < 1:
-        return
-    for key in keys:
-        connection = connections.get(key)
-        if connection and room == connection['room'] and sid != key:
-            return connection
-    return None
-
-def set_connection(sid, k=None, v=None):
-    global connections
-    connection = get_connection(sid)
-    if not connection:
-        connections[sid] = {'sid': sid}
-    if k and v:
-        connections[sid][k] = v
-
-def get_connection(sid):
-    global connections
-    return connections.get(sid)
-
-def delete_connection(sid):
-    global connections
-    connections[sid] = None
-
-@socketio.on('offer')
+@socketio.on("offer")
 def handle_offer(data):
-    print(f"Got offer: {request.sid} {repr(data)}")
-    set_connection(request.sid, 'offer', data)
-    connection = get_connection(request.sid)
-    room = connection['room']
-    other = get_other_connection(room, request.sid)
-    socketio.emit('offer', data, to=other['sid'])
+    logger.info(f"offer: [{request.sid}] {repr(data)}")
+    store.set_connection(request.sid, "offer", data)
+    connection = store.get_connection(request.sid)
+    room = connection["room_id"]
+    other = store.get_other_connection(room, request.sid)
+    socketio.emit("offer", data, to=other["sid"])
 
-@socketio.on('answer')
+@socketio.on("answer")
 def handle_answer(data):
-    print(f"Got answer: {request.sid} {repr(data)}")
-    set_connection(request.sid, 'answer', data)
-    connection = get_connection(request.sid)
-    room = connection['room']
-    other = get_other_connection(room, request.sid)
-    socketio.emit('answer', data, to=other['sid'])
+    logger.info(f"answer: [{request.sid}] {repr(data)}")
+    store.set_connection(request.sid, "answer", data)
+    connection = store.get_connection(request.sid)
+    room = connection["room_id"]
+    other = store.get_other_connection(room, request.sid)
+    socketio.emit("answer", data, to=other["sid"])
 
-@socketio.on('icecandidate')
+@socketio.on("icecandidate")
 def handle_ice_candidate(data):
-    print(f"Got ice candidate: {request.sid} {repr(data)}")
-    set_connection(request.sid, 'icecandidate', data)
-    connection = get_connection(request.sid)
-    room = connection['room']
-    other = get_other_connection(room, request.sid)
-    socketio.emit('icecandidate', data, to=other['sid'])
+    logger.info(f"icecandidate: [{request.sid}] {repr(data)}")
+    store.set_connection(request.sid, "icecandidate", data)
+    connection = store.get_connection(request.sid)
+    room = connection["room_id"]
+    other = store.get_other_connection(room, request.sid)
+    socketio.emit("icecandidate", data, to=other["sid"])
 
-@socketio.on('join')
+@socketio.on("join")
 def handle_join(data):
-    global room
-    username = data["username"]
-    join_room(room)
-    print(f"User joined: {request.sid} {username}")
-    set_connection(request.sid, 'room', room)
-    set_connection(request.sid, 'username', username)
-    socketio.emit('join', {'username': username}, to=room)
+    # TODO: look up room, if not found, send error message?
+    # TODO: check nickname present
+    room_id = data.get("id")
+    nickname = data.get("nickname")
+    side = data.get("side")
+    join_room(room_id)
+    room = store.join_room(request.sid, room_id, nickname, side)
+    logger.info(f"join: [{request.sid}] {room_id} {nickname} {side}")
+    socketio.emit("joined", room, to=room_id)
 
-@socketio.on('connect')
+@socketio.on("connect")
 def handle_connect(data):
-    print(f"Connected: {request.sid}")
-    set_connection(request.sid)
+    logger.info(f"connect: [{request.sid}] {data}")
+    store.set_connection(request.sid)
 
-@socketio.on('disconnect')
+@socketio.on("disconnect")
 def handle_disconnect():
-    print(f"Disconnected: {request.sid}")
-    delete_connection(request.sid)
-
-def run():
-    global socketio
-    socketio.run(app)
+    logger.info(f"disconnect: [{request.sid}]")
+    store.delete_connection(request.sid)

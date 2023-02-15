@@ -1,0 +1,5 @@
+/* make page visible after load: */
+html {
+    visibility: visible;
+    opacity: 1;
+}

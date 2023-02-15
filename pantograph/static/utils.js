@@ -9,9 +9,14 @@ export function getCookies() {
     return results;
 }
 
-export function getQueryParams() {
-    const params = new URLSearchParams(window.location.search);
-    return Object.fromEntries(params.entries());
+export function getQueryParams(key) {
+    let params = new URLSearchParams(window.location.search);
+    params = Object.fromEntries(params.entries());
+    if (key) {
+        return params[key];
+    } else {
+        return params;
+    }
 }
 
 export function getComputedDims(e) {

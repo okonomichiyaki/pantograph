@@ -20,7 +20,6 @@ gevent-websocket = "^0.10.1"
 opencv-python = "^4.7.0.68"
 scikit-learn = "^1.2.1"
 shapely = "^2.0.1"
-flask-cors = "^3.0.10"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"

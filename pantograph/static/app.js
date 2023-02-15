@@ -1,23 +1,25 @@
 import { createPeerConnection, offer, answer } from "./webrtc.js";
 import { getCookies, getQueryParams, getComputedDims, cropFromVideo } from "./utils.js";
+import { showModal } from './modals.js';
 import { handleClick } from "./card_search.js";
 
 class State {
-    static Connecting = new State('Connecting', 'connecting to server...');
-    static Waiting = new State('Waiting', 'waiting for opponent...');
-    static Ready = new State('Ready', 'ready to start call...');
-    static Offered = new State('Offered', 'sent offer, waiting for answer...');
-    static Answered = new State('Answered', 'received answer...');
+    static Connecting = new State('Connecting', 'connecting to server', true);
+    static Waiting = new State('Waiting', 'waiting for opponent', true);
+    static Ready = new State('Ready', 'ready to start call', false);
+    static Offered = new State('Offered', 'sent offer, waiting for answer', true);
+    static Answered = new State('Answered', 'received answer', false);
 
-    constructor(name, description) {
+    constructor(name, description, busy) {
         this.name = name;
         this.description = description;
+        this.busy = busy;
     }
     toString() {
         return `State.${this.name}`;
     }
     isBusy() {
-        return true;
+        return this.busy;
     }
 }
 
@@ -28,27 +30,43 @@ function getState() {
 function changeState(newState) {
     console.log(`Changing state: ${window.state} -> ${newState}`);
     window.state = newState;
-    const status = document.querySelectorAll('.status span');
-    if (status.length > 0) {
-        status[0].innerHTML = newState.description;
-        status[0].setAttribute('aria-busy', newState.isBusy());
+    const status = document.querySelector('.status span');
+    if (status) {
+        status.innerHTML = newState.description;
+        status.setAttribute('aria-busy', newState.isBusy());
     }
 }
 
-window.addEventListener("load", (event) => {
+window.addEventListener("load", async (event) => {
     window.state = State.Connecting;
-    let cookies = getCookies();
-    let username = cookies["username"];
-    console.log("username="+username);
+
+    // either we got here from creating a room (query param contains nickname)...
+    let roomId = window.location.pathname.replace('/app/', '');
+    console.log(`found room from location: ${roomId}`);
+    let nickname = getQueryParams('nickname');
+    if (nickname) {
+        var newurl = window.location.protocol + '//' + window.location.host + window.location.pathname;
+        window.history.replaceState({path: newurl}, '', newurl);
+        const input = document.getElementById('share-link-input');
+        input.value = newurl;
+        await showModal('share-link-modal');
+    }
+
+    // ... or we got here from a shared link
+    if (!nickname) {
+        let json = await showModal('join-room-modal', ['nickname']);
+        nickname = json['nickname'];
+    }
 
     var socket = io();
     socket.on('connect', function() {
         console.log('connect');
-        socket.emit('join', {username: username});
+        socket.emit('join', {nickname: nickname, id: roomId});
         changeState(State.Waiting);
     });
     socket.on('disconnect', function() {
         console.log('disconnect');
+        // TODO: update status
     });
     socket.on('offer', async function(data) {
         console.log('offer: ', data);
@@ -72,8 +90,15 @@ window.addEventListener("load", (event) => {
         }
     });
     socket.on('join', function(data) {
-        if (data['username'] !== username) {
-            console.log(`${data['username']} joined`);
+        console.log("join", data);
+    });
+    socket.on('joined', function(data) {
+        console.log("joined", data);
+        const members = Object.values(data['members']);
+        const other = members.some(member => {
+            return nickname !== member['nickname'];
+        });
+        if (other) {
             changeState(State.Ready);
         }
     });

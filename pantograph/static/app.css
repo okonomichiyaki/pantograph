@@ -1,14 +1,3 @@
-/*** Override some styles from Pico (probably can be customized via SASS?) ***/
-
-h1,h2 {
-    --typography-spacing-vertical: 0;
-}
-h1 {
-    --font-size:1.5rem;
-}
-h1 img {
-    max-width: 50px;
-}
 h2 {
     --font-size:0.75rem;
 }

@@ -7,24 +7,66 @@
         <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
         <link rel="stylesheet" href="base.css">
         <link rel="stylesheet" href="index.css">
+        <script type="module" src="index.js"></script>
     </head>
     <body class="waiting">
         <div class="container">
             <nav>
                 <ul>
                     <li>
-                        <h1>pantograph <img src="Pantograph.webp" alt=""/></h1>
+                        <h1>pantograph
+                            <img src="logo.png" alt=""/>
+                        </h1>
                     </li>
-                </ul>
-                <ul>
-                    <li><a href="about.html">about</a></li>
                 </ul>
             </nav>
             <h2>paper netrunner over webcam</h2>
             <div id="buttons">
-                <button>create room</button>
-                <button>join room</button>
+                <button id="open-new-room">create room</button>
+                <!-- <button>join room</button> -->
             </div>
+
+            <dialog id="new-room-modal">
+                <article>
+                    <header>
+                        <a href="#close" aria-label="Close" class="close close-modal" on></a>
+                        create room
+                    </header>
+                    <form name="newRoom">
+                        <label for="nickname">
+                            choose a nickname for yourself:
+                            <input type="text" id="nickname" name="nickname" placeholder="nickname" required>
+                        </label>
+                        <fieldset>
+                            <legend>which format?</legend>
+                            <label for="startup">
+                                <input type="radio" id="startup" name="format" value="startup">
+                                startup
+                            </label>
+                            <label for="standard">
+                                <input type="radio" id="standard" name="format" value="standard">
+                                standard
+                            </label>
+                        </fieldset>
+                        <fieldset>
+                            <legend>which side will you play?</legend>
+                            <label for="runner">
+                                <input type="radio" id="runner" name="side" value="runner">
+                                runner
+                            </label>
+                            <label for="corp">
+                                <input type="radio" id="corp" name="side" value="corp">
+                                corp
+                            </label>
+                        </fieldset>
+                    </form>
+                    <footer>
+                        <a href="#cancel" role="button" class="secondary close-modal">Cancel</a>
+                        <a href="#confirm" role="button" class="confirm-modal">Confirm</a>
+                    </footer>
+                </article>
+            </dialog>
+
         </div>
     </body>
 </html>
