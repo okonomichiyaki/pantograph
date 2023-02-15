@@ -27,6 +27,10 @@ class FuzzySearch:
             self.cards = None
             self.titles = None
 
+    def _get_titles(self, cards, fmt):
+        titles = [ card.get_titles() for card in cards if fmt in card.fmts ]
+        return list(itertools.chain.from_iterable(titles))
+
     def _init_cards(self, cards):
         result = {}
         for card in cards:
@@ -35,8 +39,12 @@ class FuzzySearch:
                 result[title] = card
             result[int(card.code)] = card
         self.cards = result
-        titles = [card.get_titles() for card in cards]
-        self.titles = list(itertools.chain.from_iterable(titles))
+        standard = self._get_titles(cards, "standard")
+        startup = self._get_titles(cards, "startup")
+        self.titles = {
+            "standard": standard,
+            "startup": startup
+        }
 
     def _fetch_and_init(self):
         if self.cards != None:
@@ -53,9 +61,9 @@ class FuzzySearch:
     def _extract(self, text, titles):
         return process.extract(text, titles, limit=5, scorer=distance)
 
-    def search(self, text):
+    def search(self, text, fmt="startup"):
         self._fetch_and_init()
-        results = self._extract(text, self.titles)
+        results = self._extract(text, self.titles[fmt])
         if len(results) > 0:
             title = results[0][0]
             card = self.cards[title]
@@ -64,9 +72,9 @@ class FuzzySearch:
         else:
             return None
 
-    def search_multiple(self, texts):
+    def search_multiple(self, texts, fmt="startup"):
         self._fetch_and_init()
-        results = [self._extract(text, self.titles) for text in texts]
+        results = [self._extract(text, self.titles[fmt]) for text in texts]
         results = [result[0] for result in results]
         results = sorted(results, key=lambda result: result[1])
         if len(results) > 0:

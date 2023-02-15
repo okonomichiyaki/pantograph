@@ -186,7 +186,6 @@ window.addEventListener("load", async (event) => {
     let children = primary.children;
     for (let i = 0; i < children.length; i++) {
         let child = children[i];
-        console.log(child);
         child.addEventListener('click', handleClick);
     }
 
