@@ -46,7 +46,7 @@ window.addEventListener("load", async (event) => {
     let nickname = getQueryParams('nickname');
     if (nickname) {
         var newurl = window.location.protocol + '//' + window.location.host + window.location.pathname;
-        window.history.replaceStatus({path: newurl}, '', newurl);
+        window.history.replaceState({path: newurl}, '', newurl);
         const input = document.getElementById('share-link-input');
         input.value = newurl;
         await showModal('share-link-modal');
