@@ -155,3 +155,8 @@ html, body, .container-fluid {
     align-items: center;
     justify-content: center;
 }
+
+/* control visibility for host/guest */
+.guest .host-visible {
+    display: none
+}

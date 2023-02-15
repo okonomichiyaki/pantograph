@@ -5,6 +5,7 @@ function createNewRoom(json) {
         return;
     }
     const nickname = json['nickname'];
+    const side = json["side"];
     const str = JSON.stringify(json);
     const options = {
         method: 'POST',
@@ -18,7 +19,7 @@ function createNewRoom(json) {
         .then(response => {
             const id = response["id"];
             console.log("created a new room: " + id);
-            window.location.href = `/app/${id}?nickname=${nickname}`;
+            window.location.href = `/app/${id}?nickname=${nickname}&side=${side}`;
         })
         .catch(err => console.error(err));
 }

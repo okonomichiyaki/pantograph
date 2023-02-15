@@ -5,8 +5,9 @@ import { handleClick } from "./card_search.js";
 
 class Status {
     static Connecting = new Status('Connecting', 'connecting to server', true);
-    static Waiting = new Status('Waiting', 'waiting for opponent', true);
+    static Waiting = new Status('Waiting', 'waiting for opponent to join', true);
     static Ready = new Status('Ready', 'ready to start call', false);
+    static Listening = new Status('Listening', 'waiting for host to call', true);
     static Offered = new Status('Offered', 'sent offer, waiting for answer', true);
     static Answered = new Status('Answered', 'received answer', false);
 
@@ -40,28 +41,36 @@ function changeStatus(newStatus) {
 window.addEventListener("load", async (event) => {
     window.state = Status.Connecting;
 
-    // either we got here from creating a room (query param contains nickname)...
     let roomId = window.location.pathname.replace('/app/', '');
     console.log(`found room from location: ${roomId}`);
+
+    // this is a hack to avoid cookies (for now?):
     let nickname = getQueryParams('nickname');
+    let side = getQueryParams('side');
+    let role = null;
+
+    // either we got here from creating a room (query param contains nickname)...
     if (nickname) {
+        document.body.classList.add('host');
+        role = 'host';
         var newurl = window.location.protocol + '//' + window.location.host + window.location.pathname;
         window.history.replaceState({path: newurl}, '', newurl);
         const input = document.getElementById('share-link-input');
         input.value = newurl;
         await showModal('share-link-modal');
-    }
-
-    // ... or we got here from a shared link
-    if (!nickname) {
+    } else {
+        // ... or we got here from a shared link
+        document.body.classList.add('guest');
+        role = 'guest';
         let json = await showModal('join-room-modal', ['nickname']);
         nickname = json['nickname'];
+        side = json['side'];
     }
 
     var socket = io();
     socket.on('connect', function() {
         console.log('connect');
-        socket.emit('join', {nickname: nickname, id: roomId});
+        socket.emit('join', {nickname: nickname, id: roomId, side: side});
         changeStatus(Status.Waiting);
     });
     socket.on('disconnect', function() {
@@ -99,7 +108,11 @@ window.addEventListener("load", async (event) => {
             return nickname !== member['nickname'];
         });
         if (other) {
-            changeStatus(Status.Ready);
+            if (role === 'host') {
+                changeStatus(Status.Ready);
+            } else {
+                changeStatus(Status.Listening);
+            }
         }
     });
 
@@ -158,7 +171,7 @@ window.addEventListener("load", async (event) => {
                 // TODO: change state to error
             }
         }
-//        document.body.classList.remove('waiting');
+        //        document.body.classList.remove('waiting'); // TODO: still relevant?
         document.body.classList.add('local-playing');
     };
 
