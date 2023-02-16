@@ -9,7 +9,7 @@
         <link rel="stylesheet" href="/app.css">
         <link rel="stylesheet" href="/nav.css">
     </head>
-    <body class="waiting">
+    <body>
         <div class="container-fluid">
             <nav>
                 <ul>
@@ -26,9 +26,6 @@
                             <span aria-busy="true">connecting...</span>
                         </div>
                     </li>
-                    <li>
-                        <!-- <a href="#" role="button">logout</a> -->
-                    </li>
                 </ul>
             </nav>
             <div class="main">
@@ -42,14 +39,7 @@
                     <nav>
                         <ul>
                             <li>
-                                <a href="#" role="button" id="call" class="host-visible">call</a>
-                            </li>
-                            <li>
-                                <div class="controls">
-                                    <select id="video-device" defaultValue="loading">
-                                        <option value="loading">loading...</option>
-                                    </select>
-                                </div>
+                                <a href="#" role="button" id="call" class="ready-visible">call</a>
                             </li>
                         </ul>
                     </nav>
@@ -106,31 +96,15 @@
             <div id="debug">
                 <h2>Debugging:</h2>
                 <canvas id="crop" width="300" height="300"></canvas>
-                <h3>State</h3>
-                <p>
-                    ICE gathering state: <span id="ice-gathering-state"></span>
-                </p>
-                <p>
-                    ICE connection state: <span id="ice-connection-state"></span>
-                </p>
-                <p>
-                    Signaling state: <span id="signaling-state"></span>
-                </p>
-                <h3>Data channel</h3>
-                <pre id="data-channel" style="height: 200px;"></pre>
-                <h3>SDP</h3>
-                <h4>Offer</h4>
-                <pre id="offer-sdp"></pre>
-                <h4>Answer</h4>
-                <pre id="answer-sdp"></pre>
             </div>
         </div>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"
                 integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA=="
                 crossorigin="anonymous"></script>
-
+        <script src="//cdn.metered.ca/sdk/video/1.4.6/sdk.min.js"></script>
         <script src="/adapter.js"></script>
+
         <script type="module" src="/webrtc.js"></script>
         <script type="module" src="/utils.js"></script>
         <script type="module" src="/card_search.js"></script>

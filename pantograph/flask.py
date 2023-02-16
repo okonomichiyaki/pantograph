@@ -9,6 +9,7 @@ from urllib.request import urlopen
 from pantograph.fuzzy_search import FuzzySearch
 from pantograph.click_search import search, Calibration
 import pantograph.store as store
+import pantograph.metered as metered
 
 from dataclasses import dataclass
 
@@ -59,8 +60,12 @@ def create_app():
         side = json.get("side")
         fmt = json.get("format")
         room = store.create_room(nickname, side, fmt)
-        logger.info(f"created room: {room}")
-        return jsonify(room)
+        successful = metered.create_room(room["id"])
+        if successful:
+            logger.info(f"created room: {room}")
+            return jsonify(room)
+        else:
+            return ("failed to create metered room", 500)
 
     @app.route("/recognize", methods=["POST"])
     @auth.login_required

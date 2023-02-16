@@ -24,28 +24,21 @@ canvas#crop {
 
 video.placeholder {
     display: none;
-}
-.demo video.placeholder {
-    display: block;
-}
-.demo div.placeholder {
-    display: none;
-}
-.demo div.placeholder {
-    display: none;
-}
-.demo #remote-video {
-    display: none;
-}
-.demo #local-video {
-    display: none;
-}
-
-.video.placeholder {
     display: flex;
 }
 .video {
     display: none;
+}
+
+/* app status controls visibility of call button. prevents calling before other user joined */
+.waiting .ready-visible {
+    display: none;
+}
+.connecting .ready-visible {
+    display: none;
+}
+.ready .ready-visible {
+    display: block;
 }
 
 /* when local/remote video is playing, hide matching placeholder and reveal video */
@@ -153,11 +146,7 @@ div.placeholder {
     justify-content: center;
 }
 
-/* control visibility for host/guest */
-.guest .host-visible {
-    display: none
-}
-
+/* following rules line up transparent calibration canvas on top of video */
 #calibration-canvas {
     display: none;
     position: absolute;
@@ -166,7 +155,6 @@ div.placeholder {
     left: 0;
     top: 0;
 }
-
 #primary-container {
     position: relative;
     margin: 0 auto;
@@ -175,7 +163,6 @@ div.placeholder {
     top: 0;
     width: 100%;
 }
-
 #primary-container .video {
     height: 100%;
     position: absolute;
