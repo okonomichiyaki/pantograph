@@ -93,33 +93,6 @@ def create_app():
 app = create_app()
 socketio = SocketIO(app)
 
-@socketio.on("offer")
-def handle_offer(data):
-    logger.info(f"offer: [{request.sid}] {repr(data)}")
-    store.set_connection(request.sid, "offer", data)
-    connection = store.get_connection(request.sid)
-    room = connection["room_id"]
-    other = store.get_other_connection(room, request.sid)
-    socketio.emit("offer", data, to=other["sid"])
-
-@socketio.on("answer")
-def handle_answer(data):
-    logger.info(f"answer: [{request.sid}] {repr(data)}")
-    store.set_connection(request.sid, "answer", data)
-    connection = store.get_connection(request.sid)
-    room = connection["room_id"]
-    other = store.get_other_connection(room, request.sid)
-    socketio.emit("answer", data, to=other["sid"])
-
-@socketio.on("icecandidate")
-def handle_ice_candidate(data):
-    logger.info(f"icecandidate: [{request.sid}] {repr(data)}")
-    store.set_connection(request.sid, "icecandidate", data)
-    connection = store.get_connection(request.sid)
-    room = connection["room_id"]
-    other = store.get_other_connection(room, request.sid)
-    socketio.emit("icecandidate", data, to=other["sid"])
-
 @socketio.on("join")
 def handle_join(data):
     # TODO: look up room, if not found, send error message?
