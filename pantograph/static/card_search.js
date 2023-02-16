@@ -7,7 +7,7 @@ function getCalibration(vw, vh) {
         let h = vh * calibration.h;
         return {w, h};
     } else {
-        return null;
+        return {w: 100, h: 200};
     }
 }
 
