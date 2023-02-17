@@ -9,7 +9,7 @@ def main():
     parser = argparse.ArgumentParser(description='TODO')
     parser.add_argument('--log-level', type=str, default='info')
     parser.add_argument(
-        "--fmt", type=str, help="Specify which format (startup or standard) to search through", default="standard"
+        "--fmt", type=str, help="Specify which format (startup or standard) to search through", default="startup"
     )
     parser.add_argument(
         "--side", type=str, help="Specify which side (runner or corp) to search through", default="both"
@@ -34,7 +34,7 @@ def main():
         filename = args.image
         with io.open(filename, "rb") as image_file:
             image_bytes = image_file.read()
-        texts = search(image_bytes)
+        texts = search(image_bytes, visual_debug=True)
         card = fuzzy.search_multiple(texts, args.side, args.fmt)
         if card:
             print(f"{card.title} [{card.code}]")
