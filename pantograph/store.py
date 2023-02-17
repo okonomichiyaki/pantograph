@@ -19,6 +19,7 @@ def delete_connection(sid):
             del members[nickname]
             room[member["side"]] = None
     del connections[sid]
+    return member
 
 def create_room(nickname, side, fmt):
     room_id = str(uuid.uuid4())

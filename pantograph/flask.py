@@ -121,5 +121,6 @@ def handle_connect(data):
 
 @socketio.on("disconnect")
 def handle_disconnect():
-    logger.info(f"disconnect: [{request.sid}]")
-    store.delete_connection(request.sid)
+    member = store.delete_connection(request.sid)
+    nickname = member and member["nickname"]
+    logger.info(f"disconnect: [{request.sid}] {nickname}")
