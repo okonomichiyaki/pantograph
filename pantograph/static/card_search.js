@@ -1,5 +1,22 @@
 import { getComputedDims, cropFromVideo, getVideoDims } from "./utils.js";
 
+function getFormat() {
+    if (window.format) {
+        return window.format;
+    }
+    return null;
+}
+
+function getSide() {
+    if (window.side === 'corp') {
+        return 'runner';
+    }
+    if (window.side === 'runner') {
+        return 'corp';
+    }
+    return null;
+}
+
 function getCalibration(vw, vh) {
     if (window.calibration) {
         let calibration = window.calibration.ratio;
@@ -56,7 +73,12 @@ export function handleClick(event) {
 
     // POST to server:
     const data = crop.toDataURL();
-    const json = {image: data, calibration: getCalibration(vw, vh)};
+    const json = {
+        image: data,
+        calibration: getCalibration(vw, vh),
+        side: getSide(),
+        format: getFormat()
+    };
     const options = {
         method: 'POST',
         headers: {
@@ -74,7 +96,6 @@ export function handleClick(event) {
                     console.log(`received card(s) from server: ${card.title}`);
                 }
                 let card = response[0];
-                // update card image:
                 var img = document.createElement('img');
                 var size = "large";
                 img.src = "https://static.nrdbassets.com/v1/" + size + "/" + card.code + ".jpg";

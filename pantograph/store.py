@@ -25,6 +25,16 @@ def get_other_connection(room_id, sid):
 def delete_connection(sid):
     connections[sid] = None
 
+def get_corp_nick(side, nickname):
+    if side == "corp":
+        return nickname
+    return None
+
+def get_runner_nick(side, nickname):
+    if side == "runner":
+        return nickname
+    return None
+
 def create_room(nickname, side, fmt):
     room_id = str(uuid.uuid4())
     member = {
@@ -34,7 +44,15 @@ def create_room(nickname, side, fmt):
         "room_id": room_id
     }
     members = {nickname: member}
-    rooms[room_id] = {"members": members, "format": fmt, "id": room_id}
+    corp_nick = get_corp_nick(side, nickname)
+    runner_nick = get_runner_nick(side, nickname)
+    rooms[room_id] = {
+        "corp": corp_nick,
+        "runner": runner_nick,
+        "members": members,
+        "format": fmt,
+        "id": room_id
+    }
     return rooms[room_id]
 
 def get_room(room_id):

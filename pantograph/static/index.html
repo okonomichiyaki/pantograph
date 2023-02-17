@@ -22,7 +22,7 @@
             </nav>
             <h2>paper netrunner over webcam</h2>
             <div id="buttons">
-                <button id="open-new-room">create room</button>
+                <button id="new-room-button">create room</button>
                 <!-- <button>join room</button> -->
             </div>
 
@@ -35,34 +35,34 @@
                     <form name="newRoom">
                         <label for="nickname">
                             choose a nickname for yourself:
-                            <input type="text" id="nickname" name="nickname" placeholder="nickname" required>
+                            <input type="text" class="nickname" id="nickname" name="nickname" placeholder="nickname" required>
                         </label>
                         <fieldset>
                             <legend>which format?</legend>
                             <label for="startup">
-                                <input type="radio" id="startup" name="format" value="startup">
+                                <input type="radio" class="format" id="startup" name="format" value="startup">
                                 startup
                             </label>
                             <label for="standard">
-                                <input type="radio" id="standard" name="format" value="standard">
+                                <input type="radio" class="format" id="standard" name="format" value="standard">
                                 standard
                             </label>
                         </fieldset>
                         <fieldset>
                             <legend>which side will you play?</legend>
                             <label for="runner">
-                                <input type="radio" id="runner" name="side" value="runner">
+                                <input type="radio" class="side" id="runner" name="side" value="runner">
                                 runner
                             </label>
                             <label for="corp">
-                                <input type="radio" id="corp" name="side" value="corp">
+                                <input type="radio" class="side" id="corp" name="side" value="corp">
                                 corp
                             </label>
                         </fieldset>
                     </form>
                     <footer>
-                        <a href="#cancel" role="button" class="secondary close-modal">Cancel</a>
-                        <a href="#confirm" role="button" class="confirm-modal">Confirm</a>
+                        <button class="secondary close-modal">cancel</button>
+                        <button class="confirm-modal">confirm</button>
                     </footer>
                 </article>
             </dialog>

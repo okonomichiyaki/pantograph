@@ -2,11 +2,13 @@ import { getCookies, getQueryParams, getComputedDims } from './utils.js';
 import { showModal } from './modals.js';
 import { calibrate } from './calibration.js';
 import { handleClick } from './card_search.js';
+import { getRoom } from './rooms.js';
 
 class Status {
     static Connecting = new Status('connecting', 'connecting to server', true);
     static Waiting = new Status('waiting', 'waiting for opponent to join', true);
     static Ready = new Status('ready', 'ready to start call', false);
+    static Disconnected = new Status('disconnected', 'lost connection to server', true);
 
     constructor(name, description, busy) {
         this.name = name;
@@ -54,6 +56,14 @@ window.addEventListener('load', async (event) => {
     document.body.classList.add(window.status.name);
 
     let roomId = window.location.pathname.replace('/app/', '');
+    let room = await getRoom(roomId);
+    let freeSide = null;
+    if (room.corp) {
+        freeSide = 'runner';
+    }
+    if (room.runner) {
+        freeSide = 'corp';
+    }
 
     // this is a hack to avoid cookies (for now?):
     const params = getQueryParams();
@@ -65,7 +75,19 @@ window.addEventListener('load', async (event) => {
         await showShareModal(params);
     } else {
         // ... or we got here from a shared link
-        let json = await showModal('join-room-modal', ['nickname']);
+        // ... or a page reload
+
+        // TODO: will need to fix when adding spectator mode:
+        const header = document.querySelector('dialog#join-room-modal header');
+        if (header && freeSide) {
+            header.innerHTML = `joining room as ${freeSide}`;
+        }
+
+        let json = await showModal(
+            'join-room-modal',
+            ['nickname'],
+            {side: {value: freeSide, disabled: true}}
+        );
         nickname = json['nickname'];
         side = json['side'];
     }
@@ -73,12 +95,12 @@ window.addEventListener('load', async (event) => {
     var socket = io();
     socket.on('connect', function() {
         console.log('connect');
-        socket.emit('join', {nickname: nickname, id: roomId, side: side});
         changeStatus(Status.Waiting);
+        socket.emit('join', {nickname: nickname, id: roomId, side: freeSide});
     });
     socket.on('disconnect', function() {
         console.log('disconnect');
-        // TODO: update status
+        changeStatus(Status.Disconnected);
     });
     socket.on('join', function(data) {
         console.log('join', data);

@@ -63,22 +63,23 @@
                     <form name="joinRoom">
                         <label for="nickname">
                             choose a nickname for yourself:
-                            <input type="text" id="nickname" name="nickname" placeholder="nickname" required>
+                            <input type="text" class="nickname" id="nickname" name="nickname" placeholder="nickname" required>
                         </label>
-                        <fieldset>
-                            <legend>which side will you play?</legend>
-                            <label for="runner">
-                                <input type="radio" id="runner" name="side" value="runner">
-                                runner
-                            </label>
-                            <label for="corp">
-                                <input type="radio" id="corp" name="side" value="corp">
-                                corp
-                            </label>
-                        </fieldset>
+                        <!-- <fieldset>
+                             <legend>which side will you play?</legend>
+                             <label for="runner">
+                             <input type="radio" class="side" name="side" id="runner" value="runner">
+                             runner
+                             </label>
+                             <label for="corp">
+                             <input type="radio" class="side" name="side" id="corp" value="corp">
+                             corp
+                             </label>
+                             </fieldset> -->
                     </form>
                     <footer>
-                        <a href="#confirm" role="button" class="confirm-modal">Confirm</a>
+                        <button aria-busy="true" class="secondary connecting-visible">connecting...</button>
+                        <button class="connecting-invisible confirm-modal">okay</button>
                     </footer>
                 </article>
             </dialog>
@@ -88,7 +89,8 @@
                     <p>share this link with your opponent:</p>
                     <input id="share-link-input" type="text" value="" readonly>
                     <footer>
-                        <a href="#confirm" role="button" class="confirm-modal">okay</a>
+                        <button aria-busy="true" class="secondary connecting-visible">connecting...</button>
+                        <button class="connecting-invisible confirm-modal">okay</button>
                     </footer>
                 </article>
             </dialog>
@@ -105,9 +107,6 @@
         <script src="//cdn.metered.ca/sdk/video/1.4.6/sdk.min.js"></script>
         <script src="/adapter.js"></script>
 
-        <script type="module" src="/webrtc.js"></script>
-        <script type="module" src="/utils.js"></script>
-        <script type="module" src="/card_search.js"></script>
         <script type="module" src="/app.js"></script>
 </body>
 </html>

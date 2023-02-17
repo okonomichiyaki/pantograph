@@ -33,5 +33,5 @@ function createNewRoom(json) {
 }
 
 window.addEventListener("load", (event) => {
-    prepareModal('open-new-room', 'new-room-modal', createNewRoom, ['nickname']);
+    prepareModal('new-room-button', 'new-room-modal', createNewRoom, ['nickname', 'format', 'side']);
 });

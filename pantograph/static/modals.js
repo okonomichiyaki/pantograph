@@ -26,13 +26,14 @@ export function createOpenHandler(id, callback, required) {
 }
 
 function checkForm(modal, required, json) {
+    console.log(json);
     if (!required || required.length === 0) {
         return true;
     }
     let ok = true;
     for (const key of required) {
-        const input = document.getElementById(key);
-        if (input) {
+        const inputs = modal.querySelectorAll('input.' + key);
+        for (const input of inputs) {
             if (json[key] && input.getAttribute('aria-invalid')) {
                 input.setAttribute('aria-invalid', false);
                 ok = ok && true;
@@ -41,18 +42,36 @@ function checkForm(modal, required, json) {
                 ok = false;
             }
         }
-        console.log(`checked ${key} got ${ok}`);
     }
     return ok;
 }
 
-export async function showModal(id, required) {
+export async function showModal(id, required, prepopulate) {
     return new Promise((resolve, reject) => {
         const modal = document.getElementById(id);
         if (!modal) {
             console.log(`no modal with id={id}`);
             reject(null);
         }
+
+        if (prepopulate) {
+            for (const key of Object.keys(prepopulate)) {
+                const inputs = modal.querySelectorAll('input.' + key);
+                for (const input of inputs) {
+                    if (input.type === "text") {
+                        input.value = prepopulate[key]['value'];
+                        input.disabled = prepopulate[key]['disabled'];
+                    }
+                    if (input.type === "radio") {
+                        if (input.value === prepopulate[key]['value']) {
+                            input.checked = true;
+                        }
+                        input.disabled = prepopulate[key]['disabled'];
+                    }
+                }
+            }
+        }
+
         modal.setAttribute('open','');
         const closeButtons = modal.querySelectorAll('.close-modal');
         for (const button of closeButtons) {

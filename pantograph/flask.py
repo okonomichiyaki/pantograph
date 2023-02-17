@@ -52,9 +52,18 @@ def create_app():
         r = send_file("static/app.html")
         return r
 
+    @app.route("/room/<room_id>", methods=["GET"])
+    @auth.login_required
+    def get_room(room_id):
+        room = store.get_room(room_id)
+        if not room:
+            return ("", 404)
+        else:
+            return jsonify(room)
+
     @app.route("/room", methods=["POST"])
     @auth.login_required
-    def room():
+    def create_room():
         json = request.get_json()
         nickname = json.get("nickname")
         side = json.get("side")
