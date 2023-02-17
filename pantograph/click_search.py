@@ -60,11 +60,12 @@ def get_texts(rotation, blocks, areas):
             return False
         if len(block.text) < 2:
             return False
-        return True
         box = shapely.geometry.Polygon(block.points)
         intersect = any([shapely.intersects(area, box) for area in areas])
         if not intersect:
             logger.debug(f"filtering {block.text} for intersect")
+        else:
+            logger.debug(f"keeping on intersect {block.text}")
         return intersect
     logger.info(f"all texts: {[block.text for block in blocks]}")
     filtered = [block.text for block in blocks if filter(block)]
@@ -103,6 +104,12 @@ def search(img_bytes, debug=False, visual_debug=False, calibration=DEFAULT):
     else:
         # TODO handle upside down card
         areas = []
+
+    for block in blocks:
+        box = shapely.geometry.Polygon(block.points)
+        intersect = any([shapely.intersects(area, box) for area in areas])
+        if intersect:
+            cv.polylines(copy, [np.array(block.points, dtype=np.int32)], True, (0, 255, 0))
 
     if visual_debug:
         cv.imshow('', copy)
