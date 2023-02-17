@@ -18,9 +18,7 @@ def get_url(path):
 
 def create_room(room_id):
     url = get_url("/room")
-    logger.info(url)
     r = requests.post(url, json={"roomName": room_id})
-    logger.info(f"metered response: {r.status_code}, {r.json()}")
     if r.status_code == 200:
         return True
     else:

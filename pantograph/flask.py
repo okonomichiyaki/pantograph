@@ -104,20 +104,20 @@ socketio = SocketIO(app)
 
 @socketio.on("join")
 def handle_join(data):
-    # TODO: look up room, if not found, send error message?
-    # TODO: check nickname present
     room_id = data.get("id")
     nickname = data.get("nickname")
     side = data.get("side")
-    join_room(room_id)
     room = store.join_room(request.sid, room_id, nickname, side)
-    logger.info(f"join: [{request.sid}] {room_id} {nickname} {side}")
-    socketio.emit("joined", room, to=room_id)
+    if room:
+        join_room(room_id)
+        socketio.emit("joined", room, to=room_id)
+        logger.info(f"join: [{request.sid}] {room_id} {nickname} {side}")
+    else:
+        logger.info(f"join: [{request.sid}] no room found: {room_id}")
 
 @socketio.on("connect")
 def handle_connect(data):
     logger.info(f"connect: [{request.sid}]")
-    store.set_connection(request.sid)
 
 @socketio.on("disconnect")
 def handle_disconnect():

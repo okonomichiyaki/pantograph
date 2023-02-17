@@ -57,13 +57,6 @@ window.addEventListener('load', async (event) => {
 
     let roomId = window.location.pathname.replace('/app/', '');
     let room = await getRoom(roomId);
-    let freeSide = null;
-    if (room.corp) {
-        freeSide = 'runner';
-    }
-    if (room.runner) {
-        freeSide = 'corp';
-    }
 
     // this is a hack to avoid cookies (for now?):
     const params = getQueryParams();
@@ -78,6 +71,13 @@ window.addEventListener('load', async (event) => {
         // ... or a page reload
 
         // TODO: will need to fix when adding spectator mode:
+        let freeSide = null;
+        if (room.corp) {
+            freeSide = 'runner';
+        }
+        if (room.runner) {
+            freeSide = 'corp';
+        }
         const header = document.querySelector('dialog#join-room-modal header');
         if (header && freeSide) {
             header.innerHTML = `joining room as ${freeSide}`;
@@ -89,14 +89,14 @@ window.addEventListener('load', async (event) => {
             {side: {value: freeSide, disabled: true}}
         );
         nickname = json['nickname'];
-        side = json['side'];
+        side = freeSide;
     }
 
     var socket = io();
     socket.on('connect', function() {
         console.log('connect');
         changeStatus(Status.Waiting);
-        socket.emit('join', {nickname: nickname, id: roomId, side: freeSide});
+        socket.emit('join', {nickname: nickname, id: roomId, side: side});
     });
     socket.on('disconnect', function() {
         console.log('disconnect');
