@@ -22,14 +22,6 @@ canvas#crop {
     justify-self: center;
 }
 
-video.placeholder {
-    display: none;
-    display: flex;
-}
-.video {
-    display: none;
-}
-
 /* app status controls visibility of call button. prevents calling before other user joined */
 .waiting .ready-visible {
     display: none;
@@ -40,8 +32,20 @@ video.placeholder {
 .ready .ready-visible {
     display: block;
 }
+.connecting-visible {
+    display: none;
+}
+.connecting .connecting-visible {
+    display: block;
+}
+.connecting .connecting-invisible {
+    display: none;
+}
 
 /* when local/remote video is playing, hide matching placeholder and reveal video */
+.video.placeholder {
+    display: flex;
+}
 .remote-playing #remote-placeholder {
     display: none;
 }
