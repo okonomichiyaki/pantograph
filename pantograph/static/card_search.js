@@ -99,6 +99,7 @@ export function handleClick(event) {
                 var img = document.createElement('img');
                 var size = "large";
                 img.src = "https://static.nrdbassets.com/v1/" + size + "/" + card.code + ".jpg";
+                img.alt = card.title;
                 container.appendChild(img);
             } else {
                 const unknown = document.createElement('div');
