@@ -35,18 +35,18 @@ def get_tri_points(cx, cy, w, h):
     return points
 
 def get_ice_titles(x, y, w, h, calibration=DEFAULT):
-    left = shapely.geometry.Polygon([
+    left = [
         [x-int(h/2),y-int(w/2)],
         [x-int(h/2),y+int(w/2)],
-        [x-int(h/2)+2*calibration.t,y-int(w/2)],
         [x-int(h/2)+2*calibration.t,y+int(w/2)],
-    ])
-    right = shapely.geometry.Polygon([
+        [x-int(h/2)+2*calibration.t,y-int(w/2)],
+    ]
+    right = [
         [x+int(h/2),y-int(w/2)],
         [x+int(h/2),y+int(w/2)],
-        [x+int(h/2)-2*calibration.t,y-int(w/2)],
         [x+int(h/2)-2*calibration.t,y+int(w/2)],
-    ])
+        [x+int(h/2)-2*calibration.t,y-int(w/2)],
+    ]
     return [right, left]
 
 def draw_laser_point(img, x, y, color):
@@ -100,7 +100,10 @@ def search(img_bytes, debug=False, visual_debug=False, calibration=DEFAULT):
         midbox = shapely.geometry.Polygon(pts)
         areas = [midbox, uptri]
     elif rotation == 90 or rotation == 270:
-        areas = get_ice_titles(x, y, calibration.w, calibration.h)
+        titles = get_ice_titles(x, y, calibration.w, calibration.h, calibration)
+        for pts in titles:
+            cv.polylines(copy, [np.array(pts, dtype=np.int32)], True, (255, 0, 0))
+        areas = [ shapely.geometry.Polygon(t) for t in titles ]
     else:
         # TODO handle upside down card
         areas = []
