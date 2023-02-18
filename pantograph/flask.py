@@ -24,7 +24,7 @@ def create_app():
 
     users = {
         "webcamrunner":
-        "pbkdf2:sha256:260000$5jRTOf7JzuA7uBj8$4bc7bed99d160de7c3c5ab88d43488c9467dd9459198f33e9f601b59e0dede02"
+        'pbkdf2:sha256:260000$621v9iA5hAvobZE1$13531db238e4f0b33b24a34bae631ea56c3c868caaac1fc93e7ae4e52b1d5d70'
     }
 
     @auth.verify_password
