@@ -16,9 +16,9 @@ def delete_connection(sid):
         room = rooms[room_id]
         if room:
             members = room["members"]
-            del members[nickname]
+            members.pop(nickname, None)
             room[member["side"]] = None
-    del connections[sid]
+    connections.pop(sid, None)
     return member
 
 def create_room(nickname, side, fmt):
