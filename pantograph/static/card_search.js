@@ -69,7 +69,7 @@ export function handleClick(event) {
     const ctx = crop.getContext("2d");
     ctx.clearRect(0, 0, crop.width, crop.height);
     ctx.putImageData(imageData, 0, 0);
-    debugCalibration(crop, ctx, vw, vh);
+    //debugCalibration(crop, ctx, vw, vh);
 
     // POST to server:
     const data = crop.toDataURL();

@@ -22,7 +22,7 @@ function createNewRoom(json) {
             console.log("created a new room: " + id);
             let path =  `/app/${id}`;
             let params = `nickname=${nickname}&side=${side}`;
-            if (window.location.search.includes('debug')) {
+            if (window.location.search.includes('mode')) {
                 params = window.location.search + '&' + params;
             } else {
                 params = '?' + params;

@@ -40,11 +40,42 @@ function changeStatus(newStatus) {
     }
 }
 
+function setModes() {
+    const params = getQueryParams();
+    window.modes = {};
+    for (const [k ,v] of Object.entries(params)) {
+        if (k.includes('mode') && v === 'true') {
+            const clss = k.replace('-mode', '');
+            document.body.classList.add(clss);
+            window.modes[clss] = true;
+        }
+    }
+}
+
+function getModes() {
+    const modes = [];
+    for (const [k ,v] of Object.entries(window.modes)) {
+        if (v) {
+            modes.push(k);
+        }
+    }
+    return modes;
+}
+
+function debugOff() {
+    const modes = getModes();
+    return modes.length === 0;
+}
+
+function isModeOn(mode) {
+    return window.modes[mode] === true;
+}
+
 async function showShareModal(params) {
     const input = document.getElementById('share-link-input');
     const location = window.location;
     const newurl = location.protocol + '//' + location.host + location.pathname;
-    if (window.history.replaceState && !params['debug']) {
+    if (window.history.replaceState && debugOff()) {
         window.history.replaceState({path: newurl}, '', newurl);
     }
     input.value = newurl;
@@ -54,6 +85,7 @@ async function showShareModal(params) {
 window.addEventListener('load', async (event) => {
     window.status = Status.Connecting;
     document.body.classList.add(window.status.name);
+    setModes();
 
     let roomId = window.location.pathname.replace('/app/', '');
     let room = await getRoom(roomId);
@@ -90,6 +122,14 @@ window.addEventListener('load', async (event) => {
         );
         nickname = json['nickname'];
         side = freeSide;
+    }
+    window.side = side;
+    window.format = room['format'];
+    let otherSide = null;
+    if (side === 'runner') {
+        otherSide = 'corp';
+    } else {
+        otherSide = 'runner';
     }
 
     var socket = io();
@@ -159,7 +199,10 @@ window.addEventListener('load', async (event) => {
 
     const calibrateButton = document.getElementById('calibrate');
     calibrateButton.onclick = async (e) => {
-        let under = document.querySelector('#remote-video');
+        let under = document.querySelector('#primary-container video.live');
+        if (isModeOn('demo')) {
+            under = document.querySelector('#primary-container video.demo');
+        }
         let dims = getComputedDims(under);
         let canvas = document.getElementById('calibration-canvas');
         canvas.style.display = 'unset';
@@ -173,9 +216,10 @@ window.addEventListener('load', async (event) => {
         child.addEventListener('click', handleClick);
     }
 
-    for (const [k ,v] of Object.entries(params)) {
-        if (k.includes('debug') && v === 'true') {
-            document.body.classList.add(k);
-        }
+    if (isModeOn('demo')) {
+        const remoteDemo = document.querySelector('#primary-container video.demo');
+        const localDemo = document.querySelector('#secondary-container video.demo');
+        remoteDemo.src = `/${otherSide}-720p.mov`;
+        localDemo.src = `/${side}-720p.mov`;
     }
 });
