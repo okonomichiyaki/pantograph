@@ -78,7 +78,7 @@ class FuzzySearch:
         if len(results) > 0:
             title = results[0][0]
             card = self.cards[title]
-            logger.info(f"fuzzy_search: text={repr(text)} card={card} results={results}")
+            logger.info(f"fuzzy_search: side={side} format={fmt} text={repr(text)} card={title} results={results}")
             return card
         else:
             return None
@@ -95,7 +95,7 @@ class FuzzySearch:
         if len(results) > 0:
             title = results[0][0]
             card = self.cards[title]
-            logger.info(f"fuzzy_search_multiple: texts={repr(texts)} card={card} results={results}")
+            logger.info(f"fuzzy_search_multiple: side={side} format={fmt} texts={repr(texts)} card={title} results={results}")
             return card
         else:
             return None
