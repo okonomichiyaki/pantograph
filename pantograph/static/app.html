@@ -30,7 +30,7 @@
                     <div id="primary-container">
                         <canvas style="cursor: crosshair;" id="calibration-canvas" width="", height=""></canvas>
                         <div id="remote-placeholder" class="video placeholder demo-hide">🎦</div>
-                        <video src="" class="demo video demo-show" autoplay="true" playsinline="true" ></video>
+                        <video id="remote-demo" src="" class="demo video demo-show" autoplay="true" playsinline="true" ></video>
                         <video id="remote-video" class="live video demo-hide" autoplay="true" playsinline="true"></video>
                     </div>
                     <nav>
@@ -41,13 +41,16 @@
                             <li>
                                 <a href="#" role="button" id="calibrate" class="">calibrate</a>
                             </li>
+                            <li>
+                                <a href="#" role="button" id="swap" class="">swap</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
                 <div class="right-panel">
                     <div id="secondary-container">
                         <div id="local-placeholder"  class="video placeholder demo-hide">🎦</div>
-                        <video src="" class="demo video demo-show" autoplay="true" playsinline="true" ></video>
+                        <video id="local-demo" src="" class="demo video demo-show" autoplay="true" playsinline="true" ></video>
                         <video id="local-video" class="live video demo-hide" autoplay="true" playsinline="true"></video>
                     </div>
                     <div id="card-container">

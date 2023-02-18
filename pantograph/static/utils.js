@@ -55,3 +55,12 @@ export function cropFromVideo(video, x, y, w, h) {
     ctx.drawImage(video, 0, 0, vw, vh);
     return ctx.getImageData(x, y, w, h);
 }
+
+export function swapElements(a, b) {
+    const parentA = a.parentElement;
+    const parentB = b.parentElement;
+    parentA.removeChild(a);
+    parentB.removeChild(b);
+    parentA.appendChild(b);
+    parentB.appendChild(a);
+}

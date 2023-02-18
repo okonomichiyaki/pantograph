@@ -1,4 +1,4 @@
-import { getCookies, getQueryParams, getComputedDims } from './utils.js';
+import { getCookies, getQueryParams, getComputedDims, swapElements } from './utils.js';
 import { showModal } from './modals.js';
 import { calibrate } from './calibration.js';
 import { handleClick } from './card_search.js';
@@ -161,32 +161,28 @@ window.addEventListener('load', async (event) => {
         roomURL: `pantograph.metered.live/${roomId}`,
         name: nickname
     });
-    console.log('Joined meeting:', meetingInfo);
+    console.log('[Metered] Joined meeting:', meetingInfo);
+    meeting.on('participantJoined', function(participantInfo) {
+        console.log('[Metered] participantJoined', participantInfo);
+    });
     meeting.on('localTrackStarted', function(item) {
         console.log('[Metered] localTrackStarted', item);
         if (item.type === 'video') {
             var track = item.track;
             var mediaStream = new MediaStream([track]);
             document.getElementById('local-video').srcObject = mediaStream;
-            document.getElementById('local-video').play();
             document.body.classList.add('local-playing');
         }
     });
-    meeting.on('participantJoined', function(participantInfo) {
-        console.log('[Metered] participantJoined', participantInfo);
-    });
     meeting.on('remoteTrackStarted', function(item) {
         console.log('[Metered] remoteTrackStarted', item);
-        var track = item.track;
-        var stream = new MediaStream([track]);
-        const videoTag = document.getElementById('remote-video');
-        videoTag.srcObject = stream;
-        document.body.classList.add('remote-playing');
+        if (item.type === 'video') {
+            var track = item.track;
+            var stream = new MediaStream([track]);
+            document.getElementById('remote-video').srcObject = stream;
+            document.body.classList.add('remote-playing');
+        }
     });
-
-    window.stop = function() {
-        // TODO
-    };
 
     const callButton = document.getElementById('call');
     callButton.onclick = async function() {
@@ -196,7 +192,6 @@ window.addEventListener('load', async (event) => {
             console.log('Error occurred when sharing camera', ex);
         }
     };
-
     const calibrateButton = document.getElementById('calibrate');
     calibrateButton.onclick = async (e) => {
         let under = document.querySelector('#primary-container video.live');
@@ -205,9 +200,18 @@ window.addEventListener('load', async (event) => {
         }
         let dims = getComputedDims(under);
         let canvas = document.getElementById('calibration-canvas');
-        canvas.style.display = 'unset';
+        canvas.style.display = 'unset'; // TODO should this be display block?
         window.calibration = await calibrate(canvas, dims.w, dims.h);
         canvas.style.display = 'none';
+    };
+    const swapButton =  document.getElementById('swap');
+    swapButton.onclick = function() {
+        const remoteVideo = document.getElementById('remote-video');
+        const localVideo = document.getElementById('local-video');
+        swapElements(remoteVideo, localVideo);
+        const remoteDemo = document.getElementById('remote-demo');
+        const localDemo = document.getElementById('local-demo');
+        swapElements(remoteDemo, localDemo);
     };
 
     let children = document.querySelectorAll('#primary-container .video');
