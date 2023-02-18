@@ -1,4 +1,4 @@
-describe('basic end-to-end test', () => {
+describe('card search via click in demo mode', () => {
     it('passes', () => {
         cy.viewport(1920, 1080);
         cy.visit('http://localhost:8000/?demo-mode=true');
