@@ -209,21 +209,22 @@ window.addEventListener('load', async (event) => {
         const remoteVideo = document.getElementById('remote-video');
         const localVideo = document.getElementById('local-video');
         swapElements(remoteVideo, localVideo);
-        const remoteDemo = document.getElementById('remote-demo');
-        const localDemo = document.getElementById('local-demo');
-        swapElements(remoteDemo, localDemo);
     };
 
-    let children = document.querySelectorAll('#primary-container .video');
+    let children = document.querySelectorAll('video.live');
     for (let i = 0; i < children.length; i++) {
         let child = children[i];
         child.addEventListener('click', handleClick);
     }
 
+    const remoteVideo = document.querySelector('#remote-video');
+    const localVideo = document.querySelector('#local-video');
+    remoteVideo.side = otherSide;
+    localVideo.side = side;
     if (isModeOn('demo')) {
-        const remoteDemo = document.querySelector('#primary-container video.demo');
-        const localDemo = document.querySelector('#secondary-container video.demo');
-        remoteDemo.src = `/${otherSide}-720p.mov`;
-        localDemo.src = `/${side}-720p.mov`;
+        remoteVideo.src = `/${otherSide}-720p.mov`;
+        localVideo.src = `/${side}-720p.mov`;
+        remoteVideo.loop = 'true';
+        localVideo.loop = 'true';
     }
 });

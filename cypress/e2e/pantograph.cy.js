@@ -10,8 +10,8 @@ describe('basic end-to-end test', () => {
         cy.get('button.confirm-modal').click();
         cy.contains('share this link with your opponent').should('be.visible');
         cy.get('dialog#share-link-modal button.confirm-modal').click();
-        cy.get('#remote-demo').should('have.prop', 'paused', false);
-        cy.get('#remote-demo').clickByPercentage(950 / 1280, 600 / 720);
+        cy.get('#remote-video').should('have.prop', 'paused', false);
+        cy.get('#remote-video').clickByPercentage(950 / 1280, 600 / 720);
         cy.get('img[alt="Spin Doctor"]').should('be.visible');
     });
 });

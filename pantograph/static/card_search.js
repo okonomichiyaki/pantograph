@@ -38,6 +38,12 @@ function debugCalibration(canvas, ctx, vw, vh) {
 }
 
 export function handleClick(event) {
+    const e = event.target;
+    if (e.parentElement.id === 'secondary-container') {
+        return ;
+    }
+    const side = e.side;
+
     // crop a 300x300 square from the video feed around the mouse click:
 
     const x = event.offsetX;
@@ -49,20 +55,18 @@ export function handleClick(event) {
     const {w: targetw, h: targeth} = getComputedDims(target);
     const {vw, vh} = getVideoDims(target);
 
-    console.log(`click: ${event.target} ${x},${y}`);
-    console.log(`target: (computed) ${targetw}x${targeth}, (video) ${vw}x${vh}`);
 
     // scale the x,y to match the element coords with video coords:
-    const calcx = (x / targetw) * vw;
-    const calcy = (y / targeth) * vh;
+    const calcx = Math.round(x / targetw * vw);
+    const calcy = Math.round(y / targeth * vh);
     const rx = calcx - w / 2;
     const ry = calcy - h / 2;
 
-    console.log(`rect: ${rx},${ry},${w},${h}`);
+    console.log(`click: offset=${x},${y} calc=${calcx}x${calcy} rect: ${rx},${ry},${w},${h} target: (computed) ${targetw}x${targeth}, (video) ${vw}x${vh}`);
 
     const imageData = cropFromVideo(target, rx, ry, w, h);
     if (imageData === null) {
-        console.log("got null from video crop, clicked on:", event.target);
+        console.error("got null from video crop, clicked on:", event.target);
         return;
     }
     const crop = document.getElementById('crop');
@@ -76,7 +80,7 @@ export function handleClick(event) {
     const json = {
         image: data,
         calibration: getCalibration(vw, vh),
-        side: getSide(),
+        side: side,
         format: getFormat()
     };
     const options = {

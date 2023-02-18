@@ -22,17 +22,6 @@ canvas#crop {
     justify-self: center;
 }
 
-/* demo mode shows only the static video files */
-.demo-show {
-    display: none;
-}
-.demo .demo-show {
-    display: block;
-}
-.demo .demo-hide {
-    display: none;
-}
-
 /* app status controls visibility of call button. prevents calling before other user joined */
 .waiting .ready-visible {
     display: none;
