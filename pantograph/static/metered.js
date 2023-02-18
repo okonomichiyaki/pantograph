@@ -1,3 +1,5 @@
+import { showModal } from './modals.js';
+
 async function getCameraPermissions(meeting) {
     try {
         // ask for permission first, so the labels are populated (Firefox)
@@ -40,6 +42,12 @@ export async function initializeMetered(nickname, side, room) {
     console.log('[Metered] Joined meeting:', meetingInfo);
     meeting.on('participantJoined', function(participantInfo) {
         console.log('[Metered] participantJoined', participantInfo);
+    });
+    meeting.on("stateChanged", function(meetingState) {
+        console.log('[Metered] stateChanged', meetingState);
+        if (meetingState === 'terminated') {
+            showModal('terminated-modal');
+        }
     });
     meeting.on('localTrackStarted', function(item) {
         console.log('[Metered] localTrackStarted', item);
