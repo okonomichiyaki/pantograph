@@ -5,6 +5,7 @@ import { handleClick } from './card_search.js';
 import { getRoom } from './rooms.js';
 import { initializeMetered } from './metered.js';
 import { setModes, getModes, debugOff, isModeOn } from './debug.js';
+import { updateMembers } from './status.js';
 
 class Status {
     static Connecting = new Status('connecting', 'connecting to server', true);
@@ -126,6 +127,12 @@ window.addEventListener('load', async (event) => {
         if (other) {
             changeStatus(Status.Ready);
         }
+        updateMembers(members);
+    });
+    socket.on('exited', function(data) {
+        console.log('exited', data);
+        const members = Object.values(data['members']);
+        updateMembers(members);
     });
 
     let meeting = null;
