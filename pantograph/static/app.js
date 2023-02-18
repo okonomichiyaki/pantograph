@@ -123,7 +123,6 @@ window.addEventListener('load', async (event) => {
         nickname = json['nickname'];
         side = freeSide;
     }
-    window.side = side;
     window.format = room['format'];
     let otherSide = null;
     if (side === 'runner') {

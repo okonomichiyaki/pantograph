@@ -7,16 +7,6 @@ function getFormat() {
     return null;
 }
 
-function getSide() {
-    if (window.side === 'corp') {
-        return 'runner';
-    }
-    if (window.side === 'runner') {
-        return 'corp';
-    }
-    return null;
-}
-
 function getCalibration(vw, vh) {
     if (window.calibration) {
         let calibration = window.calibration.ratio;
