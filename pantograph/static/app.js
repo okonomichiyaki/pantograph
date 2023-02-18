@@ -44,7 +44,6 @@ function changeStatus(newStatus) {
     }
 }
 
-
 async function showShareModal(params) {
     const input = document.getElementById('share-link-input');
     const location = window.location;
@@ -104,6 +103,7 @@ window.addEventListener('load', async (event) => {
     if (side === 'corp') {
         otherSide = 'runner';
     }
+    document.body.classList.add(side);
 
     var socket = io();
     socket.on('connect', function() {
@@ -137,7 +137,7 @@ window.addEventListener('load', async (event) => {
 
     let meeting = null;
     if (!isModeOn('demo')) {
-        meeting = await initializeMetered(nickname, room);
+        meeting = await initializeMetered(nickname, side, room);
     }
 
     const camButton = document.getElementById('camera');

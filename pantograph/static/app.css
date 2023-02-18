@@ -23,6 +23,9 @@ canvas#crop {
 }
 
 /* app status controls visibility of call button. prevents calling before other user joined */
+.spectator .spectator-hide {
+    display: none;
+}
 .waiting .ready-visible {
     display: none;
 }

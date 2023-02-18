@@ -35,13 +35,13 @@
                     </div>
                     <nav>
                         <ul>
-                            <li>
+                            <li class="spectator-hide">
                                 <select id="video-device" defaultValue="loading">
                                     <option value="loading">loading...</option>
                                 </select>
                             </li>
-                            <li>
-                                <a href="#" role="button" id="camera" class="">start camera</a>
+                            <li class="spectator-hide">
+                                <a href="#" role="button" id="camera">start camera</a>
                             </li>
                             <li>
                                 <a href="#" role="button" id="calibrate" class="">calibrate</a>
@@ -99,6 +99,7 @@
                 <article>
                     <p>share this link with your opponent:</p>
                     <input id="share-link-input" type="text" value="" readonly>
+                    <p>(spectators can also join using this link)</p>
                     <footer>
                         <button aria-busy="true" class="secondary connecting-visible">connecting...</button>
                         <button class="connecting-invisible confirm-modal">okay</button>

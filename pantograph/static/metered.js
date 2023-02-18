@@ -1,6 +1,4 @@
-export async function initializeMetered(nickname, room) {
-    const meeting = new Metered.Meeting();
-
+async function getCameraPermissions(meeting) {
     try {
         // ask for permission first, so the labels are populated (Firefox)
         await navigator.mediaDevices.getUserMedia({
@@ -18,10 +16,20 @@ export async function initializeMetered(nickname, room) {
         }
         if (devices.length > 0) {
             // TODO: can status update acquired permissions and found devices here
+            return false;
         }
+        return true;
     } catch (e) {
         console.error('caught exception', e);
-        return null;
+        return false;
+    }
+}
+
+export async function initializeMetered(nickname, side, room) {
+    const meeting = new Metered.Meeting();
+
+    if (side !== 'spectator') {
+        getCameraPermissions(meeting);
     }
 
     const roomId = room.id;
