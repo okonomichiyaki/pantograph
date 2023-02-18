@@ -74,9 +74,12 @@ def create_app():
         side = json.get("side")
         fmt = json.get("format")
         room = store.create_room(nickname, side, fmt)
+        if json.get("demo"):
+            logger.info(f"created room (demo): {room}")
+            return jsonify(room)
         successful = metered.create_room(room["id"])
         if successful:
-            logger.info(f"created room: {room}")
+            logger.info(f"created room (metered): {room}")
             return jsonify(room)
         else:
             return ("failed to create metered room", 500)

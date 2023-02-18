@@ -11,7 +11,11 @@ describe('basic end-to-end test', () => {
         cy.contains('share this link with your opponent').should('be.visible');
         cy.get('dialog#share-link-modal button.confirm-modal').click();
         cy.get('#remote-video').should('have.prop', 'paused', false);
+        cy.get('#remote-placeholder').should('not.be.visible');
         cy.get('#remote-video').clickByPercentage(950 / 1280, 600 / 720);
         cy.get('img[alt="Spin Doctor"]').should('be.visible');
+        cy.contains('swap video').click();
+        cy.get('#local-video').clickByPercentage(785 / 1280, 600 / 720);
+        cy.get('img[alt="No Free Lunch"]').should('be.visible');
     });
 });

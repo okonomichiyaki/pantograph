@@ -3,6 +3,8 @@ import { showModal } from './modals.js';
 import { calibrate } from './calibration.js';
 import { handleClick } from './card_search.js';
 import { getRoom } from './rooms.js';
+import { initializeMetered } from './metered.js';
+import { setModes, getModes, debugOff, isModeOn } from './debug.js';
 
 class Status {
     static Connecting = new Status('connecting', 'connecting to server', true);
@@ -41,36 +43,6 @@ function changeStatus(newStatus) {
     }
 }
 
-function setModes() {
-    const params = getQueryParams();
-    window.modes = {};
-    for (const [k ,v] of Object.entries(params)) {
-        if (k.includes('mode') && v === 'true') {
-            const clss = k.replace('-mode', '');
-            document.body.classList.add(clss);
-            window.modes[clss] = true;
-        }
-    }
-}
-
-function getModes() {
-    const modes = [];
-    for (const [k ,v] of Object.entries(window.modes)) {
-        if (v) {
-            modes.push(k);
-        }
-    }
-    return modes;
-}
-
-function debugOff() {
-    const modes = getModes();
-    return modes.length === 0;
-}
-
-function isModeOn(mode) {
-    return window.modes[mode] === true;
-}
 
 async function showShareModal(params) {
     const input = document.getElementById('share-link-input');
@@ -156,74 +128,17 @@ window.addEventListener('load', async (event) => {
         }
     });
 
-    const meeting = new Metered.Meeting();
-
-    try {
-        // ask for permission first, so the labels are populated
-        await navigator.mediaDevices.getUserMedia({
-            audio: false,
-            video: {width:4096,height:2160}
-        });
-        let devices = await meeting.listVideoInputDevices();
-        var deviceSelect = document.getElementById('video-device');
-        if (devices.length > 0) {
-            deviceSelect.remove(0);
-        }
-        for (let i = 0; i < devices.length; i++) {
-            let device = devices[i];
-            deviceSelect.options.add(new Option(device.label, device.deviceId));
-        }
-        if (devices.length > 0) {
-            // TODO: can status update acquired permissions and found devices here
-        }
-    } catch (e) {
-        console.error('caught exception', e);
+    let meeting = null;
+    if (!isModeOn('demo')) {
+        meeting = await initializeMetered(nickname, room);
     }
 
-    const meetingInfo = await meeting.join({
-        roomURL: `pantograph.metered.live/${roomId}`,
-        name: nickname
-    });
-    console.log('[Metered] Joined meeting:', meetingInfo);
-    meeting.on('participantJoined', function(participantInfo) {
-        console.log('[Metered] participantJoined', participantInfo);
-    });
-    meeting.on('localTrackStarted', function(item) {
-        console.log('[Metered] localTrackStarted', item);
-        if (item.type === 'video') {
-            var track = item.track;
-            var mediaStream = new MediaStream([track]);
-            document.getElementById('local-video').srcObject = mediaStream;
-            document.body.classList.add('local-playing');
+    const camButton = document.getElementById('camera');
+    camButton.onclick = async function() {
+        if (!meeting) {
+            console.error('Can\' start camera: Metered meeting not initialized.');
+            return;
         }
-    });
-    meeting.on('remoteTrackStarted', function(item) {
-        console.log('[Metered] remoteTrackStarted', item);
-        if (item.type === 'video') {
-            var track = item.track;
-            var stream = new MediaStream([track]);
-            if (side === 'spectator') {
-                console.log(room);
-                const name = item.participant.name;
-                const side = room.members[name].side;
-                if (side === 'runner') {
-                    document.getElementById('remote-video').srcObject = stream;
-                    document.getElementById('remote-video').side = 'runner';
-                    document.body.classList.add('remote-playing');
-                } else if (side === 'corp') {
-                    document.getElementById('local-video').srcObject = stream;
-                    document.getElementById('local-video').side = 'corp';
-                    document.body.classList.add('local-playing');
-                }
-            } else {
-                document.getElementById('remote-video').srcObject = stream;
-                document.body.classList.add('remote-playing');
-            }
-        }
-    });
-
-    const callButton = document.getElementById('call');
-    callButton.onclick = async function() {
         try {
             var deviceId = document.getElementById('video-device').value;
             await meeting.chooseVideoInputDevice(deviceId);
@@ -235,9 +150,6 @@ window.addEventListener('load', async (event) => {
     const calibrateButton = document.getElementById('calibrate');
     calibrateButton.onclick = async (e) => {
         let under = document.querySelector('#primary-container video.live');
-        if (isModeOn('demo')) {
-            under = document.querySelector('#primary-container video.demo');
-        }
         let dims = getComputedDims(under);
         let canvas = document.getElementById('calibration-canvas');
         canvas.style.display = 'unset'; // TODO should this be display block?
@@ -246,6 +158,9 @@ window.addEventListener('load', async (event) => {
     };
     const swapButton =  document.getElementById('swap');
     swapButton.onclick = function() {
+        const remotePlaceholder = document.getElementById('remote-placeholder');
+        const localPlaceholder = document.getElementById('local-placeholder');
+        swapElements(remotePlaceholder, localPlaceholder);
         const remoteVideo = document.getElementById('remote-video');
         const localVideo = document.getElementById('local-video');
         swapElements(remoteVideo, localVideo);
@@ -268,5 +183,7 @@ window.addEventListener('load', async (event) => {
         localVideo.src = `/${side}-720p.mov`;
         remoteVideo.loop = 'true';
         localVideo.loop = 'true';
+        document.body.classList.add('remote-playing');
+        document.body.classList.add('local-playing');
     }
 });
