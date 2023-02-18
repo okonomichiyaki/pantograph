@@ -46,30 +46,12 @@ function checkForm(modal, required, json) {
     return ok;
 }
 
-export async function showModal(id, required, prepopulate) {
+export async function showModal(id, required) {
     return new Promise((resolve, reject) => {
         const modal = document.getElementById(id);
         if (!modal) {
             console.log(`no modal with id={id}`);
             reject(null);
-        }
-
-        if (prepopulate) {
-            for (const key of Object.keys(prepopulate)) {
-                const inputs = modal.querySelectorAll('input.' + key);
-                for (const input of inputs) {
-                    if (input.type === "text") {
-                        input.value = prepopulate[key]['value'];
-                        input.disabled = prepopulate[key]['disabled'];
-                    }
-                    if (input.type === "radio") {
-                        if (input.value === prepopulate[key]['value']) {
-                            input.checked = true;
-                        }
-                        input.disabled = prepopulate[key]['disabled'];
-                    }
-                }
-            }
         }
 
         modal.setAttribute('open','');

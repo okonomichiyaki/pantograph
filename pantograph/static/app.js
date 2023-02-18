@@ -8,6 +8,7 @@ class Status {
     static Connecting = new Status('connecting', 'connecting to server', true);
     static Waiting = new Status('waiting', 'waiting for opponent to join', true);
     static Ready = new Status('ready', 'ready to start call', false);
+    static Calling = new Status('calling', 'call in progress', false);
     static Disconnected = new Status('disconnected', 'lost connection to server', true);
 
     constructor(name, description, busy) {
@@ -82,6 +83,22 @@ async function showShareModal(params) {
     await showModal('share-link-modal');
 }
 
+async function showJoinModal(room) {
+    document.querySelector('input#corp').checked = false;
+    document.querySelector('input#runner').checked = false;
+    document.querySelector('input#spectator').checked = false;
+    if (room.corp) {
+        document.querySelector('input#corp').disabled = true;
+    }
+    if (room.runner) {
+        document.querySelector('input#runner').disabled = true;
+    }
+    if (room.runner && room.corp) {
+        document.querySelector('input#spectator').checked = true;
+    }
+    return showModal('join-room-modal', ['nickname', 'side']);
+}
+
 window.addEventListener('load', async (event) => {
     window.status = Status.Connecting;
     document.body.classList.add(window.status.name);
@@ -102,32 +119,16 @@ window.addEventListener('load', async (event) => {
         // ... or we got here from a shared link
         // ... or a page reload
 
-        // TODO: will need to fix when adding spectator mode:
-        let freeSide = null;
-        if (room.corp) {
-            freeSide = 'runner';
-        }
-        if (room.runner) {
-            freeSide = 'corp';
-        }
-        const header = document.querySelector('dialog#join-room-modal header');
-        if (header && freeSide) {
-            header.innerHTML = `joining room as ${freeSide}`;
-        }
-
-        let json = await showModal(
-            'join-room-modal',
-            ['nickname'],
-            {side: {value: freeSide, disabled: true}}
-        );
+        let json = await showJoinModal(room);
         nickname = json['nickname'];
-        side = freeSide;
+        side = json['side'];
     }
     window.format = room['format'];
     let otherSide = null;
     if (side === 'runner') {
         otherSide = 'corp';
-    } else {
+    }
+    if (side === 'corp') {
         otherSide = 'runner';
     }
 
@@ -156,6 +157,29 @@ window.addEventListener('load', async (event) => {
     });
 
     const meeting = new Metered.Meeting();
+
+    try {
+        // ask for permission first, so the labels are populated
+        await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: {width:4096,height:2160}
+        });
+        let devices = await meeting.listVideoInputDevices();
+        var deviceSelect = document.getElementById('video-device');
+        if (devices.length > 0) {
+            deviceSelect.remove(0);
+        }
+        for (let i = 0; i < devices.length; i++) {
+            let device = devices[i];
+            deviceSelect.options.add(new Option(device.label, device.deviceId));
+        }
+        if (devices.length > 0) {
+            // TODO: can status update acquired permissions and found devices here
+        }
+    } catch (e) {
+        console.error('caught exception', e);
+    }
+
     const meetingInfo = await meeting.join({
         roomURL: `pantograph.metered.live/${roomId}`,
         name: nickname
@@ -178,14 +202,31 @@ window.addEventListener('load', async (event) => {
         if (item.type === 'video') {
             var track = item.track;
             var stream = new MediaStream([track]);
-            document.getElementById('remote-video').srcObject = stream;
-            document.body.classList.add('remote-playing');
+            if (side === 'spectator') {
+                console.log(room);
+                const name = item.participant.name;
+                const side = room.members[name].side;
+                if (side === 'runner') {
+                    document.getElementById('remote-video').srcObject = stream;
+                    document.getElementById('remote-video').side = 'runner';
+                    document.body.classList.add('remote-playing');
+                } else if (side === 'corp') {
+                    document.getElementById('local-video').srcObject = stream;
+                    document.getElementById('local-video').side = 'corp';
+                    document.body.classList.add('local-playing');
+                }
+            } else {
+                document.getElementById('remote-video').srcObject = stream;
+                document.body.classList.add('remote-playing');
+            }
         }
     });
 
     const callButton = document.getElementById('call');
     callButton.onclick = async function() {
         try {
+            var deviceId = document.getElementById('video-device').value;
+            await meeting.chooseVideoInputDevice(deviceId);
             meeting.startVideo();
         } catch (ex) {
             console.log('Error occurred when sharing camera', ex);
@@ -218,8 +259,10 @@ window.addEventListener('load', async (event) => {
 
     const remoteVideo = document.querySelector('#remote-video');
     const localVideo = document.querySelector('#local-video');
-    remoteVideo.side = otherSide;
-    localVideo.side = side;
+    if (side !== 'spectator') {
+        remoteVideo.side = otherSide;
+        localVideo.side = side;
+    }
     if (isModeOn('demo')) {
         remoteVideo.src = `/${otherSide}-720p.mov`;
         localVideo.src = `/${side}-720p.mov`;

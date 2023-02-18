@@ -35,6 +35,11 @@
                     <nav>
                         <ul>
                             <li>
+                                <select id="video-device" defaultValue="loading">
+                                    <option value="loading">loading...</option>
+                                </select>
+                            </li>
+                            <li>
                                 <a href="#" role="button" id="call" class="ready-visible">call</a>
                             </li>
                             <li>
@@ -66,17 +71,21 @@
                             choose a nickname for yourself:
                             <input type="text" class="nickname" id="nickname" name="nickname" placeholder="nickname" required>
                         </label>
-                        <!-- <fieldset>
-                             <legend>which side will you play?</legend>
-                             <label for="runner">
-                             <input type="radio" class="side" name="side" id="runner" value="runner">
-                             runner
-                             </label>
-                             <label for="corp">
-                             <input type="radio" class="side" name="side" id="corp" value="corp">
-                             corp
-                             </label>
-                             </fieldset> -->
+                        <fieldset>
+                            <legend>which side will you play?</legend>
+                            <label for="runner">
+                                <input type="radio" class="side" name="side" id="runner" value="runner">
+                                runner
+                            </label>
+                            <label for="corp">
+                                <input type="radio" class="side" name="side" id="corp" value="corp">
+                                corp
+                            </label>
+                            <label for="spectator">
+                                <input type="radio" class="side" name="side" id="spectator" value="spectator">
+                                spectator
+                            </label>
+                        </fieldset>
                     </form>
                     <footer>
                         <button aria-busy="true" class="secondary connecting-visible">connecting...</button>
