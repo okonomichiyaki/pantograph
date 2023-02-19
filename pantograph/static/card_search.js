@@ -87,6 +87,7 @@ export function cardSearch(event, calibration, format) {
                 var size = 'large';
                 img.src = 'https://static.nrdbassets.com/v1/' + size + '/' + card.code + '.jpg';
                 img.alt = card.title;
+                img.classList.add('card');
                 container.appendChild(img);
             } else {
                 const unknown = document.createElement('div');

@@ -137,9 +137,6 @@ div.placeholder {
     border-radius: 4%/3%;
     flex-shrink: 2;
 }
-.card-search-results {
-    flex-shrink: 2;
-}
 
 /* align status sub-components vertically */
 .status {
