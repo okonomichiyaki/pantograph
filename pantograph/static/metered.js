@@ -22,7 +22,7 @@ async function getCameraPermissions(meeting) {
         }
         return true;
     } catch (e) {
-        console.error('caught exception', e);
+        console.error('[Metered] caught exception', e);
         return false;
     }
 }

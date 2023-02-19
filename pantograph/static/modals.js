@@ -26,7 +26,6 @@ export function createOpenHandler(id, callback, required) {
 }
 
 function checkForm(modal, required, json) {
-    console.log(json);
     if (!required || required.length === 0) {
         return true;
     }
@@ -50,7 +49,7 @@ export async function showModal(id, required) {
     return new Promise((resolve, reject) => {
         const modal = document.getElementById(id);
         if (!modal) {
-            console.log(`no modal with id={id}`);
+            console.error(`no modal with id=${id}!!`);
             reject(null);
         }
 

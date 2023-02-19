@@ -166,22 +166,22 @@ window.addEventListener('load', async (event) => {
 
     var socket = io();
     socket.on('connect', function() {
-        console.log('connect');
+        console.log('[socketio] connect');
         pantograph.changeStatus(Status.Waiting);
     });
     socket.on('disconnect', function() {
-        console.log('disconnect');
+        console.log('[socketio] disconnect');
         pantograph.changeStatus(Status.Disconnected);
     });
     socket.on('join', function(data) {
-        console.log('join', data);
+        console.log('[socketio] join', data);
     });
     socket.on('joined', function(data) {
-        console.log('joined', data);
+        console.log('[socketio] joined', data);
         pantograph.updateRoom(data);
     });
     socket.on('exited', function(data) {
-        console.log('exited', data);
+        console.log('[socketio] exited', data);
         pantograph.updateRoom(data);
     });
 

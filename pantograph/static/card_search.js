@@ -1,4 +1,4 @@
-import { getComputedDims, cropFromVideo, getVideoDims } from "./utils.js";
+import { getComputedDims, cropFromVideo, getVideoDims } from './utils.js';
 
 function getCalibration(calibration, vw, vh) {
     if (calibration) {
@@ -15,7 +15,7 @@ function debugCalibration(canvas, ctx, calibration, vw, vh) {
     let {w, h} = getCalibration(calibration, vw, vh);
     let x = canvas.width / 2 - w / 2;
     let y = canvas.height / 2 - h / 2;
-    ctx.strokeStyle = "deeppink";
+    ctx.strokeStyle = 'deeppink';
     ctx.lineWidth = 2;
     ctx.strokeRect(x, y, w, h);
 }
@@ -49,11 +49,11 @@ export function cardSearch(event, calibration, format) {
 
     const imageData = cropFromVideo(target, rx, ry, w, h);
     if (imageData === null) {
-        console.error("got null from video crop, clicked on:", event.target);
+        console.error('got null from video crop, clicked on:', event.target);
         return;
     }
     const crop = document.getElementById('crop');
-    const ctx = crop.getContext("2d");
+    const ctx = crop.getContext('2d');
     ctx.clearRect(0, 0, crop.width, crop.height);
     ctx.putImageData(imageData, 0, 0);
     //debugCalibration(crop, ctx, vw, vh);
@@ -84,14 +84,14 @@ export function cardSearch(event, calibration, format) {
                 }
                 let card = response[0];
                 var img = document.createElement('img');
-                var size = "large";
-                img.src = "https://static.nrdbassets.com/v1/" + size + "/" + card.code + ".jpg";
+                var size = 'large';
+                img.src = 'https://static.nrdbassets.com/v1/' + size + '/' + card.code + '.jpg';
                 img.alt = card.title;
                 container.appendChild(img);
             } else {
                 const unknown = document.createElement('div');
-                unknown.innerHTML = "❓";
-                unknown.id = "unknown-card";
+                unknown.innerHTML = '❓';
+                unknown.id = 'unknown-card';
                 container.appendChild(unknown);
             }
         })

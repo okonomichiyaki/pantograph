@@ -1,5 +1,4 @@
 import { prepareModal } from './modals.js';
-import { calibrate } from './calibration.js';
 
 function createNewRoom(json) {
     if (!json) {
@@ -7,9 +6,12 @@ function createNewRoom(json) {
     }
     const nickname = json['nickname'];
     const side = json["side"];
+
+    // in demo mode, backend will not create a Metered room:
     if (window.location.search.includes('demo-mode=true')) {
         json["demo"] = true;
     }
+
     const str = JSON.stringify(json);
     const options = {
         method: 'POST',
@@ -22,14 +24,16 @@ function createNewRoom(json) {
         .then(response => response.json())
         .then(response => {
             const id = response["id"];
-            console.log("created a new room: " + id);
             let path =  `/app/${id}`;
             let params = `nickname=${nickname}&side=${side}`;
+
+            // if there are any modes, pass them through:
             if (window.location.search.includes('mode')) {
                 params = window.location.search + '&' + params;
             } else {
                 params = '?' + params;
             }
+
             window.location.href = path + params;
         })
         .catch(err => console.error(err));

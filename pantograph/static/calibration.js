@@ -16,7 +16,6 @@ export function calibrate(canvas, width, height) {
                 let h = Math.abs(startY - offsetY);
                 let x = Math.min(startX, offsetX);
                 let y = Math.min(startY, offsetY);
-                console.log('mousemove drawing');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.strokeStyle = "deeppink";
                 ctx.lineWidth = 2;
@@ -25,14 +24,12 @@ export function calibrate(canvas, width, height) {
         }
 
         function onMouseDown(e) {
-            console.log('mousedown');
             down = true;
             startX = e.offsetX;
             startY = e.offsetY;
         }
 
         function onMouseUp(e) {
-            console.log('mouseup');
             down = false;
             const offsetX = e.offsetX;
             const offsetY = e.offsetY;
@@ -40,6 +37,11 @@ export function calibrate(canvas, width, height) {
             let pxh = Math.abs(startY - offsetY);
             let ratiow = pxw / width;
             let ratioh = pxh / height;
+
+            canvas.removeEventListener('mousemove', onMouseMove);
+            canvas.removeEventListener('mousedown', onMouseDown);
+            canvas.removeEventListener('mouseup', onMouseUp);
+
             resolve( {pixel: {w: pxw, h: pxh}, ratio: {w: ratiow, h: ratioh}} );
         }
 
