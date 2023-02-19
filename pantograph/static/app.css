@@ -22,7 +22,6 @@ canvas#crop {
     justify-self: center;
 }
 
-/* app status controls visibility of call button. prevents calling before other user joined */
 .spectator .spectator-hide {
     display: none;
 }
@@ -42,6 +41,11 @@ canvas#crop {
     display: block;
 }
 .connecting .connecting-invisible {
+    display: none;
+}
+
+/* if nocamera error occurs, hide other statuses (this takes precedence) */
+.nocamera .status > :not(#metered) {
     display: none;
 }
 

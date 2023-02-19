@@ -7,8 +7,8 @@ import { initializeMetered } from './metered.js';
 
 class Pantograph {
     modes = {};
+    status = {};
     client = null;
-    status = null;
     nickname = null;
     side = null;
     format = null;
@@ -16,13 +16,13 @@ class Pantograph {
 
     constructor(client) {
         this.client = client;
-        this.status = Status.Initial;
+        this.status['pantograph'] = Status.Initial;
     }
 
-    changeStatus(newStatus) {
-        const oldStatus = this.status;
-        this.status = newStatus;
-        this.client.onStatusChange(oldStatus, newStatus);
+    changeStatus(key, newStatus) {
+        const oldStatus = this.status[key];
+        this.status[key] = newStatus;
+        this.client.onStatusChange(key, oldStatus, newStatus);
     }
 
     updateNickname(nickname) {
@@ -49,7 +49,7 @@ class Pantograph {
             return this.nickname !== member['nickname'];
         });
         if (other) {
-            this.changeStatus(Status.Ready);
+            this.changeStatus('pantograph', Status.Ready);
         }
         this.client.onParticipantChange(members);
     }
@@ -131,14 +131,16 @@ async function showJoinModal(room) {
 
 window.addEventListener('load', async (event) => {
     const observer = new class {
-        onStatusChange(oldStatus, newStatus) {
-            console.log(`[observer] onStatusChange: ${oldStatus} -> ${newStatus}`);
-            const indicator = document.querySelector('.status span');
-            if (indicator) {
+        onStatusChange(key, oldStatus, newStatus) {
+            console.log(`[observer] onStatusChange: ${key} ${oldStatus} -> ${newStatus}`);
+            const indicator = document.querySelector(`.status span#${key}`);
+            if (indicator && newStatus.name) {
                 indicator.innerHTML = newStatus.description;
                 indicator.setAttribute('aria-busy', newStatus.isBusy());
                 document.body.classList.add(newStatus.name);
-                document.body.classList.remove(oldStatus.name);
+                if (oldStatus) {
+                    document.body.classList.remove(oldStatus.name);
+                }
             }
         }
         onParticipantChange(members) {
@@ -162,17 +164,17 @@ window.addEventListener('load', async (event) => {
         }
     };
     const pantograph = new Pantograph(observer);
-    pantograph.changeStatus(Status.Connecting);
+    pantograph.changeStatus('pantograph', Status.Connecting);
     pantograph.initializeModes();
 
     var socket = io();
     socket.on('connect', function() {
         console.log('[socketio] connect');
-        pantograph.changeStatus(Status.Waiting);
+        pantograph.changeStatus('pantograph', Status.Waiting);
     });
     socket.on('disconnect', function() {
         console.log('[socketio] disconnect');
-        pantograph.changeStatus(Status.Disconnected);
+        pantograph.changeStatus('pantograph', Status.Disconnected);
     });
     socket.on('join', function(data) {
         console.log('[socketio] join', data);
@@ -221,10 +223,10 @@ window.addEventListener('load', async (event) => {
 
     let meeting = null;
     if (!pantograph.isModeOn('demo')) {
-        meeting = await initializeMetered(nickname, side, room);
+        meeting = await initializeMetered(pantograph, nickname, side, room);
         if (meeting === null) {
             // TODO: differentiate between failed to get camera, and failure with Metered API
-            pantograph.changeStatus(Status.NoCamera);
+            pantograph.changeStatus('metered', Status.NoCamera);
         }
     }
 

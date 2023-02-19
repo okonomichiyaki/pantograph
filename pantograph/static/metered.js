@@ -1,5 +1,16 @@
 import { showModal } from './modals.js';
 
+function watchResolution(e) {
+    let vw,vh;
+    setInterval(function() {
+        if (e.videoWidth != vw) {
+            vw = e.videoWidth;
+            vh = e.videoHeight;
+            console.log(`remote video resolution changed: ${vw}x${vh}`);
+        }
+    }, 500);
+}
+
 async function getCameraPermissions(meeting) {
     try {
         // ask for permission first, so the labels are populated (Firefox)
@@ -26,7 +37,7 @@ async function getCameraPermissions(meeting) {
     }
 }
 
-export async function initializeMetered(nickname, side, room) {
+export async function initializeMetered(pantograph, nickname, side, room) {
     const meeting = new Metered.Meeting();
 
     if (side !== 'spectator') {
@@ -37,17 +48,12 @@ export async function initializeMetered(nickname, side, room) {
         }
     }
 
-    const roomId = room.id;
-    const meetingInfo = await meeting.join({
-        roomURL: `pantograph.metered.live/${roomId}`,
-        name: nickname
-    });
-    console.log('[Metered] Joined meeting:', meetingInfo);
     meeting.on('participantJoined', function(participantInfo) {
         console.log('[Metered] participantJoined', participantInfo);
     });
     meeting.on("stateChanged", function(meetingState) {
         console.log('[Metered] stateChanged', meetingState);
+        pantograph.changeStatus('metered', meetingState);
         if (meetingState === 'terminated') {
             showModal('terminated-modal');
         }
@@ -55,35 +61,47 @@ export async function initializeMetered(nickname, side, room) {
     meeting.on('localTrackStarted', function(item) {
         console.log('[Metered] localTrackStarted', item);
         if (item.type === 'video') {
-            var track = item.track;
-            var mediaStream = new MediaStream([track]);
-            document.getElementById('local-video').srcObject = mediaStream;
+            const track = item.track;
+            const mediaStream = new MediaStream([track]);
+            const localVideo = document.getElementById('local-video');
+            localVideo.srcObject = mediaStream;
             document.body.classList.add('local-playing');
         }
     });
     meeting.on('remoteTrackStarted', function(item) {
         console.log('[Metered] remoteTrackStarted', item);
         if (item.type === 'video') {
-            var track = item.track;
-            var stream = new MediaStream([track]);
+            const track = item.track;
+            const stream = new MediaStream([track]);
+            const remoteVideo = document.getElementById('remote-video');
+            const localVideo = document.getElementById('local-video');
             if (side === 'spectator') {
                 const name = item.participant.name;
                 const side = room.members[name].side;
                 if (side === 'runner') {
-                    document.getElementById('remote-video').srcObject = stream;
-                    document.getElementById('remote-video').side = 'runner';
+                    remoteVideo.srcObject = stream;
+                    remoteVideo.side = 'runner';
                     document.body.classList.add('remote-playing');
+                    watchResolution(remoteVideo);
                 } else if (side === 'corp') {
-                    document.getElementById('local-video').srcObject = stream;
-                    document.getElementById('local-video').side = 'corp';
+                    localVideo.srcObject = stream;
+                    localVideo.side = 'corp';
                     document.body.classList.add('local-playing');
                 }
             } else {
-                document.getElementById('remote-video').srcObject = stream;
+                remoteVideo.srcObject = stream;
                 document.body.classList.add('remote-playing');
+                watchResolution(remoteVideo);
             }
         }
     });
+
+    const roomId = room.id;
+    const meetingInfo = await meeting.join({
+        roomURL: `pantograph.metered.live/${roomId}`,
+        name: nickname
+    });
+    console.log('[Metered] Joined meeting:', meetingInfo);
 
     return meeting;
 }
