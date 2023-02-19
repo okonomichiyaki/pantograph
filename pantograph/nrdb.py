@@ -1,5 +1,7 @@
 import requests
 import json
+import pprint
+import sys
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -120,3 +122,16 @@ def get_active_cards(raw=False):
         return active_cards
     else:
         return [ from_hash(card) for card in active_cards ]
+
+if __name__ == '__main__':
+    pp = pprint.PrettyPrinter(indent=4)
+    cards = get_active_cards(raw=True)
+    if (len(sys.argv) > 1):
+        arg = sys.argv[1]
+        cards = [ card for card in cards if card["title"].lower() == arg.lower() ]
+        for card in cards:
+            pp.pprint(card)
+    else:
+        cards = cards[:10]
+        for card in cards:
+            pp.pprint(card)
