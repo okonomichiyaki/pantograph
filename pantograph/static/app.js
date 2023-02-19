@@ -222,10 +222,10 @@ window.addEventListener('load', async (event) => {
     let meeting = null;
     if (!pantograph.isModeOn('demo')) {
         meeting = await initializeMetered(nickname, side, room);
-    }
-    if (meeting === null) {
-        // TODO: differentiate between failed to get camera, and failure with Metered API
-        pantograph.changeStatus(Status.NoCamera);
+        if (meeting === null) {
+            // TODO: differentiate between failed to get camera, and failure with Metered API
+            pantograph.changeStatus(Status.NoCamera);
+        }
     }
 
     const camButton = document.getElementById('camera');
