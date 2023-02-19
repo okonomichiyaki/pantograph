@@ -2,13 +2,9 @@
 describe('getUserMedia and Metered APIs', () => {
     // this is a bit of a hack. gets around difficulty stubbing Meetered.meeting
     const callbacks = {};
+    const devices = [];
 
     Cypress.on('window:before:load', (win) => {
-        // const mediaDevices = cy.stub().as('mediaDevices');
-        // Object.defineProperty(win.navigator, 'mediaDevices', {
-        //     value: mediaDevices
-        // });
-
         cy.stub(win.navigator.mediaDevices, 'getUserMedia', (constraints) => {
             return Promise.resolve({});
         });
@@ -16,10 +12,7 @@ describe('getUserMedia and Metered APIs', () => {
         class Meeting {
             constructor() {}
             listVideoInputDevices() {
-                return Promise.resolve([
-                    {label: 'webcam', deviceId: '1234'},
-                    {label: 'virtual', deviceId: '5678'},
-                ]);
+                return Promise.resolve(devices);
             }
             join(params) { return Promise.resolve({}); }
             on(evt, fn) {
@@ -27,11 +20,14 @@ describe('getUserMedia and Metered APIs', () => {
             }
         };
         win.Metered = { Meeting: Meeting };
-        //cy.stub().as('Metered');
+    });
+
+    Cypress.Commands.add('mediaDevices', (newDevices) => {
+        devices.length = 0;
+        devices.push(...newDevices);
     });
 
     Cypress.Commands.add('meteredEvent', (evt, params) => {
-        console.log(callbacks);
         callbacks[evt].apply(null, params);
     });
 
@@ -47,16 +43,34 @@ describe('getUserMedia and Metered APIs', () => {
         cy.get('input#startup').click();
         cy.get('input#runner').click();
         cy.get('button.confirm-modal').click();
-        // after loading /app/<room id> will be presented with the modal:
-        cy.contains('share this link with your opponent').should('be.visible');
-        cy.get('dialog#share-link-modal button.confirm-modal').click();
+        // after loading /app/<room id> will be presented with the modal
+        // tests below click through this to allow preparing devices stub
     });
 
     it('lists video devices', () => {
+        cy.mediaDevices([
+            {label: 'webcam', deviceId: '1234'},
+            {label: 'virtual', deviceId: '5678'},
+        ]);
+        cy.contains('share this link with your opponent').should('be.visible');
+        cy.get('dialog#share-link-modal button.confirm-modal').click();
         cy.get('#video-device option').should('have.length', 2);
     });
 
+    it.only('shows an error if no devices', () => {
+        cy.mediaDevices([]);
+        cy.contains('share this link with your opponent').should('be.visible');
+        cy.get('dialog#share-link-modal button.confirm-modal').click();
+        cy.get('#video-device option').should('have.length', 1);
+        cy.debug();
+        cy.contains('unable to find camera').should('be.visible');
+    });
+
+
     it('handle call termination', () => {
+        // after loading /app/<room id> will be presented with the modal:
+        cy.contains('share this link with your opponent').should('be.visible');
+        cy.get('dialog#share-link-modal button.confirm-modal').click();
         cy.meteredEvent('stateChanged', ['terminated']);
         cy.contains('call terminated for length').should('be.visible');
     });
