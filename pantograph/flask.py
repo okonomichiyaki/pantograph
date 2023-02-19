@@ -52,8 +52,6 @@ def create_app():
             return ("no room found", 404) # TODO render HTML
         if nickname:
             logger.info(f"user {nickname} loaded room {room_id} as host")
-        # TODO check if there are already two people in the room,
-        # and if so send the spectator page
         r = send_file("static/app.html")
         return r
 
@@ -98,12 +96,14 @@ def create_app():
         fmt = json.get("format")
         with urlopen(data_uri) as response:
             img_bytes = response.file.read()
-        texts = search(img_bytes, calibration)
+        search_results = search(img_bytes, calibration)
+        texts = search_results["filtered"]
         if len(texts) > 0:
-            card = fuzzy.search_multiple(texts, side, fmt)
-            return jsonify([{"title": card.title, "code": card.code}])
+            fuzzy_results = fuzzy.search_multiple(texts, side, fmt)
+            search_results["cards"] = [ {"title": card.title, "code": card.code, "dist": d} for (card, d) in fuzzy_results ]
+            return jsonify(search_results)
         else:
-            return jsonify([])
+            return jsonify({"cards": []})
 
     return app
 

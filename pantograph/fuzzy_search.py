@@ -56,13 +56,9 @@ class FuzzySearch:
     def _fetch_and_init(self):
         if self.cards != None:
             return
-        logging.getLogger("pantograph").debug("fetch and init")
-
         start = time.perf_counter()
-
         active_cards = get_active_cards()
         self._init_cards(active_cards)
-
         logger.info(f"initialized fuzzy card search in {time.perf_counter() - start}")
 
     def _extract(self, text, titles):
@@ -75,27 +71,19 @@ class FuzzySearch:
             fmt = "startup"
         self._fetch_and_init()
         results = self._extract(text, self._titles[fmt][side])
-        if len(results) > 0:
-            title = results[0][0]
-            card = self.cards[title]
-            logger.info(f"fuzzy_search: side={side} format={fmt} text={repr(text)} card={title} results={results}")
-            return card
-        else:
-            return None
+        results = [ (self.cards[title], d) for (title, d, x) in results ]
+        return results
 
+    # for each input text, take best result, then sort. uncertain if best approach
     def search_multiple(self, texts, side=None, fmt=None):
         if side is None:
             side = "both"
         if fmt is None:
             fmt = "startup"
         self._fetch_and_init()
+
         results = [self._extract(text, self._titles[fmt][side]) for text in texts]
         results = [result[0] for result in results]
         results = sorted(results, key=lambda result: result[1])
-        if len(results) > 0:
-            title = results[0][0]
-            card = self.cards[title]
-            logger.info(f"fuzzy_search_multiple: side={side} format={fmt} texts={repr(texts)} card={title} results={results}")
-            return card
-        else:
-            return None
+        results = [ (self.cards[title], d) for (title, d, x) in results ]
+        return results

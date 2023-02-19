@@ -2,6 +2,7 @@ import shapely.geometry
 import cv2 as cv
 import numpy as np
 import logging
+import base64
 from collections import Counter
 
 import pantograph.google_vision as vision
@@ -18,6 +19,9 @@ class Calibration:
         return self.h / 10
 
 DEFAULT = Calibration(100, 200)
+
+def draw_laser_point(img, x, y, color):
+    cv.rectangle(img, [x,y], [x+3,y+3], color)
 
 def detect_rotation(blocks):
     rotations = [block.rotation for block in blocks]
@@ -49,28 +53,31 @@ def get_ice_titles(x, y, w, h, calibration=DEFAULT):
     ]
     return [right, left]
 
-def draw_laser_point(img, x, y, color):
-    cv.rectangle(img, [x,y], [x+3,y+3], color)
-
 def get_texts(rotation, blocks, areas):
+    reasons = []
+
     def filter(block):
         if rotation != block.rotation:
+            reasons.append((block,'rotation'))
             return False
         if block.text.isdigit():
+            reasons.append((block,'digit'))
             return False
         if len(block.text) < 2:
+            reasons.append((block,'length'))
             return False
         box = shapely.geometry.Polygon(block.points)
         intersect = any([shapely.intersects(area, box) for area in areas])
         if not intersect:
-            logger.debug(f"filtering {block.text} for intersect")
+            reasons.append((block,'nointersect'))
         else:
-            logger.debug(f"keeping on intersect {block.text}")
+            reasons.append((block,'intersect'))
         return intersect
-    logger.info(f"all texts: {[block.text for block in blocks]}")
+
+    all_texts = [block.text for block in blocks]
     filtered = [block.text for block in blocks if filter(block)]
-    logger.info(f"filtered texts: {filtered}")
-    return filtered
+
+    return (filtered, all_texts, reasons)
 
 def search(img_bytes, debug=False, visual_debug=False, calibration=DEFAULT):
     if debug:
@@ -85,7 +92,6 @@ def search(img_bytes, debug=False, visual_debug=False, calibration=DEFAULT):
     x=int(w/2)
     y=int(h/2)
     rotation = detect_rotation(blocks)
-    logger.debug(f"detected rotation: {rotation}")
     if rotation == 0: # upright
         pts = get_tri_points(x, y, calibration.w, calibration.h)
         cv.polylines(copy, [np.array(pts, dtype=np.int32)], True, (0, 0, 255))
@@ -117,4 +123,14 @@ def search(img_bytes, debug=False, visual_debug=False, calibration=DEFAULT):
     if visual_debug:
         cv.imshow('', copy)
         cv.waitKey(0)
-    return get_texts(rotation, blocks, areas)
+
+    retval, buf = cv.imencode('.jpg', copy)
+    b64 = base64.b64encode(buf).decode('ascii')
+    (filtered, all_texts, reasons) = get_texts(rotation, blocks, areas)
+    return {
+        "rotation": rotation,
+        "filtered": filtered,
+        "allTexts": all_texts,
+        "reasons": [ (b.text.replace("\n","_"),r) for (b,r) in reasons ],
+        "img": b64
+    }

@@ -2,7 +2,7 @@ nav {
     height: 10%;
     /* background-color: coral; */
 }
-h1,h2 {
+h1,h2,h3,h4 {
     --typography-spacing-vertical: 0;
 }
 h1 {
@@ -12,5 +12,8 @@ h1 img {
     max-width: 100px;
 }
 h2 {
+    --font-size:1.0rem;
+}
+h3 {
     --font-size:1.0rem;
 }

@@ -35,14 +35,19 @@ def main():
         with io.open(filename, "rb") as image_file:
             image_bytes = image_file.read()
         texts = search(image_bytes, visual_debug=True)
-        card = fuzzy.search_multiple(texts, args.side, args.fmt)
-        if card:
-            print(f"{card.title} [{card.code}]")
+        results = fuzzy.search_multiple(texts, args.side, args.fmt)
+        if len(results) > 0:
+            for (card, dist) in results:
+                print(f"{card.title} ({card.code}) [{dist}]")
         else:
-            print("Failed to identify card")
+            print("Failed to identify any cards")
         exit(0)
 
     if (args.fuzzy):
-        card = fuzzy.search(args.fuzzy, args.side, args.fmt)
-        print(f"{card.title} [{card.code}]")
+        results = fuzzy.search(args.fuzzy, args.side, args.fmt)
+        if len(results) > 0:
+            for (card, dist) in results:
+                print(f"{card.title} ({card.code}) [{dist}]")
+        else:
+            print("Failed to identify any cards")
         exit(0)
