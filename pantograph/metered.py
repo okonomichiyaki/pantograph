@@ -20,8 +20,8 @@ def create_room(room_id):
     url = get_url("/room")
     r = requests.post(url, json={
         "roomName": room_id,
-        "ejectAfterElapsedTimeInSec": 60*60*3,
-        "endMeetingAfterNoActivityInSec": 5*60
+        # "ejectAfterElapsedTimeInSec": 60*60*3,
+        # "endMeetingAfterNoActivityInSec": 5*60
     })
     if r.status_code == 200:
         return True
