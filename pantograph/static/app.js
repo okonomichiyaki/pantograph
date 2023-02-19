@@ -87,6 +87,7 @@ class Status {
     static Ready = new Status('ready', 'ready to start call', false);
     static Calling = new Status('calling', 'call in progress', false);
     static Disconnected = new Status('disconnected', 'lost connection to server', true);
+    static NoCamera = new Status('nocamera', 'unable to find camera ❌', false);
 
     constructor(name, description, busy) {
         this.name = name;
@@ -221,6 +222,10 @@ window.addEventListener('load', async (event) => {
     let meeting = null;
     if (!pantograph.isModeOn('demo')) {
         meeting = await initializeMetered(nickname, side, room);
+    }
+    if (meeting === null) {
+        // TODO: differentiate between failed to get camera, and failure with Metered API
+        pantograph.changeStatus(Status.NoCamera);
     }
 
     const camButton = document.getElementById('camera');

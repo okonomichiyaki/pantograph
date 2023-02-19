@@ -16,8 +16,7 @@ async function getCameraPermissions(meeting) {
             let device = devices[i];
             deviceSelect.options.add(new Option(device.label, device.deviceId));
         }
-        if (devices.length > 0) {
-            // TODO: can status update acquired permissions and found devices here
+        if (devices.length === 0) {
             return false;
         }
         return true;
@@ -31,7 +30,11 @@ export async function initializeMetered(nickname, side, room) {
     const meeting = new Metered.Meeting();
 
     if (side !== 'spectator') {
-        getCameraPermissions(meeting);
+        const successful = await getCameraPermissions(meeting);
+        console.log('getCameraPermissions:', successful);
+        if (!successful) {
+            return null;
+        }
     }
 
     const roomId = room.id;

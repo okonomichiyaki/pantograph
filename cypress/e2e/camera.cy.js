@@ -62,7 +62,6 @@ describe('getUserMedia and Metered APIs', () => {
         cy.contains('share this link with your opponent').should('be.visible');
         cy.get('dialog#share-link-modal button.confirm-modal').click();
         cy.get('#video-device option').should('have.length', 1);
-        cy.debug();
         cy.contains('unable to find camera').should('be.visible');
     });
 
