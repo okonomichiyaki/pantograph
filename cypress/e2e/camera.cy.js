@@ -57,7 +57,7 @@ describe('getUserMedia and Metered APIs', () => {
         cy.get('#video-device option').should('have.length', 2);
     });
 
-    it.only('shows an error if no devices', () => {
+    it('shows an error if no devices', () => {
         cy.mediaDevices([]);
         cy.contains('share this link with your opponent').should('be.visible');
         cy.get('dialog#share-link-modal button.confirm-modal').click();
@@ -67,7 +67,10 @@ describe('getUserMedia and Metered APIs', () => {
 
 
     it('handle call termination', () => {
-        // after loading /app/<room id> will be presented with the modal:
+        cy.mediaDevices([
+            {label: 'webcam', deviceId: '1234'},
+            {label: 'virtual', deviceId: '5678'},
+        ]);
         cy.contains('share this link with your opponent').should('be.visible');
         cy.get('dialog#share-link-modal button.confirm-modal').click();
         cy.meteredEvent('stateChanged', ['terminated']);
