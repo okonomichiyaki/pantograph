@@ -1,25 +1,18 @@
 import { getComputedDims, cropFromVideo, getVideoDims } from "./utils.js";
 
-function getFormat() {
-    if (window.format) {
-        return window.format;
-    }
-    return null;
-}
-
-function getCalibration(vw, vh) {
-    if (window.calibration) {
-        let calibration = window.calibration.ratio;
-        let w = vw * calibration.w;
-        let h = vh * calibration.h;
+function getCalibration(calibration, vw, vh) {
+    if (calibration) {
+        let ratio = calibration.ratio;
+        let w = vw * ratio.w;
+        let h = vh * ratio.h;
         return {w, h};
     } else {
         return {w: 100, h: 200};
     }
 }
 
-function debugCalibration(canvas, ctx, vw, vh) {
-    let {w, h} = getCalibration(vw, vh);
+function debugCalibration(canvas, ctx, calibration, vw, vh) {
+    let {w, h} = getCalibration(calibration, vw, vh);
     let x = canvas.width / 2 - w / 2;
     let y = canvas.height / 2 - h / 2;
     ctx.strokeStyle = "deeppink";
@@ -27,7 +20,7 @@ function debugCalibration(canvas, ctx, vw, vh) {
     ctx.strokeRect(x, y, w, h);
 }
 
-export function handleClick(event) {
+export function cardSearch(event, calibration, format) {
     const e = event.target;
     if (e.parentElement.id === 'secondary-container') {
         return ;
@@ -69,9 +62,9 @@ export function handleClick(event) {
     const data = crop.toDataURL();
     const json = {
         image: data,
-        calibration: getCalibration(vw, vh),
+        calibration: getCalibration(calibration, vw, vh),
         side: side,
-        format: getFormat()
+        format: format
     };
     const options = {
         method: 'POST',

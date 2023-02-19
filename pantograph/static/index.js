@@ -1,6 +1,5 @@
 import { prepareModal } from './modals.js';
 import { calibrate } from './calibration.js';
-import { setModes, getModes, debugOff, isModeOn } from './debug.js';
 
 function createNewRoom(json) {
     if (!json) {
@@ -8,7 +7,7 @@ function createNewRoom(json) {
     }
     const nickname = json['nickname'];
     const side = json["side"];
-    if (isModeOn('demo')) {
+    if (window.location.search.includes('demo-mode=true')) {
         json["demo"] = true;
     }
     const str = JSON.stringify(json);
@@ -37,6 +36,5 @@ function createNewRoom(json) {
 }
 
 window.addEventListener("load", (event) => {
-    setModes();
     prepareModal('new-room-button', 'new-room-modal', createNewRoom, ['nickname', 'format', 'side']);
 });
