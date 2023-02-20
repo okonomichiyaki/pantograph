@@ -1,5 +1,9 @@
 {
   "dependencies": {
     "cypress": "^12.6.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.34.0",
+    "eslint-config-google": "^0.14.0"
   }
 }
