@@ -320,7 +320,10 @@ window.addEventListener('load', async (event) => {
       document.body.classList.add(newSide);
     }
     onModeEnabled(mode) {
+      const root = document.getElementsByTagName('html')[0];
+      root.setAttribute('class', mode);
       document.body.classList.add(mode);
+      document.querySelector('div.container-fluid').classList.add(mode);
     }
   };
 

@@ -2,11 +2,13 @@ h2 {
     --font-size:0.75rem;
 }
 
-/* Debugging display tools */
+/* used to extract cropped search target: */
 canvas#crop {
     width: 300px;
     height: 300px;
 }
+
+/* debugging display tools visible if debug mode on: */
 #debug {
     display: none;
 }
