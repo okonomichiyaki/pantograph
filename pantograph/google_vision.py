@@ -9,6 +9,7 @@ import base64
 
 logger = logging.getLogger("pantograph")
 
+
 class Block:
     def __init__(self, words, vertices):
         self.words = words
@@ -19,24 +20,29 @@ class Block:
         self.y = upper_left.get("y", 0)
         self.w = lower_right.get("x", 0) - self.x
         self.h = lower_right.get("y", 0) - self.y
-        self.points = [ [v.get("x", 0), v.get("y", 0)] for v in vertices ]
+        self.points = [[v.get("x", 0), v.get("y", 0)] for v in vertices]
 
     @property
     def rotation(self):
         dist = np.inf
         closest = -1
         for i in range(4):
-            v = self.points[i] #self.vertices[i]
+            v = self.points[i]  # self.vertices[i]
             d = math.hypot(v[0], v[1])
             if d < dist:
                 dist = d
                 closest = i
         match closest:
-            case 0: return 0
-            case 3: return 90
-            case 2: return 180
-            case 1: return 270
-            case _: return None
+            case 0:
+                return 0
+            case 3:
+                return 90
+            case 2:
+                return 180
+            case 1:
+                return 270
+            case _:
+                return None
 
     @property
     def upper_left(self):
@@ -45,6 +51,7 @@ class Block:
     @property
     def lower_right(self):
         return (self.x + self.w, self.y + self.h)
+
 
 def recognize_base64(b64):
     start = time.perf_counter()
@@ -55,7 +62,11 @@ def recognize_base64(b64):
             logger.error(f"No vision api key found")
             return []
         url = f"https://vision.googleapis.com/v1/images:annotate?key={key}"
-        annotate_image_request = {"requests": [{"image": {"content": b64},"features": [{"type": "TEXT_DETECTION"}]}]}
+        annotate_image_request = {
+            "requests": [
+                {"image": {"content": b64}, "features": [{"type": "TEXT_DETECTION"}]}
+            ]
+        }
         r = requests.post(url, json=annotate_image_request)
         if r.status_code == 200:
             json = r.json()
@@ -63,6 +74,7 @@ def recognize_base64(b64):
     finally:
         elapsed = time.perf_counter() - start
         logger.debug("received response from google vision in %.2f", elapsed)
+
 
 def _collect_blocks_json(response):
     try:
@@ -90,9 +102,11 @@ def _collect_blocks_json(response):
         logger.error(f"caught exception parsing response: {response} {e}")
         return []
 
+
 def recognize_bytes(data):
     b64 = base64.b64encode(data).decode("ascii")
     return recognize_base64(b64)
+
 
 def recognize_file(path):
     with open(path, "rb") as image_file:

@@ -15,6 +15,7 @@ from pantograph.utils import flatmap
 
 logger = logging.getLogger("pantograph")
 
+
 class FuzzySearch:
     """
     Fuzzy search over NR card titles
@@ -29,13 +30,13 @@ class FuzzySearch:
             self._titles = None
 
     def _get_titles(self, cards, fmt):
-        cards = [ c for c in cards if fmt in c.fmts ]
-        runner = [ c for c in cards if c.side_code == "runner" ]
-        corp = [ c for c in cards if c.side_code == "corp" ]
+        cards = [c for c in cards if fmt in c.fmts]
+        runner = [c for c in cards if c.side_code == "runner"]
+        corp = [c for c in cards if c.side_code == "corp"]
         return {
             "runner": flatmap(lambda c: c.get_titles(), runner),
             "corp": flatmap(lambda c: c.get_titles(), corp),
-            "both": flatmap(lambda c: c.get_titles(), cards)
+            "both": flatmap(lambda c: c.get_titles(), cards),
         }
 
     def _init_cards(self, cards):
@@ -48,10 +49,7 @@ class FuzzySearch:
         self.cards = result
         standard = self._get_titles(cards, "standard")
         startup = self._get_titles(cards, "startup")
-        self._titles = {
-            "standard": standard,
-            "startup": startup
-        }
+        self._titles = {"standard": standard, "startup": startup}
 
     def _fetch_and_init(self):
         if self.cards != None:
@@ -71,7 +69,7 @@ class FuzzySearch:
             fmt = "startup"
         self._fetch_and_init()
         results = self._extract(text, self._titles[fmt][side])
-        results = [ (self.cards[title], d) for (title, d, x) in results ]
+        results = [(self.cards[title], d) for (title, d, x) in results]
         return results
 
     # for each input text, take best result, then sort. uncertain if best approach
@@ -85,5 +83,5 @@ class FuzzySearch:
         results = [self._extract(text, self._titles[fmt][side]) for text in texts]
         results = [result[0] for result in results]
         results = sorted(results, key=lambda result: result[1])
-        results = [ (self.cards[title], d) for (title, d, x) in results ]
+        results = [(self.cards[title], d) for (title, d, x) in results]
         return results

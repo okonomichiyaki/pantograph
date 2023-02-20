@@ -8,6 +8,7 @@ logger = logging.getLogger("pantograph")
 rooms = defaultdict(lambda: None)
 connections = defaultdict(lambda: None)
 
+
 def delete_connection(sid):
     member = connections[sid]
     if member:
@@ -21,6 +22,7 @@ def delete_connection(sid):
     connections.pop(sid, None)
     return member
 
+
 def create_room(nickname, side, fmt):
     room_id = str(uuid.uuid4())
     rooms[room_id] = {
@@ -28,12 +30,14 @@ def create_room(nickname, side, fmt):
         "runner": None,
         "members": {},
         "format": fmt,
-        "id": room_id
+        "id": room_id,
     }
     return rooms[room_id]
 
+
 def get_room(room_id):
     return rooms.get(room_id)
+
 
 def join_room(sid, room_id, nickname, side):
     room = rooms[room_id]

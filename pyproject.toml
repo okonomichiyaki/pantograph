@@ -23,6 +23,8 @@ shapely = "^2.0.1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"
+black = "^23.1.0"
+pre-commit = "^3.0.4"
 
 [build-system]
 requires = ["poetry-core"]

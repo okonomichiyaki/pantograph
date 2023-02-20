@@ -16,6 +16,7 @@ from dataclasses import dataclass
 
 logger = logging.getLogger("pantograph")
 
+
 def create_app():
     logging.basicConfig(level=logging.INFO)
 
@@ -24,15 +25,17 @@ def create_app():
     fuzzy = FuzzySearch()
 
     users = {
-        "webcamrunner":
-        'pbkdf2:sha256:260000$621v9iA5hAvobZE1$13531db238e4f0b33b24a34bae631ea56c3c868caaac1fc93e7ae4e52b1d5d70'
+        "webcamrunner": "pbkdf2:sha256:260000$621v9iA5hAvobZE1$13531db238e4f0b33b24a34bae631ea56c3c868caaac1fc93e7ae4e52b1d5d70"
     }
 
-    if os.environ.get('TESTING'):
+    if os.environ.get("TESTING"):
+
         @auth.verify_password
         def verify_password(nickname, password):
             return True
+
     else:
+
         @auth.verify_password
         def verify_password(nickname, password):
             if nickname in users and check_password_hash(users.get(nickname), password):
@@ -49,7 +52,7 @@ def create_app():
         nickname = request.args.get("nickname")
         room = store.get_room(room_id)
         if not room:
-            return ("no room found", 404) # TODO render HTML
+            return ("no room found", 404)  # TODO render HTML
         if nickname:
             logger.info(f"user {nickname} loaded room {room_id} as host")
         r = send_file("static/app.html")
@@ -100,15 +103,20 @@ def create_app():
         texts = search_results["filtered"]
         if len(texts) > 0:
             fuzzy_results = fuzzy.search_multiple(texts, side, fmt)
-            search_results["cards"] = [ {"title": card.title, "code": card.code, "dist": d} for (card, d) in fuzzy_results ]
+            search_results["cards"] = [
+                {"title": card.title, "code": card.code, "dist": d}
+                for (card, d) in fuzzy_results
+            ]
             return jsonify(search_results)
         else:
             return jsonify({"cards": []})
 
     return app
 
+
 app = create_app()
 socketio = SocketIO(app)
+
 
 @socketio.on("join")
 def handle_join(data):
@@ -123,9 +131,11 @@ def handle_join(data):
     else:
         logger.info(f"join: [{request.sid}] no room found: {room_id}")
 
+
 @socketio.on("connect")
 def handle_connect(data):
     logger.info(f"connect: [{request.sid}]")
+
 
 @socketio.on("disconnect")
 def handle_disconnect():
