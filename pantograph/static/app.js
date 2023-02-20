@@ -73,6 +73,14 @@ class Pantograph {
     }
     return result;
   }
+  setMode(mode) {
+    this.modes[mode] = true;
+    this.client.onModeEnabled(mode);
+  }
+  unsetMode(mode) {
+    this.modes[mode] = false;
+    this.client.onModeDisabled(mode);
+  }
   isModeOn(mode) {
     return this.modes[mode] === true;
   }
@@ -204,6 +212,7 @@ function initClickHandlers(pantograph) {
     pantograph.updateCalibration(calibration);
     canvas.style.display = 'none';
   };
+
   const swapButton = document.getElementById('swap');
   swapButton.onclick = function() {
     const remotePlaceholder = document.getElementById('remote-placeholder');
@@ -213,13 +222,29 @@ function initClickHandlers(pantograph) {
     const localVideo = document.getElementById('local-video');
     swapElements(remoteVideo, localVideo);
   };
-  function handleClick(e) {
-    cardSearch(e, pantograph.calibration, pantograph.format);
+
+  const focusButton = document.getElementById('focus');
+  focusButton.onclick = function() {
+    //const video = document.querySelector('#primary-container video.live');
+    function leaveFocus(event) {
+      const keyName = event.key;
+      console.log(`keyName=${keyName}`, event);
+      if (keyName === ' ') {
+        document.removeEventListener('keypress', leaveFocus);
+        pantograph.unsetMode('focus');
+      }
+    }
+    document.addEventListener('keypress', leaveFocus);
+    pantograph.setMode('focus');
+  };
+
+  function handleSearchClick(e) {
+    cardSearch(e, pantograph);
   }
   const children = document.querySelectorAll('video.live');
   for (let i = 0; i < children.length; i++) {
     const child = children[i];
-    child.addEventListener('click', handleClick);
+    child.addEventListener('click', handleSearchClick);
   }
 }
 
@@ -320,10 +345,16 @@ window.addEventListener('load', async (event) => {
       document.body.classList.add(newSide);
     }
     onModeEnabled(mode) {
-      const root = document.getElementsByTagName('html')[0];
-      root.setAttribute('class', mode);
+      // const root = document.getElementsByTagName('html')[0];
+      // root.setAttribute('class', mode);
       document.body.classList.add(mode);
       document.querySelector('div.container-fluid').classList.add(mode);
+    }
+    onModeDisabled(mode) {
+      // const root = document.getElementsByTagName('html')[0];
+      // root.setAttribute('class', mode);
+      document.body.classList.remove(mode);
+      document.querySelector('div.container-fluid').classList.remove(mode);
     }
   };
 

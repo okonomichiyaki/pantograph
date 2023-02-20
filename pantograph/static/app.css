@@ -149,6 +149,9 @@ div.placeholder {
     border-radius: 4%/3%;
     flex-shrink: 2;
 }
+.focus .card {
+    margin-top: 0;
+}
 
 /* align status sub-components vertically */
 .status {
@@ -186,4 +189,12 @@ div.placeholder {
     top: 0;
     align-items: center;
     justify-content: center;
+}
+.focus #primary-container .video {
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
 }

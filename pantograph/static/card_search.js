@@ -45,11 +45,17 @@ function debugOutput(response) {
   }
 }
 
-export function cardSearch(event, calibration, format) {
+export function cardSearch(event, pantograph) {
   const e = event.target;
   if (e.parentElement.id === 'secondary-container') {
     return;
   }
+
+  const calibration = pantograph.calibration;
+  const format = pantograph.format;
+
+  const container = document.getElementById('card-container');
+  container.replaceChildren();
   const side = e.side;
 
   // crop a 300x300 square from the video feed around the mouse click:
@@ -104,8 +110,6 @@ export function cardSearch(event, calibration, format) {
       .then((response) => response.json())
       .then((response) => {
         const cards = response.cards;
-        const container = document.getElementById('card-container');
-        container.replaceChildren();
         if (cards.length > 0) {
           for (const card of cards) {
             console.log(`received card(s) from server: ${card.title}`);
@@ -116,22 +120,24 @@ export function cardSearch(event, calibration, format) {
           img.src = 'https://static.nrdbassets.com/v1/' + size + '/' + card.code + '.jpg';
           img.alt = card.title;
           img.classList.add('card');
-/*
-          let t = Toastify({
-            node: img,
-            duration: -1,
-            close: false,
-            stopOnFocus: true,
-            style: {
-              padding: 0,
-              background: "rgba(0,0,0,0.5)"
-            },
-            onClick: function(){
-              t.hideToast();
-            }
-          }).showToast();
-*/
-          container.appendChild(img);
+
+          if (pantograph.isModeOn('focus')) {
+              let t = Toastify({
+                node: img,
+                duration: -1,
+                close: false,
+                stopOnFocus: true,
+                style: {
+                  padding: 0,
+                  background: "rgba(0,0,0,0)"
+                },
+                onClick: function(){
+                  t.hideToast();
+                }
+              }).showToast();
+          } else {
+            container.appendChild(img);
+          }
           debugOutput(response);
         } else {
           const unknown = document.createElement('div');
