@@ -116,6 +116,21 @@ export function cardSearch(event, calibration, format) {
           img.src = 'https://static.nrdbassets.com/v1/' + size + '/' + card.code + '.jpg';
           img.alt = card.title;
           img.classList.add('card');
+/*
+          let t = Toastify({
+            node: img,
+            duration: -1,
+            close: false,
+            stopOnFocus: true,
+            style: {
+              padding: 0,
+              background: "rgba(0,0,0,0.5)"
+            },
+            onClick: function(){
+              t.hideToast();
+            }
+          }).showToast();
+*/
           container.appendChild(img);
           debugOutput(response);
         } else {
