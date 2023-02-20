@@ -130,8 +130,11 @@ def handle_connect(data):
 @socketio.on("disconnect")
 def handle_disconnect():
     member = store.delete_connection(request.sid)
-    room_id = member["room_id"]
-    room = store.get_room(room_id)
-    socketio.emit("exited", room, to=room_id)
-    nickname = member and member["nickname"]
-    logger.info(f"disconnect: [{request.sid}] {nickname}")
+    if member:
+        room_id = member["room_id"]
+        room = store.get_room(room_id)
+        socketio.emit("exited", room, to=room_id)
+        nickname = member["nickname"]
+        logger.info(f"disconnect: [{request.sid}] {nickname}")
+    else:
+        logger.info(f"disconnect: [{request.sid}] ?")
