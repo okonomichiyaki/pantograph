@@ -90,6 +90,7 @@ class Status {
   static Calling = new Status('calling', 'call in progress', false);
   static Disconnected = new Status('disconnected', 'lost connection to server', true);
   static NoCamera = new Status('nocamera', 'unable to find camera ❌', false);
+  static Demo = new Status('demo', 'DEMO MODE', false);
 
   constructor(name, description, busy) {
     this.name = name;
@@ -131,6 +132,163 @@ async function showJoinModal(room) {
   return showModal('join-room-modal', ['nickname', 'side']);
 }
 
+function initializeSocket(pantograph) {
+  const socket = io();
+  socket.on('connect', function() {
+    console.log('[socketio] connect');
+    pantograph.changeStatus('pantograph', Status.Waiting);
+  });
+  socket.on('disconnect', function() {
+    console.log('[socketio] disconnect');
+    pantograph.changeStatus('pantograph', Status.Disconnected);
+  });
+  socket.on('join', function(data) {
+    console.log('[socketio] join', data);
+  });
+  socket.on('joined', function(data) {
+    console.log('[socketio] joined', data);
+    pantograph.updateRoom(data);
+  });
+  socket.on('exited', function(data) {
+    console.log('[socketio] exited', data);
+    pantograph.updateRoom(data);
+  });
+
+  return socket;
+}
+
+async function initializeRoom(roomId, pantograph, socket) {
+  const room = await getRoom(roomId);
+
+  // this is a hack to avoid cookies (for now?):
+  const params = getQueryParams();
+  let nickname = params['nickname'];
+  let side = params['side'];
+
+  // either we got here from creating a room (nickname query param)...
+  if (nickname) {
+    await showShareModal(params, pantograph.isDebugOff());
+  } else {
+    // ... or we got here from a shared link
+    // ... or a page reload
+
+    const json = await showJoinModal(room);
+    nickname = json['nickname'];
+    side = json['side'];
+  }
+  pantograph.updateNickname(nickname);
+  socket.emit('join', {nickname: nickname, id: roomId, side: side});
+
+  const format = room['format'];
+  pantograph.updateFormat(format);
+  let otherSide = null;
+  if (side === 'runner') {
+    otherSide = 'corp';
+  }
+  if (side === 'corp') {
+    otherSide = 'runner';
+  }
+  pantograph.updateSide(side);
+
+  return {room, nickname, side, otherSide};
+}
+
+function initClickHandlers(pantograph) {
+  const calibrateButton = document.getElementById('calibrate');
+  calibrateButton.onclick = async (e) => {
+    const under = document.querySelector('#primary-container video.live');
+    const dims = getComputedDims(under);
+    const canvas = document.getElementById('calibration-canvas');
+    canvas.style.display = 'unset';
+    const calibration = await calibrate(canvas, dims.w, dims.h);
+    pantograph.updateCalibration(calibration);
+    canvas.style.display = 'none';
+  };
+  const swapButton = document.getElementById('swap');
+  swapButton.onclick = function() {
+    const remotePlaceholder = document.getElementById('remote-placeholder');
+    const localPlaceholder = document.getElementById('local-placeholder');
+    swapElements(remotePlaceholder, localPlaceholder);
+    const remoteVideo = document.getElementById('remote-video');
+    const localVideo = document.getElementById('local-video');
+    swapElements(remoteVideo, localVideo);
+  };
+  function handleClick(e) {
+    cardSearch(e, pantograph.calibration, pantograph.format);
+  }
+  const children = document.querySelectorAll('video.live');
+  for (let i = 0; i < children.length; i++) {
+    const child = children[i];
+    child.addEventListener('click', handleClick);
+  }
+}
+
+function initCameraButton(meeting) {
+  const camButton = document.getElementById('camera');
+  camButton.onclick = async function() {
+    if (!meeting) {
+      console.error('Can\' start camera: Metered meeting not initialized.');
+      return;
+    }
+    try {
+      const deviceId = document.getElementById('video-device').value;
+      await meeting.chooseVideoInputDevice(deviceId);
+      meeting.startVideo();
+    } catch (ex) {
+      console.log('Error occurred when sharing camera', ex);
+    }
+  };
+}
+
+function setupDemo(pantograph) {
+  // select a random corp and random runner, unless one passed in query params:
+  const runners = ['esâ', 'padma'];
+  const corps = ['prav', 'thule', 'issuaq'];
+  let runnerNick = getQueryParams('runner');
+  let corpNick = getQueryParams('corp');
+  if (!runnerNick) {
+    runnerNick = runners[Math.floor(Math.random() * runners.length)];
+  }
+  if (!corpNick) {
+    corpNick = corps[Math.floor(Math.random() * corps.length)];
+  }
+  const runner = {
+    nickname: runnerNick,
+    side: 'runner'
+  };
+  const corp = {
+    nickname: corpNick,
+    side: 'corp'
+  };
+  pantograph.updateRoom({members: {runnerNick: runner, corpNick: corp}});
+  pantograph.updateFormat('startup');
+  pantograph.updateSide('spectator');
+
+  // between corp/runner, randomly determine local/remote, unless passed in query params:
+  const members = [runner, corp];
+  let idx = getQueryParams('local');
+  if (!idx) {
+    idx = Math.round(Math.random());
+  } else {
+    idx = parseInt(idx);
+  }
+  const local = members[idx];
+  const remote = members[idx < 1 ? 1 : 0];
+
+  const remoteVideo = document.querySelector('#remote-video');
+  const localVideo = document.querySelector('#local-video');
+  remoteVideo.side = remote.side;
+  localVideo.side = local.side;
+  remoteVideo.src = `/video/${remote.nickname}-720p.mp4`;
+  localVideo.src = `/video/${local.nickname}-720p.mp4`;
+  remoteVideo.loop = 'true';
+  localVideo.loop = 'true';
+  document.body.classList.add('remote-playing');
+  document.body.classList.add('local-playing');
+
+  pantograph.changeStatus('pantograph', Status.Demo);
+}
+
 window.addEventListener('load', async (event) => {
   const observer = new class {
     onStatusChange(key, oldStatus, newStatus) {
@@ -165,128 +323,36 @@ window.addEventListener('load', async (event) => {
       document.body.classList.add(mode);
     }
   };
+
   const pantograph = new Pantograph(observer);
   pantograph.changeStatus('pantograph', Status.Connecting);
   pantograph.initializeModes();
 
-  const socket = io();
-  socket.on('connect', function() {
-    console.log('[socketio] connect');
-    pantograph.changeStatus('pantograph', Status.Waiting);
-  });
-  socket.on('disconnect', function() {
-    console.log('[socketio] disconnect');
-    pantograph.changeStatus('pantograph', Status.Disconnected);
-  });
-  socket.on('join', function(data) {
-    console.log('[socketio] join', data);
-  });
-  socket.on('joined', function(data) {
-    console.log('[socketio] joined', data);
-    pantograph.updateRoom(data);
-  });
-  socket.on('exited', function(data) {
-    console.log('[socketio] exited', data);
-    pantograph.updateRoom(data);
-  });
+  initClickHandlers(pantograph);
 
   const roomId = window.location.pathname.replace('/app/', '');
-  const room = await getRoom(roomId);
 
-  // this is a hack to avoid cookies (for now?):
-  const params = getQueryParams();
-  let nickname = params['nickname'];
-  let side = params['side'];
-
-  // either we got here from creating a room (nickname query param)...
-  if (nickname) {
-    await showShareModal(params, pantograph.isDebugOff());
-  } else {
-    // ... or we got here from a shared link
-    // ... or a page reload
-
-    const json = await showJoinModal(room);
-    nickname = json['nickname'];
-    side = json['side'];
+  if (roomId === 'demo' || pantograph.isModeOn('demo')) {
+    setupDemo(pantograph);
+    return;
   }
-  pantograph.updateNickname(nickname);
-  socket.emit('join', {nickname: nickname, id: roomId, side: side});
 
-  const format = room['format'];
-  pantograph.updateFormat(format);
-  let otherSide = null;
-  if (side === 'runner') {
-    otherSide = 'corp';
-  }
-  if (side === 'corp') {
-    otherSide = 'runner';
-  }
-  pantograph.updateSide(side);
+  let socket = initializeSocket(pantograph);
+  let {room, nickname, side, otherSide} = await initializeRoom(roomId, pantograph, socket);
 
   let meeting = null;
-  if (!pantograph.isModeOn('demo')) {
-    meeting = await initializeMetered(pantograph, nickname, side, room);
-    if (meeting === null) {
-      // TODO: differentiate between failed to get camera, and failure with Metered API
-      pantograph.changeStatus('metered', Status.NoCamera);
-    }
+  meeting = await initializeMetered(pantograph, nickname, side, room);
+  if (meeting === null) {
+    // TODO: differentiate between failed to get camera, and failure with Metered API
+    pantograph.changeStatus('metered', Status.NoCamera);
   }
 
-  const camButton = document.getElementById('camera');
-  camButton.onclick = async function() {
-    if (!meeting) {
-      console.error('Can\' start camera: Metered meeting not initialized.');
-      return;
-    }
-    try {
-      const deviceId = document.getElementById('video-device').value;
-      await meeting.chooseVideoInputDevice(deviceId);
-      meeting.startVideo();
-    } catch (ex) {
-      console.log('Error occurred when sharing camera', ex);
-    }
-  };
-  const calibrateButton = document.getElementById('calibrate');
-  calibrateButton.onclick = async (e) => {
-    const under = document.querySelector('#primary-container video.live');
-    const dims = getComputedDims(under);
-    const canvas = document.getElementById('calibration-canvas');
-    canvas.style.display = 'unset'; // TODO should this be display block?
-    const calibration = await calibrate(canvas, dims.w, dims.h);
-    pantograph.updateCalibration(calibration);
-    canvas.style.display = 'none';
-  };
-  const swapButton = document.getElementById('swap');
-  swapButton.onclick = function() {
-    const remotePlaceholder = document.getElementById('remote-placeholder');
-    const localPlaceholder = document.getElementById('local-placeholder');
-    swapElements(remotePlaceholder, localPlaceholder);
-    const remoteVideo = document.getElementById('remote-video');
-    const localVideo = document.getElementById('local-video');
-    swapElements(remoteVideo, localVideo);
-  };
+  initCameraButton(meeting);
 
-  function handleClick(e) {
-    cardSearch(e, pantograph.calibration, pantograph.format);
-  }
-  const children = document.querySelectorAll('video.live');
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i];
-    child.addEventListener('click', handleClick);
-  }
-
-  const remoteVideo = document.querySelector('#remote-video');
-  const localVideo = document.querySelector('#local-video');
   if (side !== 'spectator') {
+    const remoteVideo = document.querySelector('#remote-video');
+    const localVideo = document.querySelector('#local-video');
     remoteVideo.side = otherSide;
     localVideo.side = side;
-  }
-  if (pantograph.isModeOn('demo')) {
-    remoteVideo.src = `/${otherSide}-720p.mov`;
-    localVideo.src = `/${side}-720p.mov`;
-    remoteVideo.loop = 'true';
-    localVideo.loop = 'true';
-    document.body.classList.add('remote-playing');
-    document.body.classList.add('local-playing');
   }
 });

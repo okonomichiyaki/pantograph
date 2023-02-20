@@ -107,7 +107,6 @@ export function cardSearch(event, calibration, format) {
         const container = document.getElementById('card-container');
         container.replaceChildren();
         if (cards.length > 0) {
-          console.log(response);
           for (const card of cards) {
             console.log(`received card(s) from server: ${card.title}`);
           }

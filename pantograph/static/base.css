@@ -10,3 +10,8 @@ dialog footer{
 button {
     width: 10rem;
 }
+#branding {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}

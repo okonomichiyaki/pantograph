@@ -4,26 +4,40 @@
         <meta charset="UTF-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>pantograph</title>
+        <link rel="icon" href="logo.svg">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.*/css/pico.min.css">
         <link rel="stylesheet" href="base.css">
         <link rel="stylesheet" href="index.css">
         <script type="module" src="index.js"></script>
     </head>
-    <body class="waiting">
+    <body>
         <div class="container">
             <nav>
                 <ul>
                     <li>
-                        <h1>pantograph
+                        <div id="branding">
+                            <h1>pantograph</h1>
                             <img src="/logo.svg" alt=""/>
-                        </h1>
+                        </div>
+                    </li>
+                </ul>
+                <ul>
+                    <li>
+                        <button id="new-room-button">create room</button>
+                    </li>
+                    <li>
+                        <a href="/app/demo">demo</a>
+                    </li>
+                    <li>
+                        <a href="/about">about</a>
                     </li>
                 </ul>
             </nav>
-            <h2>paper netrunner over webcam</h2>
-            <div id="buttons">
-                <button id="new-room-button">create room</button>
-                <!-- <button>join room</button> -->
+
+            <div id="content">
+                <h2>paper netrunner over webcam</h2>
+                <p>browser based video call with card identification</p>
+                <img src="/screenshot.png" alt="screenshot of netrunner game in progress using webcams" />
             </div>
 
             <dialog id="new-room-modal">

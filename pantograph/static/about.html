@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>pantograph</title>
+        <link rel="stylesheet" href="https://unpkg.com/@picocss/pico@1.*/css/pico.min.css">
+        <link rel="stylesheet" href="base.css">
+        <link rel="stylesheet" href="nav.css">
+    </head>
+    <body>
+        <div class="container">
+            <nav>
+                <ul>
+                    <li>
+                        <div id="branding">
+                            <h1>pantograph</h1>
+                            <img src="/logo.svg" alt=""/>
+                        </div>
+                    </li>
+                </ul>
+                <ul>
+                    <li>
+                        <a href="/">home</a>
+                    </li>
+                    <li>
+                        <a href="/app/demo">demo</a>
+                    </li>
+                    <li>
+                        <a href="/about">about</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+            <div class="container" style="max-width: 640px">
+                <p>
+                    Made with 💖 by
+                    <a href="https://github.com/okonomichiyaki/">@okonomichiyaki</a>
+                </p>
+
+                <h2>how does it work?</h2>
+                <p>
+                    When you click on your opponent's video feed, an image is captured and sent to the backend,
+                    where optical character recognition and a fuzzy text search are used to find the title of the card.
+                </p>
+                <p>
+                    (no image recognition is involved.
+                    if you are proficient in computer vision or machine learning
+                    and are interested in collaborating, please get in touch!)
+                </p>
+
+                <h2>why won't it recognize cards?</h2>
+                <p>
+                    You need a camera capable of capturing at least 720p video with an overhead shot of your play area.
+                    The best way to improve the accuracy is to play in a well lit space with indirect lighting.
+                    Direct light and glare that washes out the text on cards will hinder recognition.
+                    Matte card sleeves may work better than glossy sleeves.
+                </p>
+                <p>
+                    If you are playing Standard, make sure that the room was created with that setting.
+                    Players should join as the side they are playing (this improves identification by narrowing the search space).
+                    Both FFG and NSG cards are supported, but alt arts with unusual templating may not work.
+                </p>
+
+                <h2>what data is stored or collected?</h2>
+                <p>
+                    The software does not use any cookies, and does not collect or store anything other than temporary data.
+                    When you create a room, some data is stored to enable connecting to your opponent,
+                    but this data is deleted after a room is inactive.
+                </p>
+                <p>
+                    The streaming video is coordinated through a
+                    <a href="https://www.metered.ca/">third party API</a>
+                    and will usually be sent between browsers using a peer-to-peer protocol,
+                    but in some network configurations may pass through their servers.
+                </p>
+                <p>
+                    The image used for card identification (a 300 pixel square portion of the video)
+                    is sent to Google's Cloud Vision API.
+                </p>
+
+                <h2>why is it called Pantograph?</h2>
+                <p>
+                    <a href="https://netrunnerdb.com/en/card/30023">Pantograph</a> is
+                    <a href="https://netrunnerdb.com/en/card/30019">Tāo Salonga</a>'s console,
+                    and Tāo's subtitle is "telepresence magician". It's an indirect nod to the
+                    <a href="https://spelltable.wizards.com/">app</a> that inspired it.
+                </p>
+
+                <h2>copyright and trademarks</h2>
+                <p>
+                    Netrunner and Android are trademarks of Fantasy Flight Games and/or Wizards of the Coast.
+                    Card images are copyrighted by Fantasy Flight Games and/or Null Signal Games.
+                    This website is not affiliated with Fantasy Flight Games, Wizards of the Coast, or Null Signal Games.
+                </p>
+            </div>
+    </body>
+</html>

@@ -46,17 +46,23 @@ def create_app():
     def index():
         return send_file("static/index.html")
 
+    @app.route("/about")
+    @auth.login_required
+    def about():
+        return send_file("static/about.html")
+
     @app.route("/app/<room_id>")
     @auth.login_required
     def main_app(room_id):
+        if room_id == 'demo':
+            return send_file("static/app.html")
         nickname = request.args.get("nickname")
         room = store.get_room(room_id)
         if not room:
             return ("no room found", 404)  # TODO render HTML
         if nickname:
             logger.info(f"user {nickname} loaded room {room_id} as host")
-        r = send_file("static/app.html")
-        return r
+        return send_file("static/app.html")
 
     @app.route("/room/<room_id>", methods=["GET"])
     @auth.login_required
