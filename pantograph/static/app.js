@@ -335,14 +335,14 @@ window.addEventListener('load', async (event) => {
       document.body.classList.add(newSide);
     }
     onModeEnabled(mode) {
-      // const root = document.getElementsByTagName('html')[0];
-      // root.setAttribute('class', mode);
+      const root = document.getElementsByTagName('html')[0];
+      root.classList.add(mode);
       document.body.classList.add(mode);
       document.querySelector('div.container-fluid').classList.add(mode);
     }
     onModeDisabled(mode) {
-      // const root = document.getElementsByTagName('html')[0];
-      // root.setAttribute('class', mode);
+      const root = document.getElementsByTagName('html')[0];
+      root.classList.remove(mode);
       document.body.classList.remove(mode);
       document.querySelector('div.container-fluid').classList.remove(mode);
     }
