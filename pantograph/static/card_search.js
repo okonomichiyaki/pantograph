@@ -117,7 +117,7 @@ export function cardSearch(event, pantograph) {
           const card = cards[0];
           const img = document.createElement('img');
           const size = 'large';
-          img.src = 'https://static.nrdbassets.com/v1/' + size + '/' + card.code + '.jpg';
+          img.src = `https://storage.googleapis.com/netrunner-cards/images/${card.code}.jpg`;
           img.alt = card.title;
           img.classList.add('card');
 
