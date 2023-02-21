@@ -41,4 +41,14 @@ function createNewRoom(json) {
 
 window.addEventListener('load', (event) => {
   prepareModal('new-room-button', 'new-room-modal', createNewRoom, ['nickname', 'format', 'side']);
+  const screenshots = [
+    'demo-esa-prav.png',
+    'demo-padma-prav.png',
+    'demo-esa-thule.png',
+    'demo-padma-issuaq.png'
+  ];
+  const screenshot = screenshots[Math.floor(Math.random() * screenshots.length)];
+  const img = document.getElementById('screenshot');
+  img.src = '/images/' + screenshot;
+  img.style.display = 'block';
 });
