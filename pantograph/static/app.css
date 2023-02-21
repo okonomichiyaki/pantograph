@@ -24,8 +24,9 @@ canvas#crop {
     justify-self: center;
 }
 
-/* hide some things (eg camera controls) from spectator */
-.spectator .spectator-hide {
+/* hide some things (eg camera controls) from spectator
+   needs to be more specific than player rules below */
+.spectator li.spectator-hide {
     display: none;
 }
 
