@@ -225,17 +225,26 @@ function initClickHandlers(pantograph) {
 
   const focusButton = document.getElementById('focus');
   focusButton.onclick = function() {
-    //const video = document.querySelector('#primary-container video.live');
+    const toast = Toastify({
+      text: "tap spacebar to leave focus mode",
+      close: false,
+      duration: 3000,
+      style: {
+        background: "#11191f",
+        color: "hsl(205deg, 16%, 77%)"
+      },
+    });
     function leaveFocus(event) {
       const keyName = event.key;
-      console.log(`keyName=${keyName}`, event);
       if (keyName === ' ') {
         document.removeEventListener('keypress', leaveFocus);
+        toast.hideToast();
         pantograph.unsetMode('focus');
       }
     }
     document.addEventListener('keypress', leaveFocus);
     pantograph.setMode('focus');
+    toast.showToast();
   };
 
   function handleSearchClick(e) {

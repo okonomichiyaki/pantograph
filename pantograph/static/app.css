@@ -197,4 +197,5 @@ div.placeholder {
     z-index: 100;
     left: 0;
     top: 0;
+    backdrop-filter: blur(0.25rem);
 }

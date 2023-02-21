@@ -122,19 +122,20 @@ export function cardSearch(event, pantograph) {
           img.classList.add('card');
 
           if (pantograph.isModeOn('focus')) {
-              let t = Toastify({
-                node: img,
-                duration: -1,
-                close: false,
-                stopOnFocus: true,
-                style: {
-                  padding: 0,
-                  background: "rgba(0,0,0,0)"
-                },
-                onClick: function(){
-                  t.hideToast();
-                }
-              }).showToast();
+            const toast = Toastify({
+              node: img,
+              duration: -1,
+              close: false,
+              stopOnFocus: true,
+              style: {
+                padding: 0,
+                background: "rgba(0,0,0,0)"
+              },
+              onClick: function(){
+                toast.hideToast();
+              }
+            });
+            toast.showToast();
           } else {
             container.appendChild(img);
           }
