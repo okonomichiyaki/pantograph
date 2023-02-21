@@ -13,10 +13,12 @@
             <nav>
                 <ul>
                     <li>
-                        <div id="branding">
-                            <h1>pantograph</h1>
-                            <img src="/logo.svg" alt=""/>
-                        </div>
+                        <a href="/">
+                            <div id="branding">
+                                <h1>pantograph</h1>
+                                <img src="/logo.svg" alt=""/>
+                            </div>
+                        </a>
                     </li>
                 </ul>
                 <ul>
@@ -34,16 +36,16 @@
         </div>
             <div class="container" style="max-width: 640px">
                 <p>
-                    Made with 💖 by
+                    made with 💖 by
                     <a href="https://github.com/okonomichiyaki/">@okonomichiyaki</a>
                 </p>
 
                 <h2>how does it work?</h2>
                 <p>
                     When you click on your opponent's video feed, an image is captured and sent to the backend,
-                    where optical character recognition and a fuzzy text search are used to find the title of the card.
+                    where optical character recognition and fuzzy text search are used to find the title of the card.
                 </p>
-                <p>
+                <p style="font-style: italic; font-size: 0.75em">
                     (no image recognition is involved.
                     if you are proficient in computer vision or machine learning
                     and are interested in collaborating, please get in touch!)
@@ -57,8 +59,12 @@
                     Matte card sleeves may work better than glossy sleeves.
                 </p>
                 <p>
-                    If you are playing Standard, make sure that the room was created with that setting.
-                    Players should join as the side they are playing (this improves identification by narrowing the search space).
+                    If you haven't already, be sure click the "calibrate" button and drag select a rectangle on your opponent's screen around any card. You should repeat this process in a new room or if your opponent's video changes (zooms in/out or moves closer/farther away from the table).
+                </p>
+                <p>
+                    If you are playing Standard, you must create the room with that setting, otherwise only Startup cards will be searched for.
+                    Players should join as the side they are playing, and either create a new room, or leave and rejoin to switch sides if you play a second game.
+                    (this improves identification by narrowing the search space)
                     Both FFG and NSG cards are supported, but alt arts with unusual templating may not work.
                 </p>
 
