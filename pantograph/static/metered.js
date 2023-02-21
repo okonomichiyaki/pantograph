@@ -1,4 +1,5 @@
 import {showModal} from './modals.js';
+import {Status} from './status.js';
 
 function watchResolution(e) {
   let vw; let vh;
@@ -53,10 +54,17 @@ export async function initializeMetered(pantograph, nickname, side, room) {
   });
   meeting.on('stateChanged', function(meetingState) {
     console.log('[Metered] stateChanged', meetingState);
-    pantograph.changeStatus('metered', meetingState);
+
     if (meetingState === 'terminated') {
-      showModal('terminated-modal');
+      showModal('terminated-modal'); // TODO: this is a terminal state and should stop video streams?
     }
+
+    if (meetingState === 'joined') {
+//      pantograph.changeStatus('app', Status.Calling);
+      return;
+    }
+
+//    pantograph.changeStatus('call', meetingState);
   });
   meeting.on('localTrackStarted', function(item) {
     console.log('[Metered] localTrackStarted', item);
@@ -66,6 +74,8 @@ export async function initializeMetered(pantograph, nickname, side, room) {
       const localVideo = document.getElementById('local-video');
       localVideo.srcObject = mediaStream;
       document.body.classList.add('local-playing');
+//      pantograph.changeStatus('call', Status.LocalVideo);
+      pantograph.changeStatus('app', Status.Calling);
     }
   });
   meeting.on('remoteTrackStarted', function(item) {
@@ -82,17 +92,22 @@ export async function initializeMetered(pantograph, nickname, side, room) {
           remoteVideo.srcObject = stream;
           remoteVideo.side = 'runner';
           document.body.classList.add('remote-playing');
+//          pantograph.changeStatus('call', Status.RemoteVideo);
           watchResolution(remoteVideo);
         } else if (side === 'corp') {
           localVideo.srcObject = stream;
           localVideo.side = 'corp';
           document.body.classList.add('local-playing');
+//          pantograph.changeStatus('call', Status.LocalVideo);
         }
       } else {
         remoteVideo.srcObject = stream;
         document.body.classList.add('remote-playing');
+//        pantograph.changeStatus('call', Status.RemoteVideo);
         watchResolution(remoteVideo);
       }
+
+      pantograph.changeStatus('app', Status.Calling);
     }
   });
 

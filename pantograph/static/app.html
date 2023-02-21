@@ -23,12 +23,17 @@
                 <ul>
                     <li>
                         <div class="status">
-                            <span id="pantograph" aria-busy="true">connecting...</span>
+                            <span id="app" aria-busy="false"></span>
                         </div>
                     </li>
                     <li>
                         <div class="status">
-                            <span id="metered" aria-busy="false"></span>
+                            <span id="call" aria-busy="false"></span>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="status">
+                            <span id="server" aria-busy="false"></span>
                         </div>
                     </li>
                 </ul>
@@ -42,22 +47,22 @@
                     </div>
                     <nav>
                         <ul>
-                            <li class="spectator-hide">
+                            <li class="spectator-hide ready-visible local-playing-hide">
                                 <select id="video-device" defaultValue="loading">
                                     <option value="loading">loading...</option>
                                 </select>
                             </li>
-                            <li class="spectator-hide">
+                            <li class="spectator-hide ready-visible local-playing-hide">
                                 <a href="#" role="button" id="camera">start camera</a>
                             </li>
                             <li>
-                                <a href="#" role="button" id="calibrate" class="">calibrate</a>
+                                <a href="#" role="button" id="calibrate" class="both-playing-visible">calibrate</a>
                             </li>
                             <li>
-                                <a href="#" role="button" id="swap" class="">swap video</a>
+                                <a href="#" role="button" id="swap" class="both-playing-visible">swap video</a>
                             </li>
                             <li>
-                                <a href="#" role="button" id="focus" class="">focus mode</a>
+                                <a href="#" role="button" id="focus" class="both-playing-visible">focus mode</a>
                             </li>
                         </ul>
                     </nav>
@@ -139,7 +144,7 @@
         </div>
 
         <script src="https://cdn.metered.ca/sdk/video/1.4.6/sdk.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/build/cjs/index.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/dist/socket.io.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
         <script type="module" src="/app.js"></script>
 </body>

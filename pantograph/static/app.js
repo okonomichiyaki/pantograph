@@ -4,6 +4,7 @@ import {calibrate} from './calibration.js';
 import {cardSearch} from './card_search.js';
 import {getRoom} from './rooms.js';
 import {initializeMetered} from './metered.js';
+import {Status} from './status.js';
 
 class Pantograph {
   modes = {};
@@ -49,7 +50,7 @@ class Pantograph {
       return this.nickname !== member['nickname'];
     });
     if (other) {
-      this.changeStatus('pantograph', Status.Ready);
+      this.changeStatus('app', Status.Ready);
     }
     this.client.onParticipantChange(members);
   }
@@ -90,29 +91,6 @@ class Pantograph {
   }
 }
 
-class Status {
-  static Initial = new Status('initial', 'app starting', true);
-  static Connecting = new Status('connecting', 'connecting to server', true);
-  static Waiting = new Status('waiting', 'waiting for opponent to join', true);
-  static Ready = new Status('ready', 'ready to start call', false);
-  static Calling = new Status('calling', 'call in progress', false);
-  static Disconnected = new Status('disconnected', 'lost connection to server', true);
-  static NoCamera = new Status('nocamera', 'unable to find camera ❌', false);
-  static Demo = new Status('demo', 'DEMO MODE', false);
-
-  constructor(name, description, busy) {
-    this.name = name;
-    this.description = description;
-    this.busy = busy;
-  }
-  toString() {
-    return this.name;
-  }
-  isBusy() {
-    return this.busy;
-  }
-}
-
 async function showShareModal(params, debugOff) {
   const input = document.getElementById('share-link-input');
   const location = window.location;
@@ -144,11 +122,12 @@ function initializeSocket(pantograph) {
   const socket = io();
   socket.on('connect', function() {
     console.log('[socketio] connect');
-    pantograph.changeStatus('pantograph', Status.Waiting);
+    pantograph.changeStatus('app', Status.Waiting);
+    pantograph.changeStatus('server', Status.Connected);
   });
   socket.on('disconnect', function() {
     console.log('[socketio] disconnect');
-    pantograph.changeStatus('pantograph', Status.Disconnected);
+    pantograph.changeStatus('server', Status.Disconnected);
   });
   socket.on('join', function(data) {
     console.log('[socketio] join', data);
@@ -261,7 +240,7 @@ function initCameraButton(meeting) {
   const camButton = document.getElementById('camera');
   camButton.onclick = async function() {
     if (!meeting) {
-      console.error('Can\' start camera: Metered meeting not initialized.');
+      console.error('Can\'t start camera: Metered meeting not initialized.');
       return;
     }
     try {
@@ -269,7 +248,7 @@ function initCameraButton(meeting) {
       await meeting.chooseVideoInputDevice(deviceId);
       meeting.startVideo();
     } catch (ex) {
-      console.log('Error occurred when sharing camera', ex);
+      console.error('Error occurred when sharing camera', ex);
     }
   };
 }
@@ -320,7 +299,8 @@ function setupDemo(pantograph) {
   document.body.classList.add('remote-playing');
   document.body.classList.add('local-playing');
 
-  pantograph.changeStatus('pantograph', Status.Demo);
+//  pantograph.changeStatus('app', Status.Demo);
+  pantograph.changeStatus('app', Status.Calling);
 }
 
 window.addEventListener('load', async (event) => {
@@ -329,8 +309,9 @@ window.addEventListener('load', async (event) => {
       console.log(`[observer] onStatusChange: ${key} ${oldStatus} -> ${newStatus}`);
       const indicator = document.querySelector(`.status span#${key}`);
       if (indicator && newStatus.name) {
-        indicator.innerHTML = newStatus.description;
+        indicator.innerHTML = newStatus.description + ' ' + newStatus.emoji;
         indicator.setAttribute('aria-busy', newStatus.isBusy());
+
         document.body.classList.add(newStatus.name);
         if (oldStatus) {
           document.body.classList.remove(oldStatus.name);
@@ -368,7 +349,7 @@ window.addEventListener('load', async (event) => {
   };
 
   const pantograph = new Pantograph(observer);
-  pantograph.changeStatus('pantograph', Status.Connecting);
+  pantograph.changeStatus('app', Status.Connecting);
   pantograph.initializeModes();
 
   initClickHandlers(pantograph);
@@ -387,7 +368,7 @@ window.addEventListener('load', async (event) => {
   meeting = await initializeMetered(pantograph, nickname, side, room);
   if (meeting === null) {
     // TODO: differentiate between failed to get camera, and failure with Metered API
-    pantograph.changeStatus('metered', Status.NoCamera);
+    pantograph.changeStatus('call', Status.NoCamera);
   }
 
   initCameraButton(meeting);

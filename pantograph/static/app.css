@@ -24,9 +24,12 @@ canvas#crop {
     justify-self: center;
 }
 
+/* hide some things (eg camera controls) from spectator */
 .spectator .spectator-hide {
     display: none;
 }
+
+/* hide camera controls while waiting. show when ready */
 .waiting .ready-visible {
     display: none;
 }
@@ -36,6 +39,21 @@ canvas#crop {
 .ready .ready-visible {
     display: block;
 }
+
+/* hide camera controls after local video playing (TODO: switch to "stop" controls) */
+.local-playing .local-playing-hide {
+    /* display: none; */
+}
+
+/* hide some controls until both playing */
+body.local-playing.remote-playing .both-playing-visible {
+    /* display: block; */
+}
+.both-playing-visible {
+    /* display: none; */
+}
+
+/* ??? */
 .connecting-visible {
     display: none;
 }
