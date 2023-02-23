@@ -42,10 +42,13 @@ function createNewRoom(json) {
 window.addEventListener('load', (event) => {
   prepareModal('new-room-button', 'new-room-modal', createNewRoom, ['nickname', 'format', 'side']);
   const screenshots = [
-    'demo-esa-prav.png',
+    'demo-esâ-ob.png',
+    'demo-issuaq-padma.png',
+    'demo-ob-esâ.png',
     'demo-padma-prav.png',
-    'demo-esa-thule.png',
-    'demo-padma-issuaq.png'
+    'demo-prav-esâ.png',
+    'demo-sable-thule.png',
+    'demo-thule-sable.png'
   ];
   const screenshot = screenshots[Math.floor(Math.random() * screenshots.length)];
   const img = document.getElementById('screenshot');

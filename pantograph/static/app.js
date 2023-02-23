@@ -255,8 +255,8 @@ function initCameraButton(meeting) {
 
 function setupDemo(pantograph) {
   // select a random corp and random runner, unless one passed in query params:
-  const runners = ['esâ', 'padma'];
-  const corps = ['prav', 'thule', 'issuaq'];
+  const runners = ['esâ', 'padma', 'sable'];
+  const corps = ['prav', 'thule', 'issuaq', 'ob'];
   let runnerNick = getQueryParams('runner');
   let corpNick = getQueryParams('corp');
   if (!runnerNick) {
