@@ -93,9 +93,11 @@ export function cardSearch(event, pantograph) {
   // then render calibration for debugging: (AFTER extracting data)
   debugCalibration(calibration, crop, ctx, vw, vh);
 
+  let scaledCalibration = scaleCalibration(calibration, vw, vh);
+
   const json = {
     image: data,
-    calibration: scaleCalibration(calibration, vw, vh),
+    calibration: scaledCalibration,
     side: side,
     format: format,
   };
@@ -142,7 +144,14 @@ export function cardSearch(event, pantograph) {
           debugOutput(response);
         } else {
           const unknown = document.createElement('div');
-          unknown.innerHTML = '❓';
+          unknown.style.width = scaledCalibration.w;
+          unknown.style.height = scaledCalibration.h;
+          if (side === 'corp') {
+            unknown.style.backgroundColor = 'dodgerblue';
+          } else {
+            unknown.style.backgroundColor = 'crimson'; //'firebrick';
+          }
+          unknown.innerHTML = '❔';
           unknown.id = 'unknown-card';
           container.appendChild(unknown);
         }

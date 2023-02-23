@@ -7,11 +7,37 @@
     margin: 0;
     --font-size: 1.25rem;
 }
-@media (min-width: 35rem) {
+#branding-mini {
+    display: none;
+}
+@media (min-width: 768px) {
     #branding img {
         width: 150px;
         margin-left: 20px;
     }
+    #upper-right-burger {
+        display: none;
+    }
+    #burger-expand {
+        display: none;
+    }
+}
+@media (max-width: 768px) {
+    #upper-right-menu {
+        display: none;
+    }
+    #upper-right-burger {
+        display: block;
+    }
+    #burger-button {
+        /* width: 5rem; */
+    }
+}
+#burger-expand {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+    text-align: center;
 }
 h1 {
     margin: 0;

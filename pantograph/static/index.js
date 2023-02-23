@@ -54,4 +54,12 @@ window.addEventListener('load', (event) => {
   const img = document.getElementById('screenshot');
   img.src = '/images/' + screenshot;
   img.style.display = 'block';
+
+  const burger = document.getElementById('burger-button');
+  burger.onclick = function(e) {
+    document.getElementById('upper-right-menu').style.display = 'block';
+    document.getElementById('branding').style.display = 'none';
+    document.getElementById('branding-mini').style.display = 'block';
+    burger.style.display = 'none';
+  };
 });

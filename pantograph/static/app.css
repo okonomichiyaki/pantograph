@@ -15,6 +15,15 @@ canvas#crop {
 .debug #debug {
     display: block;
 }
+#debug h2 {
+    --typography-spacing-vertical: .5rem;
+}
+#debug pre {
+    --typography-spacing-vertical: 0;
+}
+#debug canvas, #debug img {
+    border: dashed coral;
+}
 
 /* Placeholders and status changes */
 #unknown-card {
@@ -212,6 +221,8 @@ div.placeholder {
     align-items: center;
     justify-content: center;
 }
+
+/* focus mode brings primary video to take up whole view, also blurs rest of page */
 .focus #primary-container .video {
     height: 100vh;
     width: 100vw;
@@ -220,4 +231,54 @@ div.placeholder {
     left: 0;
     top: 0;
     backdrop-filter: blur(0.25rem);
+}
+
+/* responsive styles */
+@media (orientation: portrait) {
+    div.main {
+        flex-direction: column;
+        justify-content: space-evenly;
+        flex-basis: 0;
+    }
+    div.main div {
+        padding: 0;
+    }
+    div.left-panel nav {
+        display: none;
+    }
+    div.left-panel {
+        width: 100%;
+        flex-grow: 0;
+    }
+    div.right-panel {
+        width: 100%;
+    }
+    #primary-container {
+        position: static;
+        width: 100%;
+        height: 100%;
+        flex-grow: 0;
+    }
+    #primary-container .video {
+        position: static;
+    }
+
+    #card-container {
+        width:100%;
+        position:relative;
+    }
+    html,body,#card-container {
+        height:100%;
+    }
+    #card-container > img {
+        width:100%;
+        max-width: 300px;
+        position:absolute;
+        top:0; left:0; right:0; bottom:0;
+        margin:auto;
+    }
+
+    html:not(.debug), body:not(.debug), .container-fluid:not(.debug) {
+        overflow: visible;
+    }
 }
