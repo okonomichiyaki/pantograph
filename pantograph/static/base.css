@@ -15,3 +15,23 @@ button {
     flex-direction: row;
     align-items: center;
 }
+@media (max-width: 576px) {
+    body.style-debug {
+        background-color: mediumorchid;
+    }
+}
+@media (min-width: 576px) and (max-width: 768px) {
+    body.style-debug {
+        background-color: mediumseagreen;
+    }
+}
+@media (min-width: 768px) and (max-width: 992px) {
+    body.style-debug {
+        background-color: steelblue;
+    }
+}
+@media (min-width: 992px) and (max-width: 1200px) {
+    body.style-debug {
+        background-color: tomato;
+    }
+}

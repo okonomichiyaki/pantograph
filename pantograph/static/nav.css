@@ -1,6 +1,8 @@
 nav {
     height: 10%;
-    /* background-color: coral; */
+}
+.style-debug nav {
+    background-color: darkviolet;
 }
 #branding img {
     margin-left: 10px;
