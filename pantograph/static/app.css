@@ -120,15 +120,15 @@ html:not(.debug), body:not(.debug), .container-fluid:not(.debug) {
     height: 100%;
     display: flex;
     flex-direction: column;
-    /* background-color: yellowgreen; */
+}
+.style-debug .left-panel {
+    background-color: yellowgreen;
 }
 #primary-container {
     flex-grow: 2;
 }
 
 .right-panel {
-    /* background-color: steelblue; */
-
     /* maximize height, but constrain width and shrink (allows left panel to use more space) */
     height: 100%;
     min-width: 360px; /* TODO: could this be a percentage? */
@@ -144,6 +144,9 @@ html:not(.debug), body:not(.debug), .container-fluid:not(.debug) {
        changed to center horiz in panel, and maintains aspect ratio of card images
        (https://stackoverflow.com/a/44030846/352061) */
     align-items: center;
+}
+.style-debug .right-panel {
+    background-color: steelblue;
 }
 #secondary-container {
     width: 100%;
