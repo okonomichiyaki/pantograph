@@ -5,6 +5,7 @@ import {cardSearch} from './card_search.js';
 import {getRoom} from './rooms.js';
 import {initializeMetered} from './metered.js';
 import {Status} from './status.js';
+import {View} from './view.js';
 
 class Pantograph {
   modes = {};
@@ -53,6 +54,10 @@ class Pantograph {
       this.changeStatus('app', Status.Ready);
     }
     this.client.onParticipantChange(members);
+  }
+
+  updateSearchResults(response) {
+    this.client.onSearchResult(response);
   }
 
   initializeModes() {
@@ -180,7 +185,7 @@ async function initializeRoom(roomId, pantograph, socket) {
   return {room, nickname, side, otherSide};
 }
 
-function initClickHandlers(pantograph) {
+function initClickHandlers(pantograph, view) {
   const calibrateButton = document.getElementById('calibrate');
   calibrateButton.onclick = async (e) => {
     const under = document.querySelector('#primary-container video.live');
@@ -219,6 +224,7 @@ function initClickHandlers(pantograph) {
         document.removeEventListener('keypress', leaveFocus);
         toast.hideToast();
         pantograph.unsetMode('focus');
+        view.clearCard();
       }
     }
     document.addEventListener('keypress', leaveFocus);
@@ -227,6 +233,7 @@ function initClickHandlers(pantograph) {
   };
 
   function handleSearchClick(e) {
+    view.clearCard();
     cardSearch(e, pantograph);
   }
   const children = document.querySelectorAll('video.live');
@@ -304,6 +311,7 @@ function setupDemo(pantograph) {
 }
 
 window.addEventListener('load', async (event) => {
+  const view = new View();
   const observer = new class {
     onStatusChange(key, oldStatus, newStatus) {
       console.log(`[observer] onStatusChange: ${key} ${oldStatus} -> ${newStatus}`);
@@ -346,13 +354,27 @@ window.addEventListener('load', async (event) => {
       document.body.classList.remove(mode);
       document.querySelector('div.container-fluid').classList.remove(mode);
     }
+    onSearchResult(response) {
+      const cards = response.cards;
+      const focusMode = pantograph.isModeOn('focus');
+      if (cards.length > 0) {
+        for (const card of cards) {
+          console.log(`received card(s) from server: ${card.title}`);
+        }
+        const card = cards[0];
+        view.renderKnownCard(card, focusMode);
+        view.renderDebug(response);
+      } else {
+        view.renderUnknownCard(response.side, focusMode);
+      }
+    }
   };
 
   const pantograph = new Pantograph(observer);
   pantograph.changeStatus('app', Status.Connecting);
   pantograph.initializeModes();
 
-  initClickHandlers(pantograph);
+  initClickHandlers(pantograph, view);
 
   const roomId = window.location.pathname.replace('/app/', '');
 

@@ -20,31 +20,6 @@ function debugCalibration(calibration, canvas, ctx, vw, vh) {
   ctx.strokeRect(x, y, w, h);
 }
 
-function debugOutput(response) {
-  const b64 = response.img;
-  const dataUri = `data:image/jpeg;base64,${b64}`;
-  const container = document.getElementById('debug-image-container');
-  container.replaceChildren();
-  const img = document.createElement('img');
-  img.src = dataUri;
-  container.appendChild(img);
-
-  if (response.reasons && response.reasons.length > 0) {
-    const logs = response.reasons.map(([t, r]) => t + ',' + r).join('\n');
-    const display = document.getElementById('debug-search-logs');
-    display.innerText = '';
-    display.innerText = logs;
-  }
-
-  if (response.cards && response.cards.length > 1) {
-    const cards = response.cards.slice(1);
-    const titles = cards.map((card) => card.title + ',' + card.dist).join('\n');
-    const display = document.getElementById('debug-alternates');
-    display.innerText = '';
-    display.innerText = titles;
-  }
-}
-
 export function cardSearch(event, pantograph) {
   const e = event.target;
   if (e.parentElement.id === 'secondary-container') {
@@ -53,9 +28,6 @@ export function cardSearch(event, pantograph) {
 
   const calibration = pantograph.calibration;
   const format = pantograph.format;
-
-  const container = document.getElementById('card-container');
-  container.replaceChildren();
   const side = e.side;
 
   // crop a 300x300 square from the video feed around the mouse click:
@@ -111,50 +83,8 @@ export function cardSearch(event, pantograph) {
   fetch('/recognize', options)
       .then((response) => response.json())
       .then((response) => {
-        const cards = response.cards;
-        if (cards.length > 0) {
-          for (const card of cards) {
-            console.log(`received card(s) from server: ${card.title}`);
-          }
-          const card = cards[0];
-          const img = document.createElement('img');
-          const size = 'large';
-          img.src = `https://storage.googleapis.com/netrunner-cards/images/${card.code}.jpg`;
-          img.alt = card.title;
-          img.classList.add('card');
-
-          if (pantograph.isModeOn('focus')) {
-            const toast = Toastify({
-              node: img,
-              duration: -1,
-              close: false,
-              stopOnFocus: true,
-              style: {
-                padding: 0,
-                background: "rgba(0,0,0,0)"
-              },
-              onClick: function(){
-                toast.hideToast();
-              }
-            });
-            toast.showToast();
-          } else {
-            container.appendChild(img);
-          }
-          debugOutput(response);
-        } else {
-          const unknown = document.createElement('div');
-          unknown.style.width = scaledCalibration.w;
-          unknown.style.height = scaledCalibration.h;
-          if (side === 'corp') {
-            unknown.style.backgroundColor = 'dodgerblue';
-          } else {
-            unknown.style.backgroundColor = 'crimson'; //'firebrick';
-          }
-          unknown.innerHTML = '❔';
-          unknown.id = 'unknown-card';
-          container.appendChild(unknown);
-        }
+        response.side = side; // TODO
+        pantograph.updateSearchResults(response);
       })
       .catch((err) => console.error(err));
 };

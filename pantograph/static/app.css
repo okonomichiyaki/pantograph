@@ -20,6 +20,7 @@ canvas#crop {
 }
 #debug pre {
     --typography-spacing-vertical: 0;
+    margin: 0;
 }
 #debug canvas, #debug img {
     border: dashed coral;
@@ -27,10 +28,13 @@ canvas#crop {
 
 /* Placeholders and status changes */
 #unknown-card {
-    font-size: 100px;
-    height: 100%;
-    align-self: center;
-    justify-self: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 200px;
+    font-weight: bold;
+    width: 215px;
+    height: 300px;
 }
 
 /* hide some things (eg camera controls) from spectator
