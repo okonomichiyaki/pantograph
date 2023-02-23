@@ -7,6 +7,9 @@ export function calibrate(canvas, width, height) {
     const ctx = canvas.getContext('2d');
     ctx.canvas.width = width;
     ctx.canvas.height = height;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    canvas.style.display = 'block';
 
     function onMouseMove(e) {
       const offsetX = e.offsetX;

@@ -186,7 +186,6 @@ function initClickHandlers(pantograph) {
     const under = document.querySelector('#primary-container video.live');
     const dims = getComputedDims(under);
     const canvas = document.getElementById('calibration-canvas');
-    canvas.style.display = 'unset';
     const calibration = await calibrate(canvas, dims.w, dims.h);
     pantograph.updateCalibration(calibration);
     canvas.style.display = 'none';
