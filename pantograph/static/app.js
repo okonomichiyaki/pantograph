@@ -215,6 +215,7 @@ function initClickHandlers(pantograph) {
     function leaveFocus(event) {
       const keyName = event.key;
       if (keyName === ' ') {
+        event.preventDefault();
         document.removeEventListener('keypress', leaveFocus);
         toast.hideToast();
         pantograph.unsetMode('focus');
