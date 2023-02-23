@@ -93,7 +93,7 @@ def search(img_bytes, debug=False, visual_debug=False, calibration=DEFAULT):
             f.write(img_bytes)
     blocks = vision.recognize_bytes(img_bytes)
     if len(blocks) < 1:
-        return []
+        return {"filtered": []}
     img = cv.imdecode(np.frombuffer(img_bytes, np.uint8), -1)
     copy = img.copy()
     (w, h, *_) = img.shape
