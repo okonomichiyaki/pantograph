@@ -1,6 +1,15 @@
 import {showModal} from './modals.js';
 import {Status} from './status.js';
 
+function stopVideo(video) {
+  video.pause();
+  let tracks = video.srcObject.getTracks();
+  for (let track of tracks) {
+    video.srcObject.removeTrack(track);
+  }
+  video.srcObject = null;
+}
+
 function watchResolution(e) {
   let vw; let vh;
   setInterval(function() {
@@ -109,6 +118,18 @@ export async function initializeMetered(pantograph, nickname, side, room) {
 
       pantograph.changeStatus('app', Status.Calling);
     }
+  });
+  meeting.on('localTrackStopped', function(item) {
+    console.log('[Metered] localTrackStopped', item);
+    const video = document.getElementById('local-video');
+    stopVideo(video);
+    document.body.classList.remove('local-playing');
+  });
+  meeting.on('remoteTrackStopped', function(item) {
+    console.log('[Metered] remoteTrackStopped', item);
+    const video = document.getElementById('remote-video');
+    stopVideo(video);
+    document.body.classList.remove('remote-playing');
   });
 
   const roomId = room.id;

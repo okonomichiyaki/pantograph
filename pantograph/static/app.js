@@ -243,9 +243,9 @@ function initClickHandlers(pantograph, view) {
   }
 }
 
-function initCameraButton(meeting) {
-  const camButton = document.getElementById('camera');
-  camButton.onclick = async function() {
+function initCameraButtons(meeting) {
+  const startButton = document.getElementById('start-camera');
+  startButton.onclick = async function() {
     if (!meeting) {
       console.error('Can\'t start camera: Metered meeting not initialized.');
       return;
@@ -255,7 +255,19 @@ function initCameraButton(meeting) {
       await meeting.chooseVideoInputDevice(deviceId);
       meeting.startVideo();
     } catch (ex) {
-      console.error('Error occurred when sharing camera', ex);
+      console.error('Error occurred when starting camera', ex);
+    }
+  };
+  const stopButton = document.getElementById('stop-camera');
+  stopButton.onclick = async function() {
+    if (!meeting) {
+      console.error('Can\'t stop camera: Metered meeting not initialized.');
+      return;
+    }
+    try {
+      meeting.stopVideo();
+    } catch (ex) {
+      console.error('Error occurred when stopping camera', ex);
     }
   };
 }
@@ -389,11 +401,10 @@ window.addEventListener('load', async (event) => {
   let meeting = null;
   meeting = await initializeMetered(pantograph, nickname, side, room);
   if (meeting === null) {
-    // TODO: differentiate between failed to get camera, and failure with Metered API
-    pantograph.changeStatus('call', Status.NoCamera);
+    pantograph.changeStatus('app', Status.NoCamera);
   }
 
-  initCameraButton(meeting);
+  initCameraButtons(meeting);
 
   if (side !== 'spectator') {
     const remoteVideo = document.querySelector('#remote-video');

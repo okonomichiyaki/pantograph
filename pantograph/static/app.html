@@ -42,34 +42,41 @@
                 <div class="left-panel">
                     <div id="primary-container">
                         <canvas style="cursor: crosshair;" id="calibration-canvas" width="", height=""></canvas>
-                        <div id="remote-placeholder" class="video placeholder">🎦</div>
+                        <div id="remote-placeholder" class="video placeholder">
+                            <div>🎦</div>
+                        </div>
                         <video id="remote-video" class="live video" autoplay playsinline></video>
                     </div>
                     <nav>
                         <ul>
-                            <li class="spectator-hide ready-visible local-playing-hide">
+                            <li class="spectator-hide">
                                 <select id="video-device" defaultValue="loading">
                                     <option value="loading">loading...</option>
                                 </select>
                             </li>
-                            <li class="spectator-hide ready-visible local-playing-hide">
-                                <a href="#" role="button" id="camera">start camera</a>
+                            <li class="spectator-hide">
+                                <a href="#" role="button" id="start-camera">start camera</a>
+                            </li>
+                            <li class="spectator-hide">
+                                <a href="#" role="button" id="stop-camera">stop camera</a>
                             </li>
                             <li>
-                                <a href="#" role="button" id="calibrate" class="both-playing-visible">calibrate</a>
+                                <a href="#" role="button" id="calibrate">calibrate</a>
                             </li>
                             <li>
-                                <a href="#" role="button" id="swap" class="both-playing-visible">swap video</a>
+                                <a href="#" role="button" id="swap">swap video</a>
                             </li>
                             <li>
-                                <a href="#" role="button" id="focus" class="both-playing-visible">focus mode</a>
+                                <a href="#" role="button" id="focus">focus mode</a>
                             </li>
                         </ul>
                     </nav>
                 </div>
                 <div class="right-panel">
                     <div id="secondary-container">
-                        <div id="local-placeholder"  class="video placeholder">🎦</div>
+                        <div id="local-placeholder"  class="video placeholder">
+                            <div>🎦</div>
+                        </div>
                         <video id="local-video" class="live video" autoplay playsinline></video>
                     </div>
                     <div id="card-container">

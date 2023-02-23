@@ -78,11 +78,6 @@ body.local-playing.remote-playing .both-playing-visible {
     display: none;
 }
 
-/* if nocamera error occurs, hide other statuses (this takes precedence) */
-.nocamera .status > :not(#metered) {
-    display: none;
-}
-
 /* when local/remote video is playing, hide matching placeholder and reveal video */
 .remote-playing #remote-placeholder {
     display: none;
@@ -177,6 +172,18 @@ div.placeholder {
     background-color: grey;
     height: 100%;
     width: 100%;
+}
+.runner div#local-placeholder div {
+    border: crimson solid;
+}
+.runner div#remote-placeholder div {
+    border: dodgerblue solid;
+}
+.corp div#remote-placeholder div {
+    border: crimson solid;
+}
+.corp div#local-placeholder div {
+    border: dodgerblue solid;
 }
 
 .card {
