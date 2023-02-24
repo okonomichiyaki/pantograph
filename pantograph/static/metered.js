@@ -1,13 +1,23 @@
 import {showModal} from './modals.js';
 import {Status} from './status.js';
 
-function stopVideo(video) {
-  video.pause();
-  let tracks = video.srcObject.getTracks();
-  for (let track of tracks) {
-    video.srcObject.removeTrack(track);
-  }
-  video.srcObject = null;
+function startPlaying(stream, which, container, side) {
+  const video = document.createElement('video');
+  video.id = which + '-video';
+  video.autoPlay = true;
+  video.playsInline = true;
+  video.srcObject = stream;
+  video.classList.add('live');
+  video.classList.add(side);
+  video.side = side;
+  video.play();
+  document.getElementById(container).append(video);
+  document.body.classList.add(which + '-playing');
+}
+
+function stopPlaying(which) {
+  document.getElementById(which + '-video').remove();
+  document.body.classList.remove(which + '-playing');
 }
 
 function watchResolution(e) {
@@ -65,71 +75,29 @@ export async function initializeMetered(pantograph, nickname, side, room) {
     console.log('[Metered] stateChanged', meetingState);
 
     if (meetingState === 'terminated') {
-      showModal('terminated-modal'); // TODO: this is a terminal state and should stop video streams?
+      showModal('terminated-modal');
+      // TODO: this is a terminal state and should stop video streams?
     }
-
-    if (meetingState === 'joined') {
-//      pantograph.changeStatus('app', Status.Calling);
-      return;
-    }
-
-//    pantograph.changeStatus('call', meetingState);
   });
   meeting.on('localTrackStarted', function(item) {
     console.log('[Metered] localTrackStarted', item);
     if (item.type === 'video') {
-      const track = item.track;
-      const mediaStream = new MediaStream([track]);
-      const localVideo = document.getElementById('local-video');
-      localVideo.srcObject = mediaStream;
-      document.body.classList.add('local-playing');
-//      pantograph.changeStatus('call', Status.LocalVideo);
-      pantograph.changeStatus('app', Status.Calling);
+      pantograph.localVideoStarted(item);
     }
   });
   meeting.on('remoteTrackStarted', function(item) {
     console.log('[Metered] remoteTrackStarted', item);
     if (item.type === 'video') {
-      const track = item.track;
-      const stream = new MediaStream([track]);
-      const remoteVideo = document.getElementById('remote-video');
-      const localVideo = document.getElementById('local-video');
-      if (side === 'spectator') {
-        const name = item.participant.name;
-        const side = room.members[name].side;
-        if (side === 'runner') {
-          remoteVideo.srcObject = stream;
-          remoteVideo.side = 'runner';
-          document.body.classList.add('remote-playing');
-//          pantograph.changeStatus('call', Status.RemoteVideo);
-          watchResolution(remoteVideo);
-        } else if (side === 'corp') {
-          localVideo.srcObject = stream;
-          localVideo.side = 'corp';
-          document.body.classList.add('local-playing');
-//          pantograph.changeStatus('call', Status.LocalVideo);
-        }
-      } else {
-        remoteVideo.srcObject = stream;
-        document.body.classList.add('remote-playing');
-//        pantograph.changeStatus('call', Status.RemoteVideo);
-        watchResolution(remoteVideo);
-      }
-
-      pantograph.changeStatus('app', Status.Calling);
+      pantograph.remoteVideoStarted(item);
     }
   });
   meeting.on('localTrackStopped', function(item) {
     console.log('[Metered] localTrackStopped', item);
-    const video = document.getElementById('local-video');
-    stopVideo(video);
-    document.body.classList.remove('local-playing');
+    stopPlaying('local');
   });
   meeting.on('remoteTrackStopped', function(item) {
     console.log('[Metered] remoteTrackStopped', item);
-    const video = document.getElementById('remote-video');
-    stopVideo(video);
-    document.body.classList.remove('remote-playing');
+    stopPlaying('remote');
   });
 
   const roomId = room.id;

@@ -94,6 +94,35 @@ class Pantograph {
     const modes = this.getModes();
     return modes.length === 0;
   }
+
+  localVideoStarted(item) {
+    console.log('pantograph.localVideoStarted');
+    const track = item.track;
+    const stream = new MediaStream([track]);
+    this.client.startPlaying(stream, 'local', 'secondary-container', this.side, (e) => {cardSearch(e, this);});
+  }
+  remoteVideoStarted(item) {
+    console.log('pantograph.remoteVideoStarted');
+    const track = item.track;
+    const stream = new MediaStream([track]);
+    const name = item.participant.name;
+    const thatSide = this.room.members[name].side;
+    if (this.side === 'spectator') {
+      if (thatSide === 'runner') {
+        this.client.startPlaying(stream, 'remote', 'primary-container', thatSide, (e) => {cardSearch(e, this);});
+      } else if (thatSide === 'corp') {
+        this.client.startPlaying(stream, 'local', 'primary-container', thatSide, (e) => {cardSearch(e, this);});
+      }
+    } else {
+      this.client.startPlaying(stream, 'remote', 'primary-container', thatSide, (e) => {cardSearch(e, this);});
+    }
+  }
+  localTrackStopped(item) {
+    
+  }
+  remoteTrackStopped(item) {
+    
+  }
 }
 
 async function showShareModal(params, debugOff) {
@@ -198,12 +227,18 @@ function initClickHandlers(pantograph, view) {
 
   const swapButton = document.getElementById('swap');
   swapButton.onclick = function() {
-    const remotePlaceholder = document.getElementById('remote-placeholder');
-    const localPlaceholder = document.getElementById('local-placeholder');
-    swapElements(remotePlaceholder, localPlaceholder);
-    const remoteVideo = document.getElementById('remote-video');
-    const localVideo = document.getElementById('local-video');
-    swapElements(remoteVideo, localVideo);
+    const primary = document.getElementById('primary-container');
+    const secondary = document.getElementById('secondary-container');
+    const primaryChildren = [];
+    for (const child of primary.children) {
+      primaryChildren.push(child);
+    }
+    const secondaryChildren = [];
+    for (const child of secondary.children) {
+      secondaryChildren.push(child);
+    }
+    primary.replaceChildren(...secondaryChildren);
+    secondary.replaceChildren(...primaryChildren);
   };
 
   const focusButton = document.getElementById('focus');
@@ -232,15 +267,30 @@ function initClickHandlers(pantograph, view) {
     toast.showToast();
   };
 
-  function handleSearchClick(e) {
-    view.clearCard();
-    cardSearch(e, pantograph);
-  }
-  const children = document.querySelectorAll('video.live');
-  for (let i = 0; i < children.length; i++) {
-    const child = children[i];
-    child.addEventListener('click', handleSearchClick);
-  }
+  const rdButton = document.getElementById('rd-access');
+  rdButton.onclick = function() {
+    const toast = Toastify({
+      text: "tap spacebar to leave R&D access mode",
+      close: false,
+      duration: 3000,
+      style: {
+        background: "#11191f",
+        color: "hsl(205deg, 16%, 77%)"
+      },
+    });
+    function leaveRD(event) {
+      const keyName = event.key;
+      if (keyName === ' ') {
+        event.preventDefault();
+        document.removeEventListener('keypress', leaveRD);
+        toast.hideToast();
+        pantograph.unsetMode('rdaccess');
+      }
+    }
+    document.addEventListener('keypress', leaveRD);
+    pantograph.setMode('rdaccess');
+    toast.showToast();
+  };
 }
 
 function initCameraButtons(meeting) {
@@ -254,25 +304,39 @@ function initCameraButtons(meeting) {
       const deviceId = document.getElementById('video-device').value;
       await meeting.chooseVideoInputDevice(deviceId);
       meeting.startVideo();
+      document.body.classList.add('camera-on');
     } catch (ex) {
       console.error('Error occurred when starting camera', ex);
     }
   };
   const stopButton = document.getElementById('stop-camera');
-  stopButton.onclick = async function() {
-    if (!meeting) {
-      console.error('Can\'t stop camera: Metered meeting not initialized.');
-      return;
-    }
-    try {
-      meeting.stopVideo();
-    } catch (ex) {
-      console.error('Error occurred when stopping camera', ex);
-    }
-  };
+  stopButton.onclick = (function() {
+    let paused = false;
+    return async function() {
+      if (!meeting) {
+        console.error('Can\'t pause camera: Metered meeting not initialized.');
+        return;
+      }
+      try {
+        if (paused) {
+          await meeting.resumeLocalVideo();
+          document.body.classList.add('camera-on');
+          document.body.classList.remove('camera-off');
+        } else {
+          await meeting.pauseLocalVideo();
+          document.body.classList.add('camera-off');
+          document.body.classList.remove('camera-on');
+        }
+        paused = !paused;
+      } catch (ex) {
+        console.error('Error occurred when stopping camera', ex);
+      }
+    };
+  })();
+
 }
 
-function setupDemo(pantograph) {
+function setupDemo(pantograph, view) {
   // select a random corp and random runner, unless one passed in query params:
   const runners = ['esâ', 'padma', 'sable'];
   const corps = ['prav', 'thule', 'issuaq', 'ob'];
@@ -307,16 +371,12 @@ function setupDemo(pantograph) {
   const local = members[idx];
   const remote = members[idx < 1 ? 1 : 0];
 
-  const remoteVideo = document.querySelector('#remote-video');
-  const localVideo = document.querySelector('#local-video');
-  remoteVideo.side = remote.side;
-  localVideo.side = local.side;
-  remoteVideo.src = `/video/${remote.nickname}-720p.mp4`;
-  localVideo.src = `/video/${local.nickname}-720p.mp4`;
-  remoteVideo.loop = 'true';
-  localVideo.loop = 'true';
-  document.body.classList.add('remote-playing');
-  document.body.classList.add('local-playing');
+  function handleClick(e) {
+    view.clearCard();
+    cardSearch(e, pantograph);
+  }
+  view.renderVideo(`/video/${remote.nickname}-720p.mp4`, 'remote', 'primary-container', remote.side, handleClick);
+  view.renderVideo(`/video/${local.nickname}-720p.mp4`, 'local', 'secondary-container', local.side, handleClick);
 
 //  pantograph.changeStatus('app', Status.Demo);
   pantograph.changeStatus('app', Status.Calling);
@@ -380,6 +440,9 @@ window.addEventListener('load', async (event) => {
         view.renderUnknownCard(response.side, focusMode);
       }
     }
+    startPlaying(stream, which, container, side, onclick) {
+      view.renderVideo(stream, which, container, side, onclick);
+    }
   };
 
   const pantograph = new Pantograph(observer);
@@ -391,7 +454,7 @@ window.addEventListener('load', async (event) => {
   const roomId = window.location.pathname.replace('/app/', '');
 
   if (roomId === 'demo' || pantograph.isModeOn('demo')) {
-    setupDemo(pantograph);
+    setupDemo(pantograph, view);
     return;
   }
 
@@ -405,11 +468,4 @@ window.addEventListener('load', async (event) => {
   }
 
   initCameraButtons(meeting);
-
-  if (side !== 'spectator') {
-    const remoteVideo = document.querySelector('#remote-video');
-    const localVideo = document.querySelector('#local-video');
-    remoteVideo.side = otherSide;
-    localVideo.side = side;
-  }
 });

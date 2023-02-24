@@ -74,6 +74,6 @@ describe('getUserMedia and Metered APIs', () => {
         cy.contains('share this link with your opponent').should('be.visible');
         cy.get('dialog#share-link-modal button.confirm-modal').click();
         cy.meteredEvent('stateChanged', ['terminated']);
-        cy.contains('call terminated for length').should('be.visible');
+        cy.contains('call ended').should('be.visible');
     });
 });

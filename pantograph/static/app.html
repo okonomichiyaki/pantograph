@@ -45,22 +45,24 @@
                         <div id="remote-placeholder" class="video placeholder">
                             <div>🎦</div>
                         </div>
-                        <video id="remote-video" class="live video" autoplay playsinline></video>
                     </div>
                     <nav>
                         <ul>
-                            <li class="spectator-hide">
+                            <li class="spectator-hide local-playing-hide">
                                 <select id="video-device" defaultValue="loading">
                                     <option value="loading">loading...</option>
                                 </select>
                             </li>
-                            <li class="spectator-hide">
+                            <li class="spectator-hide local-playing-hide">
                                 <a href="#" role="button" id="start-camera">start camera</a>
                             </li>
-                            <li class="spectator-hide">
-                                <a href="#" role="button" id="stop-camera">stop camera</a>
+                            <li class="spectator-hide local-playing-show">
+                                <a href="#" role="button" id="stop-camera">
+                                    <span class="camera-on-show">camera off</span>
+                                    <span class="camera-off-show">camera on</span>
+                                </a>
                             </li>
-                            <li>
+                            <li class="remote-playing-show">
                                 <a href="#" role="button" id="calibrate">calibrate</a>
                             </li>
                             <li>
@@ -69,15 +71,17 @@
                             <li>
                                 <a href="#" role="button" id="focus">focus mode</a>
                             </li>
+                            <li id="rd-access-li">
+                                <a href="#" role="button" id="rd-access">R&amp;D access</a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
                 <div class="right-panel">
                     <div id="secondary-container">
-                        <div id="local-placeholder"  class="video placeholder">
+                        <div id="local-placeholder"  class="placeholder">
                             <div>🎦</div>
                         </div>
-                        <video id="local-video" class="live video" autoplay playsinline></video>
                     </div>
                     <div id="card-container">
                     </div>
@@ -131,8 +135,7 @@
 
             <dialog id="terminated-modal">
                 <article>
-                    <header>call terminated for length</header>
-                    <p>The app uses a paid third party API to coordinate the video call. There is a 3 hour limit per room to prevent extra charges in case of a browser tab accidentally left open.</p>
+                    <header>call ended</header>
                     <p>If you are still playing, please create a new room.</p>
                 </article>
             </dialog>

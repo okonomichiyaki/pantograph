@@ -88,4 +88,27 @@ export class View {
       display.innerText = titles;
     }
   }
+
+  renderVideo(source, which, container, side, onclick) {
+    const video = document.createElement('video');
+    video.id = which + '-video';
+    video.autoPlay = true;
+    video.playsInline = true;
+    if (typeof source === 'string') {
+      video.src = source;
+    } else {
+      video.srcObject = source;
+    }
+    video.classList.add('live');
+    video.classList.add(side);
+    video.side = side;
+    const fn = function(e) {
+      this.clearCard();
+      onclick(e);
+    };
+    video.onclick = fn.bind(this);
+    video.play();
+    document.getElementById(container).append(video);
+    document.body.classList.add(which + '-playing');
+  }
 }
