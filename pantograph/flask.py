@@ -132,7 +132,11 @@ def handle_join(data):
     room = store.join_room(request.sid, room_id, nickname, side)
     if room:
         join_room(room_id)
-        socketio.emit("joined", room, to=room_id)
+        payload = {
+            "room": room,
+            "joiner": room["members"][nickname]
+        }
+        socketio.emit("joined", payload, to=room_id)
         logger.info(f"join: [{request.sid}] {room_id} {nickname} {side}")
     else:
         logger.info(f"join: [{request.sid}] no room found: {room_id}")
@@ -149,7 +153,11 @@ def handle_disconnect():
     if member:
         room_id = member["room_id"]
         room = store.get_room(room_id)
-        socketio.emit("exited", room, to=room_id)
+        payload = {
+            "room": room,
+            "exiter": member
+        }
+        socketio.emit("exited", payload, to=room_id)
         nickname = member["nickname"]
         logger.info(f"disconnect: [{request.sid}] {nickname}")
     else:

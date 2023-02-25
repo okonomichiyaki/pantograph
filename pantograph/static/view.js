@@ -76,7 +76,6 @@ export class View {
     if (response.reasons && response.reasons.length > 0) {
       const logs = response.reasons.map(([t, r]) => t + ',' + r).join('\n');
       const display = document.getElementById('debug-search-logs');
-      display.innerText = '';
       display.innerText = logs;
     }
 
@@ -84,7 +83,6 @@ export class View {
       const cards = response.cards.slice(1);
       const titles = cards.map((card) => card.title + ',' + card.dist).join('\n');
       const display = document.getElementById('debug-alternates');
-      display.innerText = '';
       display.innerText = titles;
     }
   }

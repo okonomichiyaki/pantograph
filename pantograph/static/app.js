@@ -4,7 +4,7 @@ import {calibrate} from './calibration.js';
 import {cardSearch} from './card_search.js';
 import {getRoom} from './rooms.js';
 import {initializeMetered} from './metered.js';
-import {Status} from './status.js';
+import {StatusEvent} from './events.js';
 import {View} from './view.js';
 
 class Pantograph {
@@ -15,16 +15,19 @@ class Pantograph {
   side = null;
   format = null;
   calibration = null;
+  participants = [];
 
   constructor(client) {
     this.client = client;
-    this.status['pantograph'] = Status.Initial;
   }
 
-  changeStatus(key, newStatus) {
-    const oldStatus = this.status[key];
-    this.status[key] = newStatus;
-    this.client.onStatusChange(key, oldStatus, newStatus);
+  logEvent(event) {
+    if (event.description) {
+      console.log(`[${event.key}] ${event.name}`, event.description);
+    } else {
+      console.log(`[${event.key}] ${event.name}`);
+    }
+    this.client.onEvent(event);
   }
 
   updateNickname(nickname) {
@@ -45,14 +48,26 @@ class Pantograph {
     this.format = format;
   }
 
-  updateRoom(room) {
-    const members = Object.values(room.members);
-    const other = members.some((member) => {
-      return this.nickname !== member['nickname'];
-    });
-    if (other) {
-      this.changeStatus('app', Status.Ready);
+  addParticipant(joiner) {
+    this.participants.push(joiner);
+    this.client.onParticipantAdd(joiner);
+  }
+
+  updateRoom(data) {
+    const room = data["room"];
+    const joiner = data["joiner"];
+    const exiter = data["exiter"];
+    const hands = ['👋','👋🏻','👋🏼','👋🏽','👋🏾','👋🏿'];
+    const hand = hands[Math.floor(Math.random() * hands.length)];
+    if (joiner && joiner['nickname'] !== this.nickname) {
+      const message = `${joiner['nickname']} joined as ${joiner['side']}`;
+      this.logEvent(new StatusEvent('app', 'joined', message, hand, true));
     }
+    if (exiter && exiter['nickname'] !== this.nickname) {
+      const message = `${exiter['nickname']} left`;
+      this.logEvent(new StatusEvent('app', 'exited', message, hand, true));
+    }
+    const members = Object.values(room.members);
     this.client.onParticipantChange(members);
   }
 
@@ -96,7 +111,6 @@ class Pantograph {
   }
 
   localVideoStarted(item) {
-    console.log('pantograph.localVideoStarted');
     const track = item.track;
     const stream = new MediaStream([track]);
     this.client.startPlaying(stream, 'local', 'secondary-container', this.side, (e) => {cardSearch(e, this);});
@@ -117,12 +131,8 @@ class Pantograph {
       this.client.startPlaying(stream, 'remote', 'primary-container', thatSide, (e) => {cardSearch(e, this);});
     }
   }
-  localTrackStopped(item) {
-    
-  }
-  remoteTrackStopped(item) {
-    
-  }
+  localTrackStopped(item) { }
+  remoteTrackStopped(item) { }
 }
 
 async function showShareModal(params, debugOff) {
@@ -155,23 +165,20 @@ async function showJoinModal(room) {
 function initializeSocket(pantograph) {
   const socket = io();
   socket.on('connect', function() {
-    console.log('[socketio] connect');
-    pantograph.changeStatus('app', Status.Waiting);
-    pantograph.changeStatus('server', Status.Connected);
+    pantograph.logEvent(new StatusEvent('socketio', 'connect', 'connected to server', '✅', true));
   });
   socket.on('disconnect', function() {
-    console.log('[socketio] disconnect');
-    pantograph.changeStatus('server', Status.Disconnected);
+    pantograph.logEvent(new StatusEvent('socketio', 'disconnect', 'disconnected from server', '⚠️', true));
   });
   socket.on('join', function(data) {
-    console.log('[socketio] join', data);
+    pantograph.logEvent(new StatusEvent('socketio', 'join', data));
   });
   socket.on('joined', function(data) {
-    console.log('[socketio] joined', data);
+    pantograph.logEvent(new StatusEvent('socketio', 'joined', data));
     pantograph.updateRoom(data);
   });
   socket.on('exited', function(data) {
-    console.log('[socketio] exited', data);
+    pantograph.logEvent(new StatusEvent('socketio', 'exited', data));
     pantograph.updateRoom(data);
   });
 
@@ -244,12 +251,12 @@ function initClickHandlers(pantograph, view) {
   const focusButton = document.getElementById('focus');
   focusButton.onclick = function() {
     const toast = Toastify({
-      text: "tap spacebar to leave focus mode",
+      text: 'tap spacebar to leave focus mode',
       close: false,
       duration: 3000,
       style: {
-        background: "#11191f",
-        color: "hsl(205deg, 16%, 77%)"
+        background: '#11191f',
+        color: 'hsl(205deg, 16%, 77%)'
       },
     });
     function leaveFocus(event) {
@@ -270,12 +277,12 @@ function initClickHandlers(pantograph, view) {
   const rdButton = document.getElementById('rd-access');
   rdButton.onclick = function() {
     const toast = Toastify({
-      text: "tap spacebar to leave R&D access mode",
+      text: 'tap spacebar to leave R&D access mode',
       close: false,
       duration: 3000,
       style: {
-        background: "#11191f",
-        color: "hsl(205deg, 16%, 77%)"
+        background: '#11191f',
+        color: 'hsl(205deg, 16%, 77%)'
       },
     });
     function leaveRD(event) {
@@ -356,7 +363,8 @@ function setupDemo(pantograph, view) {
     nickname: corpNick,
     side: 'corp'
   };
-  pantograph.updateRoom({members: {runnerNick: runner, corpNick: corp}});
+  const room = {members: {runnerNick: runner, corpNick: corp}};
+  pantograph.updateRoom({room: room});
   pantograph.updateFormat('startup');
   pantograph.updateSide('spectator');
 
@@ -377,26 +385,25 @@ function setupDemo(pantograph, view) {
   }
   view.renderVideo(`/video/${remote.nickname}-720p.mp4`, 'remote', 'primary-container', remote.side, handleClick);
   view.renderVideo(`/video/${local.nickname}-720p.mp4`, 'local', 'secondary-container', local.side, handleClick);
-
-//  pantograph.changeStatus('app', Status.Demo);
-  pantograph.changeStatus('app', Status.Calling);
 }
 
 window.addEventListener('load', async (event) => {
   const view = new View();
   const observer = new class {
-    onStatusChange(key, oldStatus, newStatus) {
-      console.log(`[observer] onStatusChange: ${key} ${oldStatus} -> ${newStatus}`);
-      const indicator = document.querySelector(`.status span#${key}`);
-      if (indicator && newStatus.name) {
-        indicator.innerHTML = newStatus.description + ' ' + newStatus.emoji;
-        indicator.setAttribute('aria-busy', newStatus.isBusy());
-
-        document.body.classList.add(newStatus.name);
-        if (oldStatus) {
-          document.body.classList.remove(oldStatus.name);
-        }
+    onEvent(event) {
+      if (event.toast) {
+        const toast = Toastify({
+          text: event.emoji + ' ' + event.description,
+          close: false,
+          duration: 3000,
+          style: {
+            background: '#11191f',
+            color: 'hsl(205deg, 16%, 77%)'
+          },
+        });
+        toast.showToast();
       }
+      document.getElementById('debug-event-logs').innerText += (event + '\n');
     }
     onParticipantChange(members) {
       const corp = members.find((m) => m.side === 'corp');
@@ -446,7 +453,6 @@ window.addEventListener('load', async (event) => {
   };
 
   const pantograph = new Pantograph(observer);
-  pantograph.changeStatus('app', Status.Connecting);
   pantograph.initializeModes();
 
   initClickHandlers(pantograph, view);
@@ -464,7 +470,7 @@ window.addEventListener('load', async (event) => {
   let meeting = null;
   meeting = await initializeMetered(pantograph, nickname, side, room);
   if (meeting === null) {
-    pantograph.changeStatus('app', Status.NoCamera);
+    pantograph.logEvent(new StatusEvent('Metered', 'nocamera', 'unable to find camera', '❌', true));
   }
 
   initCameraButtons(meeting);

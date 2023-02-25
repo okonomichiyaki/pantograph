@@ -1,5 +1,5 @@
 import {showModal} from './modals.js';
-import {Status} from './status.js';
+import {StatusEvent} from './events.js';
 
 function startPlaying(stream, which, container, side) {
   const video = document.createElement('video');
@@ -62,17 +62,16 @@ export async function initializeMetered(pantograph, nickname, side, room) {
 
   if (side !== 'spectator') {
     const successful = await getCameraPermissions(meeting);
-    console.log('getCameraPermissions:', successful);
     if (!successful) {
       return null;
     }
   }
 
   meeting.on('participantJoined', function(participantInfo) {
-    console.log('[Metered] participantJoined', participantInfo);
+    pantograph.logEvent(new StatusEvent('Metered', 'participantJoined', participantInfo));
   });
   meeting.on('stateChanged', function(meetingState) {
-    console.log('[Metered] stateChanged', meetingState);
+    pantograph.logEvent(new StatusEvent('Metered', 'stateChanged', meetingState));
 
     if (meetingState === 'terminated') {
       showModal('terminated-modal');
@@ -80,23 +79,23 @@ export async function initializeMetered(pantograph, nickname, side, room) {
     }
   });
   meeting.on('localTrackStarted', function(item) {
-    console.log('[Metered] localTrackStarted', item);
+    pantograph.logEvent(new StatusEvent('Metered', 'localTrackStarted', item));
     if (item.type === 'video') {
       pantograph.localVideoStarted(item);
     }
   });
   meeting.on('remoteTrackStarted', function(item) {
-    console.log('[Metered] remoteTrackStarted', item);
+    pantograph.logEvent(new StatusEvent('Metered', 'remoteTrackStarted', item));
     if (item.type === 'video') {
       pantograph.remoteVideoStarted(item);
     }
   });
   meeting.on('localTrackStopped', function(item) {
-    console.log('[Metered] localTrackStopped', item);
+    pantograph.logEvent(new StatusEvent('Metered', 'localTrackStopped', item));
     stopPlaying('local');
   });
   meeting.on('remoteTrackStopped', function(item) {
-    console.log('[Metered] remoteTrackStopped', item);
+    pantograph.logEvent(new StatusEvent('Metered', 'remoteTrackStopped', item));
     stopPlaying('remote');
   });
 
@@ -105,7 +104,6 @@ export async function initializeMetered(pantograph, nickname, side, room) {
     roomURL: `pantograph.metered.live/${roomId}`,
     name: nickname,
   });
-  console.log('[Metered] Joined meeting:', meetingInfo);
 
   return meeting;
 }
