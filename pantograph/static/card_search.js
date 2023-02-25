@@ -7,7 +7,7 @@ function scaleCalibration(calibration, vw, vh) {
     const h = vh * ratio.h;
     return {w, h};
   } else {
-    return {w: 100, h: 200};
+    return {w: 145, h: 200};
   }
 }
 

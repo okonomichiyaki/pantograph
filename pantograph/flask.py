@@ -100,7 +100,7 @@ def create_app():
         if calibration:
             calibration = Calibration(calibration["w"], calibration["h"])
         else:
-            calibration = Calibration(100, 200)
+            calibration = Calibration(145, 200)
         side = json.get("side")
         fmt = json.get("format")
         with urlopen(data_uri) as response:

@@ -23,7 +23,7 @@ class Calibration:
         return f"Calibration({self.w}x{self.h})"
 
 
-DEFAULT = Calibration(100, 200)
+DEFAULT = Calibration(145, 200)
 
 
 def draw_laser_point(img, x, y, color):
