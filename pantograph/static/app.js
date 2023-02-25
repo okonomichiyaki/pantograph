@@ -14,6 +14,7 @@ class Pantograph {
   nickname = null;
   side = null;
   format = null;
+  room = null;
   calibration = null;
   participants = [];
 
@@ -54,7 +55,7 @@ class Pantograph {
   }
 
   updateRoom(data) {
-    const room = data["room"];
+    this.room = data["room"];
     const joiner = data["joiner"];
     const exiter = data["exiter"];
     const hands = ['👋','👋🏻','👋🏼','👋🏽','👋🏾','👋🏿'];
@@ -67,7 +68,7 @@ class Pantograph {
       const message = `${exiter['nickname']} left`;
       this.logEvent(new StatusEvent('app', 'exited', message, hand, true));
     }
-    const members = Object.values(room.members);
+    const members = Object.values(this.room.members);
     this.client.onParticipantChange(members);
   }
 
