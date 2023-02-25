@@ -19,6 +19,9 @@ class Calibration:
     def t(self):
         return self.h / 10
 
+    def __str__(self):
+        return f"Calibration({self.w}x{self.h})"
+
 
 DEFAULT = Calibration(100, 200)
 

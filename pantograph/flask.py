@@ -105,7 +105,7 @@ def create_app():
         fmt = json.get("format")
         with urlopen(data_uri) as response:
             img_bytes = response.file.read()
-        search_results = search(img_bytes, calibration)
+        search_results = search(img_bytes, calibration=calibration)
         texts = search_results["filtered"]
         if len(texts) > 0:
             fuzzy_results = fuzzy.search_multiple(texts, side, fmt)
