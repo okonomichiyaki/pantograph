@@ -184,6 +184,7 @@ html:not(.debug), body:not(.debug), .container-fluid:not(.debug) {
 #secondary-container {
     width: 100%;
     padding: 0;
+    margin-bottom: 15px;
 }
 #secondary-container video, #secondary-video .placeholder {
     width: 100%;
@@ -193,6 +194,7 @@ html:not(.debug), body:not(.debug), .container-fluid:not(.debug) {
     position: relative;
     flex-grow: 1;
     width: 100%;
+    padding: 0;
 }
 #card-container img {
     position: absolute;
@@ -201,9 +203,6 @@ html:not(.debug), body:not(.debug), .container-fluid:not(.debug) {
     left: 0;
     right: 0;
     z-index: 1;
-}
-#card-container img:hover {
-    z-index: 100;
 }
 div.placeholder {
     display: flex;
@@ -228,7 +227,6 @@ div.placeholder {
 }
 
 .card {
-    margin-top: 10px;
     border-radius: 4%/3%;
     flex-shrink: 2;
 }

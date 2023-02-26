@@ -1,3 +1,6 @@
+
+const TITLE_HEIGHT = 30;
+
 export class View {
   cardToast = null;
 
@@ -73,8 +76,21 @@ export class View {
     img.src = `https://storage.googleapis.com/netrunner-cards/images/${card.code}.jpg`;
     img.alt = card.title;
     img.classList.add('card');
-    img.style.top = (idx * 7) + '%';
-
+    img.style.top = (idx * TITLE_HEIGHT) + 'px';
+    const onMouseLeave = (e) => {
+      const imgs = document.querySelectorAll('#card-container img');
+      for (const img of imgs) {
+        img.style.zIndex = 1;
+      }
+    };
+    const onMouseMove = (e) => {
+      onMouseLeave(e);
+      if (e.offsetY <= TITLE_HEIGHT) {
+        e.target.style.zIndex = 100;
+      }
+    };
+    img.addEventListener("mousemove", onMouseMove);
+    img.addEventListener("mouseleave", onMouseLeave);
     if (focusMode) {
       this.#showToast(img);
     } else {
