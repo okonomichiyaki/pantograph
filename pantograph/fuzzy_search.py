@@ -16,6 +16,13 @@ from pantograph.utils import flatmap
 logger = logging.getLogger("pantograph")
 
 
+@dataclass
+class Result:
+    orig: str
+    title: str
+    dist: int
+
+
 class FuzzySearch:
     """
     Fuzzy search over NR card titles
@@ -60,7 +67,8 @@ class FuzzySearch:
         logger.info(f"initialized fuzzy card search in {time.perf_counter() - start}")
 
     def _extract(self, text, titles):
-        return process.extract(text, titles, limit=5, scorer=distance)
+        results = process.extract(text, titles, limit=5, scorer=distance)
+        return [Result(text, result, d) for (result, d, x) in results]
 
     def search(self, text, side=None, fmt=None):
         if side is None:
@@ -69,8 +77,7 @@ class FuzzySearch:
             fmt = "startup"
         self._fetch_and_init()
         results = self._extract(text, self._titles[fmt][side])
-        results = [(self.cards[title], d) for (title, d, x) in results]
-        return results
+        return [(self.cards[result.title], result) for result in results]
 
     # for each input text, take best result, then sort. uncertain if best approach
     def search_multiple(self, texts, side=None, fmt=None):
@@ -82,6 +89,7 @@ class FuzzySearch:
 
         results = [self._extract(text, self._titles[fmt][side]) for text in texts]
         results = [result[0] for result in results]
-        results = sorted(results, key=lambda result: result[1])
-        results = [(self.cards[title], d) for (title, d, x) in results]
+        results = [result for result in results if len(result.orig) > result.dist and len(result.title) > result.dist]
+        results = sorted(results, key=lambda result: result.dist)
+        results = [(self.cards[result.title], result) for result in results]
         return results

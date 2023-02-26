@@ -440,16 +440,13 @@ window.addEventListener('load', async (event) => {
     onSearchResult(response) {
       const cards = response.cards;
       const focusMode = pantograph.isModeOn('focus');
+      const debugMode = pantograph.isModeOn('debug');
       if (cards.length > 0) {
         for (const card of cards) {
           console.log(`received card(s) from server: ${card.title}`);
         }
-        const card = cards[0];
-        view.renderKnownCard(card, focusMode);
-        view.renderDebug(response);
-      } else {
-        view.renderUnknownCard(response.side, focusMode);
       }
+      view.renderResults(response, focusMode, debugMode);
     }
     startPlaying(stream, which, container, side, onclick) {
       view.renderVideo(stream, which, container, side, onclick);

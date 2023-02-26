@@ -189,6 +189,22 @@ html:not(.debug), body:not(.debug), .container-fluid:not(.debug) {
     width: 100%;
     flex-shrink: 2;
 }
+#card-container {
+    position: relative;
+    flex-grow: 1;
+    width: 100%;
+}
+#card-container img {
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    z-index: 1;
+}
+#card-container img:hover {
+    z-index: 100;
+}
 div.placeholder {
     display: flex;
     font-size: 100px;

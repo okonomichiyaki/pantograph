@@ -111,8 +111,8 @@ def create_app():
         if len(texts) > 0:
             fuzzy_results = fuzzy.search_multiple(texts, side, fmt)
             search_results["cards"] = [
-                {"title": card.title, "code": card.code, "dist": d}
-                for (card, d) in fuzzy_results
+                {"title": card.title, "code": card.code, "dist": result.dist, "orig": result.orig}
+                for (card, result) in fuzzy_results
             ]
             return jsonify(search_results)
         else:

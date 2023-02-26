@@ -31,6 +31,23 @@ export class View {
     this.cardToast = toast;
   }
 
+  renderResults(response, focusMode, debugMode) {
+    if (response.cards.length > 0) {
+      if (debugMode) {
+        const cards = Array.from(response.cards).reverse();
+        for (let i = 0; i < cards.length; i++) {
+          const card = cards[i];
+          this.renderKnownCard(card, focusMode, i);
+        }
+      } else {
+        this.renderKnownCard(response.cards[0], focusMode, 0);
+      }
+      this.renderDebug(response);
+    } else {
+      this.renderUnknownCard(response.side, focusMode);
+    }
+  }
+
   renderUnknownCard(side, focusMode) {
     const container = document.getElementById('card-container');
     const unknown = document.createElement('div');
@@ -49,13 +66,14 @@ export class View {
     }
   }
 
-  renderKnownCard(card, focusMode) {
+  renderKnownCard(card, focusMode, idx) {
     const container = document.getElementById('card-container');
     const img = document.createElement('img');
     const size = 'large';
     img.src = `https://storage.googleapis.com/netrunner-cards/images/${card.code}.jpg`;
     img.alt = card.title;
     img.classList.add('card');
+    img.style.top = (idx * 7) + '%';
 
     if (focusMode) {
       this.#showToast(img);
@@ -79,10 +97,11 @@ export class View {
       display.innerText = logs;
     }
 
-    if (response.cards && response.cards.length > 1) {
-      const cards = response.cards.slice(1);
-      const titles = cards.map((card) => card.title + ',' + card.dist).join('\n');
-      const display = document.getElementById('debug-alternates');
+    const display = document.getElementById('debug-search-results');
+    display.innerText = '';
+    if (response.cards && response.cards.length > 0) {
+      const cards = response.cards;
+      const titles = cards.map((card) => card.title + ',' + card.dist + ',' + card.orig).join('\n');
       display.innerText = titles;
     }
   }
