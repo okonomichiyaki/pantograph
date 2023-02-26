@@ -51,11 +51,13 @@ def create_app():
     def about():
         return send_file("static/about.html")
 
+    @app.route("/app/demo")
+    def demo():
+        return send_file("static/app.html")
+
     @app.route("/app/<room_id>")
     @auth.login_required
     def main_app(room_id):
-        if room_id == 'demo':
-            return send_file("static/app.html")
         nickname = request.args.get("nickname")
         room = store.get_room(room_id)
         if not room:
@@ -92,7 +94,6 @@ def create_app():
             return ("failed to create metered room", 500)
 
     @app.route("/recognize", methods=["POST"])
-    @auth.login_required
     def recognize():
         json = request.get_json()
         data_uri = json.get("image")
