@@ -6,6 +6,7 @@ import {getRoom} from './rooms.js';
 import {initializeMetered} from './metered.js';
 import {StatusEvent} from './events.js';
 import {View} from './view.js';
+import {prepareModal} from './modals.js';
 
 class Pantograph {
   modes = {};
@@ -223,7 +224,7 @@ async function initializeRoom(roomId, pantograph, socket) {
 }
 
 function initClickHandlers(pantograph, view) {
-  const calibrateButton = document.getElementById('calibrate');
+  const calibrateButton = document.getElementById('calibrate-button');
   calibrateButton.onclick = async (e) => {
     const under = document.querySelector('#primary-container video.live');
     const dims = getComputedDims(under);
@@ -299,6 +300,8 @@ function initClickHandlers(pantograph, view) {
     pantograph.setMode('rdaccess');
     toast.showToast();
   };
+
+  prepareModal('tutorial-button', 'tutorial-modal');
 }
 
 function initCameraButtons(meeting) {

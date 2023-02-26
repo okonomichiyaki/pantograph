@@ -26,6 +26,9 @@
                             <span id="app" aria-busy="false"></span>
                         </div>
                     </li>
+                    <li>
+                        <a href="#" role="button" id="tutorial-button">tutorial</a>
+                    </li>
                 </ul>
             </nav>
             <div class="main">
@@ -53,7 +56,7 @@
                                 </a>
                             </li>
                             <li class="remote-playing-show">
-                                <a href="#" role="button" id="calibrate">calibrate</a>
+                                <a href="#" role="button" id="calibrate-button">calibrate</a>
                             </li>
                             <li>
                                 <a href="#" role="button" id="swap">swap video</a>
@@ -119,6 +122,27 @@
                     <footer>
                         <button aria-busy="true" class="secondary connecting-visible">connecting...</button>
                         <button class="connecting-invisible confirm-modal">okay</button>
+                    </footer>
+                </article>
+            </dialog>
+
+            <dialog id="tutorial-modal">
+                <article>
+                    <header>
+                        tutorial
+                    </header>
+                    <div style="display: flex; flex-direction: column;">
+                        <p>click on cards to look up full res versions. click in the center of the card (best) or the title of the card (may work better for some alt arts):</p>
+                        <img src="/images/click.png" />
+                        <p>click ICE in the center of the card too:</p>
+                        <img src="/images/clickice.png" />
+                        <p>calibration helps improve identification by measuring the dimensions of cards.</p>
+                        <p>drag select a rectangle around any card on your opponent's video to measure it.</p>
+                        <video src="/video/calibration.mp4" autoplay loop></video>
+                        <p>repeat this process if your opponent's camera changes significantly (zooms in or out).</p>
+                    </div>
+                    <footer style="display: flex; flex-direction: column;">
+                        <button class="confirm-modal">okay</button>
                     </footer>
                 </article>
             </dialog>

@@ -280,6 +280,10 @@ div.placeholder {
     filter: blur(1.5rem) grayscale(1);
 }
 
+#tutorial-modal img {
+    margin-bottom: 30px;
+}
+
 /* responsive styles. wip */
 @media (orientation: portrait) {
     div.main {
