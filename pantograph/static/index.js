@@ -23,7 +23,7 @@ function createNewRoom(json) {
   fetch('/room', options)
       .then((response) => response.json())
       .then((response) => {
-        const id = response['id'];
+        const id = response['room_id'];
         const path = `/app/${id}`;
         let params = `nickname=${nickname}&side=${side}`;
 

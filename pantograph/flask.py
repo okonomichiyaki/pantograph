@@ -46,12 +46,12 @@ def create_app():
     def index():
         return send_file("static/index.html")
 
-    @app.route("/about")
+    @app.route("/about/")
     @auth.login_required
     def about():
         return send_file("static/about.html")
 
-    @app.route("/app/demo")
+    @app.route("/app/demo/")
     def demo():
         return send_file("static/app.html")
 
@@ -75,7 +75,7 @@ def create_app():
         else:
             return jsonify(room)
 
-    @app.route("/room", methods=["POST"])
+    @app.route("/room/", methods=["POST"])
     @auth.login_required
     def create_room():
         json = request.get_json()
@@ -86,7 +86,7 @@ def create_app():
         if json.get("demo"):
             logger.info(f"created room (demo): {room}")
             return jsonify(room)
-        successful = metered.create_room(room["id"])
+        successful = metered.create_room(room["room_id"])
         if successful:
             logger.info(f"created room (metered): {room}")
             return jsonify(room)
@@ -127,7 +127,7 @@ socketio = SocketIO(app)
 
 @socketio.on("join")
 def handle_join(data):
-    room_id = data.get("id")
+    room_id = data.get("room_id")
     nickname = data.get("nickname")
     side = data.get("side")
     room = store.join_room(request.sid, room_id, nickname, side)

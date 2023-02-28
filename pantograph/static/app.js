@@ -207,7 +207,7 @@ async function initializeRoom(roomId, pantograph, socket) {
     side = json['side'];
   }
   pantograph.updateNickname(nickname);
-  socket.emit('join', {nickname: nickname, id: roomId, side: side});
+  socket.emit('join', {nickname: nickname, room_id: roomId, side: side});
 
   const format = room['format'];
   pantograph.updateFormat(format);
