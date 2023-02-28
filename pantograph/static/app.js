@@ -7,6 +7,7 @@ import {initializeMetered} from './metered.js';
 import {StatusEvent} from './events.js';
 import {View} from './view.js';
 import {prepareModal} from './modals.js';
+//import {autoComplete} from "@tarekraafat/autocomplete.js";
 
 class Pantograph {
   modes = {};
@@ -347,6 +348,48 @@ function initCameraButtons(meeting) {
 
 }
 
+function initAutoComplete(view, format) {
+  const options = {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    }
+  };
+  fetch('/cards/' + format, options)
+    .then((response) => response.json())
+    .then((response) => {
+      const titles = response.map(card => card.title);
+      const cards = {};
+      for (const card of response) {
+        cards[card.title] = card;
+      }
+      const autoCompleteJS = new autoComplete({
+        selector: "#autoComplete",
+        placeHolder: "search for cards...",
+        diacritics: true,
+        data: {
+          src: titles,
+          cache: true,
+        },
+        resultItem: {
+          highlight: true
+        },
+        events: {
+          input: {
+            selection: (event) => {
+              const selection = event.detail.selection.value;
+              autoCompleteJS.input.value = selection;
+              console.log(`search selected: ${selection}`);
+              const card = cards[selection];
+              view.renderKnownCard(card, false, 0);
+            }
+          }
+        }
+      });
+    })
+    .catch((err) => console.error(err));
+}
+
 function setupDemo(pantograph, view) {
   // select a random corp and random runner, unless one passed in query params:
   const runners = ['esâ', 'padma', 'sable'];
@@ -462,6 +505,7 @@ window.addEventListener('load', async (event) => {
 
   if (roomId === 'demo' || pantograph.isModeOn('demo')) {
     setupDemo(pantograph, view);
+    initAutoComplete(view, 'startup');
     return;
   }
 
@@ -474,5 +518,6 @@ window.addEventListener('load', async (event) => {
     pantograph.logEvent(new StatusEvent('Metered', 'nocamera', 'unable to find camera', '❌', true));
   }
 
+  initAutoComplete(view, room.format);
   initCameraButtons(meeting);
 });

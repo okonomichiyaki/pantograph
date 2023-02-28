@@ -80,7 +80,7 @@ export function cardSearch(event, pantograph) {
     },
     body: JSON.stringify(json),
   };
-  fetch('/recognize', options)
+  fetch('/recognize/', options)
       .then((response) => response.json())
       .then((response) => {
         response.side = side; // TODO

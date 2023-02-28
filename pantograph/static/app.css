@@ -184,7 +184,6 @@ html:not(.debug), body:not(.debug), .container-fluid:not(.debug) {
 #secondary-container {
     width: 100%;
     padding: 0;
-    margin-bottom: 15px;
 }
 #secondary-container video, #secondary-video .placeholder {
     width: 100%;
@@ -296,6 +295,36 @@ div.placeholder {
 
 #tutorial-modal img {
     margin-bottom: 30px;
+}
+
+/* autocomplete search box */
+.autoComplete_wrapper {
+    padding: 0;
+}
+.autoComplete_wrapper > ul > li mark {
+    background-color: unset !important;
+    color: unset !important;
+}
+.autoComplete_wrapper > ul > li:hover {
+    cursor: pointer;
+    background-color: rgba(16, 149, 193, 0.25) !important;
+}
+.autoComplete_wrapper > input::selection {
+    background-color: rgba(16, 149, 193, 0.25) !important;
+}
+.autoComplete_wrapper > ul {
+    z-index: 1000 !important;
+    margin-top: 0;
+}
+.autoComplete_wrapper > input::placeholder {
+    color: unset !important;
+}
+.autoComplete_wrapper > input {
+    background-color: unset !important;
+    border: .05rem solid hsl(205deg, 16%, 77%) !important;
+    color: unset !important;
+    height: 50px;
+    margin-bottom: 0px;
 }
 
 /* responsive styles. wip */

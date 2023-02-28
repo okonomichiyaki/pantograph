@@ -11,6 +11,7 @@ from pantograph.fuzzy_search import FuzzySearch
 from pantograph.click_search import search, Calibration
 import pantograph.store as store
 import pantograph.metered as metered
+import pantograph.nrdb as nrdb
 
 from dataclasses import dataclass
 
@@ -93,7 +94,7 @@ def create_app():
         else:
             return ("failed to create metered room", 500)
 
-    @app.route("/recognize", methods=["POST"])
+    @app.route("/recognize/", methods=["POST"])
     def recognize():
         json = request.get_json()
         data_uri = json.get("image")
@@ -117,6 +118,13 @@ def create_app():
             return jsonify(search_results)
         else:
             return jsonify({"cards": []})
+
+    @app.route("/cards/<fmt>", methods=["GET"])
+    def get_cards(fmt):
+        cards = nrdb.get_active_cards()
+        cards = [card for card in cards if fmt in card.fmts]
+        cards = [{"title": card.title, "code": card.code} for card in cards]
+        return jsonify(cards)
 
     return app
 

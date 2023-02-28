@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>pantograph</title>
         <link rel="icon" href="/logo.svg">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/css/autoComplete.min.css">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1.*/css/pico.min.css">
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
         <link rel="stylesheet" href="/base.css">
@@ -76,6 +77,7 @@
                             <div>🎦</div>
                         </div>
                     </div>
+                    <input id="autoComplete" type="search" dir="ltr" spellcheck=false autocorrect="off" autocomplete="on" autocapitalize="off">
                     <div id="card-container">
                     </div>
                 </div>
@@ -172,6 +174,7 @@
         <script src="https://cdn.metered.ca/sdk/video/1.4.6/sdk.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.6.0/dist/socket.io.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tarekraafat/autocomplete.js@10.2.7/dist/autoComplete.min.js"></script>
         <script type="module" src="/app.js"></script>
 </body>
 </html>
