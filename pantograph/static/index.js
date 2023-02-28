@@ -20,7 +20,7 @@ function createNewRoom(json) {
     },
     body: str,
   };
-  fetch('/room', options)
+  fetch('/room/', options)
       .then((response) => response.json())
       .then((response) => {
         const id = response['room_id'];
