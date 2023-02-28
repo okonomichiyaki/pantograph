@@ -458,7 +458,7 @@ window.addEventListener('load', async (event) => {
 
   initClickHandlers(pantograph, view);
 
-  const roomId = window.location.pathname.replace('/app/', '');
+  const roomId = window.location.pathname.replace('/app/','').replace('/','');
 
   if (roomId === 'demo' || pantograph.isModeOn('demo')) {
     setupDemo(pantograph, view);
