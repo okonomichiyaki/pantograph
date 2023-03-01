@@ -99,7 +99,7 @@ export async function initializeMetered(pantograph, nickname, side, room) {
     stopPlaying('remote');
   });
 
-  const roomId = room.id;
+  const roomId = room.room_id;
   const meetingInfo = await meeting.join({
     roomURL: `pantograph.metered.live/${roomId}`,
     name: nickname,
