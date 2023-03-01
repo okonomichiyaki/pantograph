@@ -39,7 +39,9 @@ export function cropFromVideo(video, x, y, w, h) {
   if (vw === 0 || vh === 0) {
     return null;
   }
-  const canvas = new OffscreenCanvas(vw, vh);
+  const canvas = document.createElement("canvas");
+  canvas.width = vw;
+  canvas.height = vh;
   const ctx = canvas.getContext('2d');
   ctx.drawImage(video, 0, 0, vw, vh);
   return ctx.getImageData(x, y, w, h);
