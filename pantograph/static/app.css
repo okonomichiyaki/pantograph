@@ -194,6 +194,9 @@ html:not(.debug), body:not(.debug), .container-fluid:not(.debug) {
     flex-grow: 1;
     width: 100%;
     padding: 0;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
 }
 #card-container img {
     position: absolute;
