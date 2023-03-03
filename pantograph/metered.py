@@ -55,7 +55,7 @@ def get_all_rooms():
         logger.error(f"Failed to get all Metered rooms: {r.json()}")
 
 
-if __name__ == "__main__":
+def cleanup():
     rooms = get_all_rooms()
     for room in rooms:
         room_name = room["roomName"]
