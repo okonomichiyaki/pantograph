@@ -28,10 +28,10 @@ def delete_connection(sid):
         nickname = member["nickname"]
         room_id = member["room_id"]
         side = member["side"]
-        db["rooms"].update_one(
-            {"room_id": room_id},
-            {"$set": {side: None}, "$unset": {f"members.{nickname}": ""}}
-        )
+        update = {"$unset": {f"members.{nickname}": ""}}
+        if side != "spectator":
+            update["$set"] = {side: None}
+        db["rooms"].update_one({"room_id": room_id}, update)
     coll.delete_one({"sid": sid})
     return member
 
@@ -67,11 +67,16 @@ def join_room(sid, room_id, nickname, side):
         "room_id": room_id,
     }
     coll = db["rooms"]
-    coll.update_one(
-        {"room_id": room_id},
-        {"$set": {f"members.{nickname}": member, side: nickname}}
-    )
+    if side != "spectator":
+        update = {f"members.{nickname}": member, side: nickname}
+    else:
+        update = {f"members.{nickname}": member}
+    coll.update_one({"room_id": room_id}, {"$set": update})
     coll = db["connections"]
     coll.insert_one({"sid": sid, "member": member})
     room["members"][nickname] = member
     return room
+
+def cleanup():
+    db["rooms"].delete_many({})
+    db["connections"].delete_many({})

@@ -128,7 +128,7 @@ class Pantograph {
       if (thatSide === 'runner') {
         this.client.startPlaying(stream, 'remote', 'primary-container', thatSide, (e) => {cardSearch(e, this);});
       } else if (thatSide === 'corp') {
-        this.client.startPlaying(stream, 'local', 'primary-container', thatSide, (e) => {cardSearch(e, this);});
+        this.client.startPlaying(stream, 'local', 'secondary-container', thatSide, (e) => {cardSearch(e, this);});
       }
     } else {
       this.client.startPlaying(stream, 'remote', 'primary-container', thatSide, (e) => {cardSearch(e, this);});
