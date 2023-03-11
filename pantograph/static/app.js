@@ -33,6 +33,18 @@ class Pantograph {
     this.client.onEvent(event);
   }
 
+  getNickname() {
+    return this.nickname;
+  }
+
+  getSide() {
+    return this.side;
+  }
+
+  getRoom() {
+    return this.room;
+  }
+
   updateNickname(nickname) {
     this.nickname = nickname;
   }
@@ -54,6 +66,10 @@ class Pantograph {
   addParticipant(joiner) {
     this.participants.push(joiner);
     this.client.onParticipantAdd(joiner);
+  }
+
+  setRoom(room) {
+    this.room = room;
   }
 
   updateRoom(data) {
@@ -119,7 +135,6 @@ class Pantograph {
     this.client.startPlaying(stream, 'local', 'secondary-container', this.side, (e) => {cardSearch(e, this);});
   }
   remoteVideoStarted(item) {
-    console.log('pantograph.remoteVideoStarted');
     const track = item.track;
     const stream = new MediaStream([track]);
     const name = item.participant.name;
@@ -169,6 +184,11 @@ function initializeSocket(pantograph) {
   const socket = io();
   socket.on('connect', function() {
     pantograph.logEvent(new StatusEvent('socketio', 'connect', 'connected to server', '✅', true));
+    socket.emit('join', {
+      nickname: pantograph.getNickname(),
+      room_id: pantograph.getRoom()["room_id"],
+      side: pantograph.getSide()
+    });
   });
   socket.on('disconnect', function() {
     pantograph.logEvent(new StatusEvent('socketio', 'disconnect', 'disconnected from server', '⚠️', true));
@@ -188,8 +208,9 @@ function initializeSocket(pantograph) {
   return socket;
 }
 
-async function initializeRoom(roomId, pantograph, socket) {
+async function initializeRoom(roomId, pantograph) {
   const room = await getRoom(roomId);
+  pantograph.setRoom(room);
 
   // this is a hack to avoid cookies (for now?):
   const params = getQueryParams();
@@ -208,7 +229,6 @@ async function initializeRoom(roomId, pantograph, socket) {
     side = json['side'];
   }
   pantograph.updateNickname(nickname);
-  socket.emit('join', {nickname: nickname, room_id: roomId, side: side});
 
   const format = room['format'];
   pantograph.updateFormat(format);
@@ -509,8 +529,8 @@ window.addEventListener('load', async (event) => {
     return;
   }
 
+  let {room, nickname, side, otherSide} = await initializeRoom(roomId, pantograph);
   let socket = initializeSocket(pantograph);
-  let {room, nickname, side, otherSide} = await initializeRoom(roomId, pantograph, socket);
 
   let meeting = null;
   meeting = await initializeMetered(pantograph, nickname, side, room);

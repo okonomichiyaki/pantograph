@@ -70,6 +70,9 @@ export async function initializeMetered(pantograph, nickname, side, room) {
   meeting.on('participantJoined', function(participantInfo) {
     pantograph.logEvent(new StatusEvent('Metered', 'participantJoined', participantInfo));
   });
+  meeting.on("participantLeft", function(participantInfo) {
+    pantograph.logEvent(new StatusEvent('Metered', 'participantLeft', participantInfo));
+  });
   meeting.on('stateChanged', function(meetingState) {
     pantograph.logEvent(new StatusEvent('Metered', 'stateChanged', meetingState));
 
