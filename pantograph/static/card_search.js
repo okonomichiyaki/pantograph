@@ -20,27 +20,20 @@ function debugCalibration(calibration, canvas, ctx, vw, vh) {
   ctx.strokeRect(x, y, w, h);
 }
 
-export function cardSearch(event, pantograph) {
-  const e = event.target;
-  if (e.parentElement.id === 'secondary-container') {
-    return;
+function getShift(max) {
+  return max - Math.round(Math.random() * max * 2);
+}
+
+function getRandomClicks(count, max, x, y) {
+  const clicks = [{x: x, y: y}];
+  for (let i = 0; i < count; i++) {
+    // TODO limit these by total w/h
+    clicks.push({x: x + getShift(max), y: y + getShift(max)});
   }
+  return clicks;
+}
 
-  const calibration = pantograph.calibration;
-  const format = pantograph.format;
-  const side = e.side;
-
-  // crop a 300x300 square from the video feed around the mouse click:
-  const x = event.offsetX;
-  const y = event.offsetY;
-  const w = 300;
-  const h = 300;
-
-  const target = event.target;
-  const {w: targetw, h: targeth} = getComputedDims(target);
-  const {vw, vh} = getVideoDims(target);
-
-
+function getCrop(target, x, y, w, h, targetw, targeth, vw, vh) {
   // scale the x,y to match the element coords with video coords:
   const calcx = Math.round(x / targetw * vw);
   const calcy = Math.round(y / targeth * vh);
@@ -51,8 +44,8 @@ export function cardSearch(event, pantograph) {
 
   const imageData = cropFromVideo(target, rx, ry, w, h);
   if (imageData === null) {
-    console.error('got null from video crop, clicked on:', event.target);
-    return;
+    console.error('got null from video crop, clicked on:', target);
+    return null;
   }
   const crop = document.getElementById('crop');
   const ctx = crop.getContext('2d');
@@ -60,15 +53,43 @@ export function cardSearch(event, pantograph) {
   ctx.putImageData(imageData, 0, 0);
 
   // get data to POST to server:
-  const data = crop.toDataURL();
+  return crop.toDataURL();
+}
 
-  // then render calibration for debugging: (AFTER extracting data)
-  debugCalibration(calibration, crop, ctx, vw, vh);
+export function cardSearch(event, pantograph) {
+  const e = event.target;
+  if (e.parentElement.id === 'secondary-container') {
+    return;
+  }
 
+  const calibration = pantograph.calibration;
+  const format = pantograph.format;
+  const side = e.side;
+  const w = 300;
+  const h = 300;
+
+  const target = event.target;
+  const {w: targetw, h: targeth} = getComputedDims(target);
+  const {vw, vh} = getVideoDims(target);
   let scaledCalibration = scaleCalibration(calibration, vw, vh);
 
+  // crop a 300x300 square from the video feed around the mouse click:
+  const ox = event.offsetX;
+  const oy = event.offsetY;
+
+  const clicks = getRandomClicks(0, 5, ox, oy);
+  const images = [];
+  for (let click of clicks) {
+    const {x, y} = click;
+    const data = getCrop(target, x, y, w, h, targetw, targeth, vw, vh);
+    images.push(data);
+  }
+
+  // then render calibration for debugging: (AFTER extracting data)
+  //debugCalibration(calibration, crop, ctx, vw, vh);
+
   const json = {
-    image: data,
+    images: images,
     calibration: scaledCalibration,
     side: side,
     format: format,
@@ -83,8 +104,10 @@ export function cardSearch(event, pantograph) {
   fetch('/recognize/', options)
       .then((response) => response.json())
       .then((response) => {
-        response.side = side; // TODO
-        pantograph.updateSearchResults(response);
+        const result = {};
+        result.side = side; // TODO
+        result.cards = response.flatMap(r => r.cards);
+        pantograph.updateSearchResults(result);
       })
       .catch((err) => console.error(err));
 };

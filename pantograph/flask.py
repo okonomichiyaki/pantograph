@@ -18,6 +18,9 @@ from dataclasses import dataclass
 logger = logging.getLogger("pantograph")
 
 
+#def search_multiple(data_uris):
+
+
 def create_app():
     logging.basicConfig(level=logging.INFO)
 
@@ -89,10 +92,7 @@ def create_app():
         else:
             return ("failed to create metered room", 500)
 
-    @app.route("/recognize/", methods=["POST"])
-    def recognize():
-        json = request.get_json()
-        data_uri = json.get("image")
+    def search_single(data_uri, json):
         calibration = json.get("calibration")
         if calibration:
             calibration = Calibration(calibration["w"], calibration["h"])
@@ -102,17 +102,26 @@ def create_app():
         fmt = json.get("format")
         with urlopen(data_uri) as response:
             img_bytes = response.file.read()
-        search_results = search(img_bytes, calibration=calibration)
-        texts = search_results["filtered"]
-        if len(texts) > 0:
-            fuzzy_results = fuzzy.search_multiple(texts, side, fmt)
-            search_results["cards"] = [
-                {"title": card.title, "code": card.code, "dist": result.dist, "orig": result.orig}
-                for (card, result) in fuzzy_results
-            ]
-            return jsonify(search_results)
-        else:
-            return jsonify({"cards": []})
+            search_results = search(img_bytes, calibration=calibration)
+            texts = search_results["filtered"]
+            if len(texts) > 0:
+                fuzzy_results = fuzzy.search_multiple(texts, side, fmt)
+                search_results["cards"] = [
+                    {"title": card.title, "code": card.code, "dist": result.dist, "orig": result.orig}
+                    for (card, result) in fuzzy_results
+                ]
+                return search_results
+            else:
+                return {"cards": []}
+
+    @app.route("/recognize/", methods=["POST"])
+    def recognize():
+        json = request.get_json()
+        data_uri = json.get("image")
+        data_uris = json.get("images")
+        result = map(lambda d: search_single(d, json), data_uris)
+        result = list(result)
+        return jsonify(result)
 
     @app.route("/cards/<fmt>", methods=["GET"])
     def get_cards(fmt):
