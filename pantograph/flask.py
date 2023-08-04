@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, join_room, leave_room
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 
+import random
 import time
 import os
 import logging
@@ -46,6 +47,12 @@ def create_app():
     @app.route("/")
     def index():
         return send_file("static/index.html")
+
+    @app.route("/screenshot/")
+    def screenshot():
+        ids = ['arissana', 'ateia', 'epiphany', 'mercury']
+        pick = random.choice(ids)
+        return send_file(f"static/images/demo-{pick}.png")
 
     @app.route("/about/")
     def about():

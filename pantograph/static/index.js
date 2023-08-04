@@ -41,17 +41,6 @@ function createNewRoom(json) {
 
 window.addEventListener('load', (event) => {
   prepareModal('new-room-button', 'new-room-modal', createNewRoom, ['nickname', 'format', 'side']);
-  const screenshots = [
-    'demo-arissana.png',
-	  'demo-ateia.png',
-		'demo-epiphany.png',
-	  'demo-mercury.png',
-  ];
-  const screenshot = screenshots[Math.floor(Math.random() * screenshots.length)];
-  const img = document.getElementById('screenshot');
-  img.src = '/images/' + screenshot;
-  img.style.display = 'block';
-
   const burger = document.getElementById('burger-button');
   burger.onclick = function(e) {
     document.getElementById('upper-right-menu').style.display = 'flex';
