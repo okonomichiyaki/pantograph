@@ -2,14 +2,19 @@ import requests
 import json
 import pprint
 import sys
+import logging
+import argparse
 
 from dataclasses import dataclass
 from pathlib import Path
+import urllib.request
 
 API_URL = "https://netrunnerdb.com/api/2.0/public/"
-IMG_URL = "https://static.nrdbassets.com/v1/large/{code}.jpg"
+IMG_URL = "https://card-images.netrunnerdb.com/v1/large/{code}.jpg"
 CORP_FACTIONS = ["NBN", "Jinteki", "Haas-Bioroid", "Weyland Consortium"]
-STARTUP = ["ph", "ms", "msbp", "su21", "sg"]  # pack codes
+STARTUP = ["ph", "ms", "msbp", "su21", "sg", "tai"]  # pack codes
+
+logger = logging.getLogger("pantograph")
 
 
 @dataclass
@@ -52,6 +57,7 @@ def from_hash(card):
 
 def get(url):
     response = requests.get(url)
+    logger.info(f"requests.get {url}")
     if response.status_code == 200:
         return response.text
     else:
@@ -59,6 +65,7 @@ def get(url):
 
 
 def load_or_request(url, filename):
+    logger.info(f"load_or_request {url} {filename}")
     file = Path(filename)
     if file.is_file():
         with open(filename, "r", encoding="utf-8") as f:
@@ -138,15 +145,64 @@ def get_active_cards(raw=False):
         return [from_hash(card) for card in active_cards]
 
 
+def download_images(pack_code, path="."):
+    cards = get_all_cards()
+    cards = [card for card in cards if card["pack_code"] == pack_code]
+    for card in cards:
+        code = card["code"]
+        img_url = IMG_URL.replace("{code}", code)
+        filename = path + "/" + code + ".jpg"
+        if Path(filename).is_file():
+            print("Skipping " + filename)
+        else:
+            print("Downloading " + img_url)
+            urllib.request.urlretrieve(img_url, filename)
+
 if __name__ == "__main__":
-    pp = pprint.PrettyPrinter(indent=4)
-    cards = get_active_cards(raw=True)
-    if len(sys.argv) > 1:
-        arg = sys.argv[1]
-        cards = [card for card in cards if card["title"].lower() == arg.lower()]
+    parser = argparse.ArgumentParser(description="utility script for interacting with the NRDB API")
+    parser.add_argument(
+        "--download-pack",
+        type=str,
+        help="Specify pack code (eg \"tai\" for \"The Automata Initiative\") to download images"
+    )
+    parser.add_argument(
+        "--download-path",
+        type=str,
+        help="Specified path to save images",
+        default="."
+    )
+    parser.add_argument(
+        "--search",
+        type=str,
+        help="Search for a card by title (exact match), pretty print JSON",
+    )
+    parser.add_argument(
+        "--list-legal-packs",
+        action="store_true",
+        help="List pack codes not marked for rotation (standard legal)",
+    )
+    args = parser.parse_args()
+
+    if args.download_pack:
+        download_images(args.download_pack, args.download_path)
+        exit(0)
+
+    if args.search:
+        pp = pprint.PrettyPrinter(indent=4)
+        cards = get_active_cards(raw=True)
+        cards = [card for card in cards if args.search.lower() in card["title"].lower()]
         for card in cards:
             pp.pprint(card)
-    else:
-        cards = cards[:10]
-        for card in cards:
-            pp.pprint(card)
+        exit(0)
+
+    if args.list_legal_packs:
+        active_cycles = get_active_cycles()
+        packs = get_all_packs()
+        for pack in packs:
+            if pack["cycle_code"] in active_cycles:
+                name = pack["name"]
+                code = pack["code"]
+                cycle = pack["cycle_code"]
+                print(f"{name} - {code} - {cycle}")
+
+        exit(0)
