@@ -35,7 +35,8 @@ export class View {
   }
 
   renderResults(response, focusMode, debugMode) {
-    if (response.cards.length > 0) {
+    const cards = response.cards;
+    if (cards && cards.length > 0) {
       if (debugMode) {
         const cards = Array.from(response.cards).reverse();
         for (let i = 0; i < cards.length; i++) {
@@ -46,8 +47,10 @@ export class View {
         this.renderKnownCard(response.cards[0], focusMode, 0);
       }
       this.renderDebug(response);
-    } else {
+    } else if (cards && cards.length == 0) {
       this.renderUnknownCard(response.side, focusMode);
+    } else if (response.error) {
+      this.renderUnknownCard('error', focusMode);
     }
   }
 
@@ -56,10 +59,16 @@ export class View {
     const unknown = document.createElement('div');
     if (side === 'corp') {
       unknown.style.backgroundColor = 'dodgerblue';
-    } else {
+    } else if (side === 'runner') {
       unknown.style.backgroundColor = 'crimson';
+    } else {
+      unknown.style.backgroundColor = 'gold';
     }
-    unknown.innerHTML = '?';
+    if (side === 'error') {
+      unknown.innerHTML = '!';
+    } else {
+      unknown.innerHTML = '?';
+    }
     unknown.id = 'unknown-card';
     unknown.classList.add('card');
     if (focusMode) {

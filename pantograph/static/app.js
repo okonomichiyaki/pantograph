@@ -531,13 +531,11 @@ window.addEventListener('load', async (event) => {
       document.querySelector('div.container-fluid').classList.remove(mode);
     }
     onSearchResult(response) {
-      const cards = response.cards;
+      const cards = response.cards ? response.cards : [];
       const focusMode = pantograph.isModeOn('focus');
       const debugMode = pantograph.isModeOn('debug');
-      if (cards.length > 0) {
-        for (const card of cards) {
-          console.log(`received card(s) from server: ${card.title}`);
-        }
+      for (const card of cards) {
+        console.log(`received card(s) from server: ${card.title}`);
       }
       view.renderResults(response, focusMode, debugMode);
     }

@@ -1,4 +1,5 @@
 import {getComputedDims, cropFromVideo, getVideoDims} from './utils.js';
+import {StatusEvent} from './events.js';
 
 function scaleCalibration(calibration, vw, vh) {
   if (calibration) {
@@ -20,7 +21,7 @@ function debugCalibration(calibration, canvas, ctx, vw, vh) {
   ctx.strokeRect(x, y, w, h);
 }
 
-export function cardSearch(event, pantograph) {
+export async function cardSearch(event, pantograph) {
   const e = event.target;
   if (e.parentElement.id === 'secondary-container') {
     return;
@@ -68,7 +69,7 @@ export function cardSearch(event, pantograph) {
 
   let scaledCalibration = scaleCalibration(calibration, vw, vh);
 
-  const json = {
+  const requestBody = {
     image: data,
     calibration: scaledCalibration,
     side: side,
@@ -79,14 +80,19 @@ export function cardSearch(event, pantograph) {
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(json),
+    body: JSON.stringify(requestBody),
   };
-  fetch('/recognize/', options)
-      .then((response) => response.json())
-      .then((response) => {
-        response.side = side; // TODO
-        pantograph.updateSearchResults(response);
-        document.body.classList.remove('loading');
-      })
-      .catch((err) => console.error(err));
+  const response = await fetch('/recognize/', options)
+        .catch((err) => console.error('error fetching /recognize/', err));
+  if (response && response.status === 200) {
+    const json = await response.json();
+    json.side = side; // TODO
+    pantograph.updateSearchResults(json);
+  } else {
+    const status = response ? response.status : 'x';
+    const error = response ? response.body : '?';
+    pantograph.updateSearchResults({error, status});
+    pantograph.logEvent(new StatusEvent('pantograph', 'error', 'error from server', '⚠️', true));
+  }
+  document.body.classList.remove('loading');
 };
