@@ -43,12 +43,10 @@ def create_app():
                 return nickname
 
     @app.route("/")
-    @auth.login_required
     def index():
         return send_file("static/index.html")
 
     @app.route("/about/")
-    @auth.login_required
     def about():
         return send_file("static/about.html")
 
@@ -57,7 +55,6 @@ def create_app():
         return send_file("static/app.html")
 
     @app.route("/app/<room_id>")
-    @auth.login_required
     def main_app(room_id):
         nickname = request.args.get("nickname")
         room = store.get_room(room_id)
@@ -68,7 +65,6 @@ def create_app():
         return send_file("static/app.html")
 
     @app.route("/room/<room_id>", methods=["GET"])
-    @auth.login_required
     def get_room(room_id):
         room = store.get_room(room_id)
         if not room:
@@ -77,7 +73,6 @@ def create_app():
             return jsonify(room)
 
     @app.route("/room/", methods=["POST"])
-    @auth.login_required
     def create_room():
         json = request.get_json()
         nickname = json.get("nickname")
