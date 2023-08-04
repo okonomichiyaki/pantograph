@@ -442,8 +442,8 @@ function initAutoComplete(view, format) {
 
 function setupDemo(pantograph, view) {
   // select a random corp and random runner, unless one passed in query params:
-  const runners = ['esâ', 'padma', 'sable'];
-  const corps = ['prav', 'thule', 'issuaq', 'ob'];
+  const runners = ['mercury', 'arissana', 'esâ', 'padma', 'sable'];
+  const corps = ['epiphany', 'ateia', 'prav', 'thule', 'issuaq', 'ob'];
   let runnerNick = getQueryParams('runner');
   let corpNick = getQueryParams('corp');
   if (!runnerNick) {
