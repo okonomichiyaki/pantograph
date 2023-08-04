@@ -136,7 +136,7 @@ export class View {
     video.classList.add(side);
     video.side = side;
     const fn = function(e) {
-      this.clearCard();
+      this.clearCard();// TODO: this causes clicks on the secondary container to clear the searched card--should be a no-op
       onclick(e);
     };
     video.onclick = fn.bind(this);
