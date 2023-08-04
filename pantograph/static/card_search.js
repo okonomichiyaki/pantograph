@@ -25,6 +25,7 @@ export function cardSearch(event, pantograph) {
   if (e.parentElement.id === 'secondary-container') {
     return;
   }
+  document.body.classList.add('loading');
 
   const calibration = pantograph.calibration;
   const format = pantograph.format;
@@ -85,6 +86,7 @@ export function cardSearch(event, pantograph) {
       .then((response) => {
         response.side = side; // TODO
         pantograph.updateSearchResults(response);
+        document.body.classList.remove('loading');
       })
       .catch((err) => console.error(err));
 };
