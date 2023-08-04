@@ -265,6 +265,7 @@ div.placeholder {
 }
 #primary-container video, #primary-container .placeholder {
     max-width: 100%;
+    /* TODO: below fixes extra padding in fullscreen mode. but has some other side effect? */
     /* height: 100%; */
     position: absolute;
     z-index: 1;
