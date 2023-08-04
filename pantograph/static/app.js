@@ -297,6 +297,36 @@ function initClickHandlers(pantograph, view) {
     toast.showToast();
   };
 
+  function toggleFullscreen() {
+    if (!document.fullscreenEnabled) {
+      const toast = Toastify({
+        text: 'fullscreen not supported',
+        close: false,
+        duration: 3000,
+        style: {
+          background: '#11191f',
+          color: 'hsl(205deg, 16%, 77%)'
+        },
+      });
+      toast.showToast();
+      return;
+    }
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      document.body.requestFullscreen();
+    }
+  }
+  const fullscreenButton = document.getElementById('fullscreen');
+  document.addEventListener('keypress', function(event) {
+    const keyName = event.key;
+    if (keyName.toLowerCase() === 'f') {
+      toggleFullscreen();
+      event.preventDefault();
+    }
+  });
+  fullscreenButton.onclick = toggleFullscreen;
+
   const rdButton = document.getElementById('rd-access');
   rdButton.onclick = function() {
     const toast = Toastify({
