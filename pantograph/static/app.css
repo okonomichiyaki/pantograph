@@ -248,6 +248,7 @@ div.placeholder {
 
 /* following rules line up transparent calibration canvas on top of video */
 #calibration-canvas {
+    cursor: crosshair;
     display: none;
     position: absolute;
     z-index: 20;
