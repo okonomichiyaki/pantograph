@@ -3,6 +3,7 @@ from flask_socketio import SocketIO, join_room, leave_room
 from flask_httpauth import HTTPBasicAuth
 from werkzeug.security import generate_password_hash, check_password_hash
 
+import time
 import os
 import logging
 from urllib.request import urlopen
@@ -66,6 +67,12 @@ def create_app():
 
     @app.route("/room/<room_id>", methods=["GET"])
     def get_room(room_id):
+        room = metered.get_room(room_id)
+        if not room:
+            return ("", 404)
+        now = int(time.time())
+        if room["expireUnixSec"] < now:
+            return jsonify({"expired": True})
         room = store.get_room(room_id)
         if not room:
             return ("", 404)

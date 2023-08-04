@@ -208,11 +208,7 @@ function initializeSocket(pantograph) {
   return socket;
 }
 
-async function initializeRoom(roomId, pantograph) {
-  const room = await getRoom(roomId);
-  pantograph.setRoom(room);
-
-  // this is a hack to avoid cookies (for now?):
+async function initializeRoom(room, pantograph) {
   const params = getQueryParams();
   let nickname = params['nickname'];
   let side = params['side'];
@@ -241,7 +237,7 @@ async function initializeRoom(roomId, pantograph) {
   }
   pantograph.updateSide(side);
 
-  return {room, nickname, side, otherSide};
+  return {nickname, side, otherSide};
 }
 
 function initClickHandlers(pantograph, view) {
@@ -557,7 +553,14 @@ window.addEventListener('load', async (event) => {
     return;
   }
 
-  let {room, nickname, side, otherSide} = await initializeRoom(roomId, pantograph);
+  const room = await getRoom(roomId);
+  if (room.expired) {
+    showModal('terminated-modal');
+    return;
+  }
+
+  pantograph.setRoom(room);
+  let {nickname, side, otherSide} = await initializeRoom(room, pantograph);
   let socket = initializeSocket(pantograph);
 
   let meeting = null;

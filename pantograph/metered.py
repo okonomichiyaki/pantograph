@@ -1,6 +1,8 @@
 import os
 import logging
 import requests
+import time
+
 
 logger = logging.getLogger("pantograph")
 
@@ -21,12 +23,15 @@ def get_url(path):
 
 def create_room(room_id):
     url = get_url("/room")
+    now = int(time.time())
+    expiry = now + 60 * 60 * 4
     r = requests.post(
         url,
         json={
             "roomName": room_id,
-            # "ejectAfterElapsedTimeInSec": 60*60*3,
-            # "endMeetingAfterNoActivityInSec": 5*60
+            "expireUnixSec": expiry,
+            "ejectAtRoomExp": True,
+            "deleteOnExp": True
         },
     )
     if r.status_code == 200:
@@ -55,6 +60,15 @@ def get_all_rooms():
         logger.error(f"Failed to get all Metered rooms: {r.json()}")
 
 
+def get_room(id):
+    url = get_url("/room/" + id)
+    r = requests.get(url)
+    if r.status_code == 200:
+        return r.json()
+    else:
+        logger.error(f"Failed to get Metered room: {r.json()}")
+
+
 def cleanup():
     rooms = get_all_rooms()
     for room in rooms:
@@ -63,3 +77,7 @@ def cleanup():
             print(f"deleted {room_name}")
         else:
             print(f"failed to delete {room_name}")
+
+
+if __name__ == "__main__":
+    cleanup()
