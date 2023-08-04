@@ -332,6 +332,12 @@ div.placeholder {
     margin-bottom: 0px;
 }
 
+.trojan {
+    position: absolute;
+    z-index: 100;
+    cursor: move;
+}
+
 /* responsive styles. wip */
 @media (orientation: portrait) {
     div.main {

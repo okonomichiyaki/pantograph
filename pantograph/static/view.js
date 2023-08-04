@@ -1,3 +1,4 @@
+import {createHostedCard} from './trojan.js';
 
 const TITLE_HEIGHT = 30;
 
@@ -34,13 +35,19 @@ export class View {
     this.cardToast = toast;
   }
 
-  renderResults(response, focusMode, debugMode) {
+  renderHostedCard(card) {
+    const img = createHostedCard(card);
+    const container = document.getElementById('primary-container');
+    container.appendChild(img);
+  }
+
+  renderResults(response, focusMode, debugMode, onclick) {
     if (response.cards.length > 0) {
       if (debugMode) {
         const cards = Array.from(response.cards).reverse();
         for (let i = 0; i < cards.length; i++) {
           const card = cards[i];
-          this.renderKnownCard(card, focusMode, i);
+          this.renderKnownCard(card, focusMode, i, onclick);
         }
       } else {
         this.renderKnownCard(response.cards[0], focusMode, 0);
@@ -69,7 +76,7 @@ export class View {
     }
   }
 
-  renderKnownCard(card, focusMode, idx) {
+  renderKnownCard(card, focusMode, idx, onclick) {
     const container = document.getElementById('card-container');
     const img = document.createElement('img');
     const size = 'large';
@@ -91,6 +98,7 @@ export class View {
     };
     img.addEventListener("mousemove", onMouseMove);
     img.addEventListener("mouseleave", onMouseLeave);
+    img.onclick = onclick;
     if (focusMode) {
       this.#showToast(img);
     } else {

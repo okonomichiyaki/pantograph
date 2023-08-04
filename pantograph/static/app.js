@@ -7,6 +7,7 @@ import {initializeMetered} from './metered.js';
 import {StatusEvent} from './events.js';
 import {View} from './view.js';
 import {prepareModal} from './modals.js';
+import {startTrojan} from './trojan.js';
 //import {autoComplete} from "@tarekraafat/autocomplete.js";
 
 class Pantograph {
@@ -19,6 +20,7 @@ class Pantograph {
   room = null;
   calibration = null;
   participants = [];
+  hostedCards = [];
 
   constructor(client) {
     this.client = client;
@@ -92,6 +94,11 @@ class Pantograph {
 
   updateSearchResults(response) {
     this.client.onSearchResult(response);
+  }
+
+  addHostedCard(card, x, y) {
+    this.hostedCards.push({card, x, y});
+    this.client.onHostedCardAdded(card, x, y);
   }
 
   initializeModes() {
@@ -398,7 +405,7 @@ function initCameraButtons(meeting) {
 
 }
 
-function initAutoComplete(view, format) {
+function initAutoComplete(view, pantograph, format) {
   const options = {
     method: 'GET',
     headers: {
@@ -431,7 +438,15 @@ function initAutoComplete(view, format) {
               autoCompleteJS.input.value = selection;
               console.log(`search selected: ${selection}`);
               const card = cards[selection];
-              view.renderKnownCard(card, false, 0);
+              const onclick = async function(e) {
+                let {x, y} = await startTrojan(e);
+                const w = 145; //pantograph.calibration.pixel.w;
+                const h = 200; //pantograph.calibration.pixel.h;
+                x = x - w / 2;
+                y = y - h / 2;
+                pantograph.addHostedCard({src: e.target.src, alt: e.target.alt, x, y, w, h});
+              };
+              view.renderKnownCard(card, false, 0, onclick);
             }
           }
         }
@@ -539,10 +554,21 @@ window.addEventListener('load', async (event) => {
           console.log(`received card(s) from server: ${card.title}`);
         }
       }
-      view.renderResults(response, focusMode, debugMode);
+      const onclick = async function(e) {
+        let {x, y} = await startTrojan(e);
+        const w = 145; //pantograph.calibration.pixel.w;
+        const h = 200; //pantograph.calibration.pixel.h;
+        x = x - w / 2;
+        y = y - h / 2;
+        pantograph.addHostedCard({src: e.target.src, alt: e.target.alt, x, y, w, h});
+      };
+      view.renderResults(response, focusMode, debugMode, onclick);
     }
     startPlaying(stream, which, container, side, onclick) {
       view.renderVideo(stream, which, container, side, onclick);
+    }
+    onHostedCardAdded(card) {
+      view.renderHostedCard(card);
     }
   };
 
@@ -555,7 +581,7 @@ window.addEventListener('load', async (event) => {
 
   if (roomId === 'demo' || pantograph.isModeOn('demo')) {
     setupDemo(pantograph, view);
-    initAutoComplete(view, 'startup');
+    initAutoComplete(view, pantograph, 'startup');
     return;
   }
 
