@@ -13,8 +13,10 @@ def test_fuzzy_search_makers_eye():
     text = "2\nTHE MAKER'S F\nScant "
     makers = "The Maker's Eye"
     titles = ["Synthetic Systems: The World Re-imagined", makers]
-    fuzzy = FuzzySearch([NrdbCard(title, 123, None, None, None) for title in titles])
+    fuzzy = FuzzySearch([NrdbCard(title, 123, None, None, None, ['startup']) for title in titles])
     result = fuzzy.search(text)
+    assert len(result) > 0
+    result = result[0][0]
     assert result.title == makers
 
 
@@ -22,10 +24,12 @@ def test_fuzzy_search_zenit():
     text = "884\nZENIT CHIP IZ-2M)"
     zenit = "Zenit Chip JZ-2MJ"
     titles = ["Brain Chip", "Security Chip", "Friday Chip", zenit, "Unity"]
-    fuzzy = FuzzySearch([NrdbCard(title, 123, None, None, None) for title in titles])
+    fuzzy = FuzzySearch([NrdbCard(title, 123, None, None, None, ['startup']) for title in titles])
     logger = logging.getLogger("pantograph")
     logger.debug(fuzzy.cards)
     result = fuzzy.search(text)
+    assert len(result) > 0
+    result = result[0][0]
     assert result.title == zenit
 
 
@@ -33,6 +37,8 @@ def test_fuzzy_search_wake_implant():
     text = "WAKE IMPLANT VIA-IRI"
     wake = "WAKE Implant v2A-JRJ"
     titles = ["Imp", "Wake Up Call", wake]
-    fuzzy = FuzzySearch([NrdbCard(title, 123, None, None, None) for title in titles])
+    fuzzy = FuzzySearch([NrdbCard(title, 123, None, None, None, ['startup']) for title in titles])
     result = fuzzy.search(text)
+    assert len(result) > 0
+    result = result[0][0]
     assert result.title == wake
