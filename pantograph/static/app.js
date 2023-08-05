@@ -132,7 +132,7 @@ class Pantograph {
   localVideoStarted(item) {
     const track = item.track;
     const stream = new MediaStream([track]);
-    this.client.startPlaying(stream, 'local', 'secondary-container', this.side, (e) => {cardSearch(e, this);});
+    this.client.startPlaying(stream, 'local', 'local-container', this.side, (e) => {cardSearch(e, this);});
   }
   remoteVideoStarted(item) {
     const track = item.track;
@@ -141,12 +141,12 @@ class Pantograph {
     const thatSide = this.room.members[name].side;
     if (this.side === 'spectator') {
       if (thatSide === 'runner') {
-        this.client.startPlaying(stream, 'remote', 'primary-container', thatSide, (e) => {cardSearch(e, this);});
+        this.client.startPlaying(stream, 'remote', thatSide, (e) => {cardSearch(e, this);});
       } else if (thatSide === 'corp') {
-        this.client.startPlaying(stream, 'local', 'secondary-container', thatSide, (e) => {cardSearch(e, this);});
+        this.client.startPlaying(stream, 'local', thatSide, (e) => {cardSearch(e, this);});
       }
     } else {
-      this.client.startPlaying(stream, 'remote', 'primary-container', thatSide, (e) => {cardSearch(e, this);});
+      this.client.startPlaying(stream, 'remote', thatSide, (e) => {cardSearch(e, this);});
     }
   }
   localTrackStopped(item) { }
@@ -476,8 +476,8 @@ function setupDemo(pantograph, view) {
     view.clearCard();
     cardSearch(e, pantograph);
   }
-  view.renderVideo(`/video/${remote.nickname}-720p.mp4`, 'remote', 'primary-container', remote.side, handleClick);
-  view.renderVideo(`/video/${local.nickname}-720p.mp4`, 'local', 'secondary-container', local.side, handleClick);
+  view.renderVideo(`/video/${remote.nickname}-720p.mp4`, 'remote', remote.side, handleClick);
+  view.renderVideo(`/video/${local.nickname}-720p.mp4`, 'local', local.side, handleClick);
 }
 
 window.addEventListener('load', async (event) => {
@@ -535,8 +535,8 @@ window.addEventListener('load', async (event) => {
       }
       view.renderResults(response, focusMode, debugMode);
     }
-    startPlaying(stream, which, container, side, onclick) {
-      view.renderVideo(stream, which, container, side, onclick);
+    startPlaying(stream, which, side, onclick) {
+      view.renderVideo(stream, which, side, onclick);
     }
   };
 

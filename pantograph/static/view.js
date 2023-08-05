@@ -131,7 +131,7 @@ export class View {
     }
   }
 
-  renderVideo(source, which, container, side, onclick) {
+  renderVideo(source, which, side, onclick) {
     const video = document.createElement('video');
     video.id = which + '-video';
     video.autoPlay = true;
@@ -150,7 +150,7 @@ export class View {
     };
     video.onclick = fn.bind(this);
     video.play();
-    document.getElementById(container).append(video);
+    document.getElementById(which + '-container').append(video);
     document.body.classList.add(which + '-playing');
   }
 }
