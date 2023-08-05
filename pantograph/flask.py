@@ -58,6 +58,10 @@ def create_app():
     def about():
         return send_file("static/about.html")
 
+    @app.route("/help/")
+    def help():
+        return send_file("static/help.html")
+
     @app.route("/app/demo/")
     def demo():
         return send_file("static/app.html")
