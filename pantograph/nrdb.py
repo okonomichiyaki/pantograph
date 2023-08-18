@@ -4,6 +4,7 @@ import pprint
 import sys
 import logging
 import argparse
+import time
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -157,6 +158,7 @@ def download_images(pack_code, path="."):
         else:
             print("Downloading " + img_url)
             urllib.request.urlretrieve(img_url, filename)
+            time.sleep(1)
 
 
 if __name__ == "__main__":
