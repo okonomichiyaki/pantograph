@@ -132,7 +132,7 @@ class Pantograph {
   localVideoStarted(item) {
     const track = item.track;
     const stream = new MediaStream([track]);
-    this.client.startPlaying(stream, 'local', 'local-container', this.side, (e) => {cardSearch(e, this);});
+    this.client.startPlaying(stream, 'local', this.side, (e) => {cardSearch(e, this);});
   }
   remoteVideoStarted(item) {
     const track = item.track;

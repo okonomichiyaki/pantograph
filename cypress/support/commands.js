@@ -26,7 +26,7 @@ Cypress.Commands.add('clickByPercentage', { prevSubject: true }, clickByPercenta
 // commands for stubbing Metered API: this is a bit of a hack. gets around difficulty stubbing Metered.meeting
 const callbacks = {};
 const devices = [];
-let localVideoUrl = "https://pantograph.cbgpnck.net/video/padma-720p.mp4";
+let localVideoUrl = "";
 Cypress.on('window:before:load', (win) => {
   cy.stub(win.navigator.mediaDevices, 'getUserMedia', (constraints) => {
     return Promise.resolve({});
@@ -40,6 +40,30 @@ Cypress.on('window:before:load', (win) => {
     on(evt, fn) {
       callbacks[evt] = fn;
     }
+    startVideo() {
+      const video = document.createElement('video');
+      video.src = localVideoUrl;
+      video.loop = true;
+      video.play().then(function() {
+        let stream;
+        if (video.captureStream) {
+          stream = video.captureStream();
+        }
+        if (video.mozCaptureStream) {
+          stream = video.mozCaptureStream();
+        }
+        if (stream && stream.getVideoTracks().length > 0) {
+          const track = stream.getVideoTracks()[0];
+          const item = {
+            type: 'video',
+            track: track,
+          };
+          const onLocalStarted = callbacks["localTrackStarted"];
+          onLocalStarted(item);
+        }
+      });
+    }
+    chooseVideoInputDevice(deviceId) { return Promise.resolve({}); }
   };
   win.Metered = { Meeting: Meeting };
 });
