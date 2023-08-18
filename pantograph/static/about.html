@@ -36,9 +36,37 @@
                     </li>
                 </ul>
             </nav>
+
+            <h2>what is this?</h2>
             <p>
-                made with 💖 by
-                <a href="https://github.com/okonomichiyaki/">@okonomichiyaki</a>
+                Pantograph is a web application that streamlines playing the card game
+                <a href="https://nullsignal.games/about/netrunner/">Netrunner</a>
+                with a remote opponent using physical cards.
+                Each player needs paper cards and a camera positioned over their play area.
+                Once you start a video call using the app you can click on your opponent's cards to see higher resolution images.
+            </p>
+            <p>
+                You can try it out <a href="/app/demo">here</a>.
+                This demo uses static video files to simulate a game in progress,
+                and you can click on the video to see the card search in action.
+                Refresh the page to generate a random runner and corp match up.
+            </p>
+
+            <h2>how does it work?</h2>
+            <p>
+                When you click on the video a cropped snapshot is sent to the server and optical character recognition
+                (via Google's Cloud Vision API) is used to try to match the title of the card with data from
+                <a href="https://netrunnerdb.com/">NetrunnerDB</a>.
+                The search is based on recognized text, not image recognition based on the art,
+                so should work with alt arts so long as they include the title and do not use a very unusual layout.
+            </p>
+
+            <h2>why is it called Pantograph?</h2>
+            <p>
+                <a href="https://netrunnerdb.com/en/card/30023">Pantograph</a> is Tāo Salonga's console, and Tāo's subtitle is
+                <a href="https://netrunnerdb.com/en/card/30019">"telepresence magician"</a>. It's an indirect nod to the
+                <a href="https://spelltable.wizards.com/">app</a> that inspired it. The logo is a reference to a certain
+                <a href="https://slay-the-spire.fandom.com/wiki/Pantograph">video game</a>.
             </p>
 
             <h2>what data is stored or collected?</h2>
@@ -58,19 +86,23 @@
                 is sent to Google's Cloud Vision API.
             </p>
 
-            <h2>why is it called Pantograph?</h2>
-            <p>
-                <a href="https://netrunnerdb.com/en/card/30023">Pantograph</a> is Tāo Salonga's console, and Tāo's subtitle is
-                <a href="https://netrunnerdb.com/en/card/30019">"telepresence magician"</a>. It's an indirect nod to the
-                <a href="https://spelltable.wizards.com/">app</a> that inspired it, and to a certain
-                <a href="https://slay-the-spire.fandom.com/wiki/Pantograph">video game</a>.
-            </p>
-
             <h2>copyright and trademarks</h2>
             <p>
                 Netrunner and Android are trademarks of Fantasy Flight Games and/or Wizards of the Coast.
                 Card images are copyrighted by Fantasy Flight Games and/or Null Signal Games.
                 This website is not affiliated with Fantasy Flight Games, Wizards of the Coast, or Null Signal Games.
+            </p>
+
+            <h2>code</h2>
+            <p>
+                open source under MIT License
+                <br/>
+                pull requests welcome on
+                <a href="https://github.com/okonomichiyaki/pantograph">GitHub</a>
+            </p>
+            <p>
+                made with 💖 by
+                <a href="https://github.com/okonomichiyaki/">@okonomichiyaki</a>
             </p>
         </div>
     </body>
