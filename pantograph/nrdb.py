@@ -158,18 +158,18 @@ def download_images(pack_code, path="."):
             print("Downloading " + img_url)
             urllib.request.urlretrieve(img_url, filename)
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="utility script for interacting with the NRDB API")
+    parser = argparse.ArgumentParser(
+        description="utility script for interacting with the NRDB API"
+    )
     parser.add_argument(
         "--download-pack",
         type=str,
-        help="Specify pack code (eg \"tai\" for \"The Automata Initiative\") to download images"
+        help='Specify pack code (eg "tai" for "The Automata Initiative") to download images',
     )
     parser.add_argument(
-        "--download-path",
-        type=str,
-        help="Specified path to save images",
-        default="."
+        "--download-path", type=str, help="Specified path to save images", default="."
     )
     parser.add_argument(
         "--search",

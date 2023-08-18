@@ -50,7 +50,7 @@ def create_app():
 
     @app.route("/screenshot/")
     def screenshot():
-        ids = ['arissana', 'ateia', 'epiphany', 'mercury']
+        ids = ["arissana", "ateia", "epiphany", "mercury"]
         pick = random.choice(ids)
         return send_file(f"static/images/demo-{pick}.png")
 
@@ -125,7 +125,12 @@ def create_app():
         if len(texts) > 0:
             fuzzy_results = fuzzy.search_multiple(texts, side, fmt)
             search_results["cards"] = [
-                {"title": card.title, "code": card.code, "dist": result.dist, "orig": result.orig}
+                {
+                    "title": card.title,
+                    "code": card.code,
+                    "dist": result.dist,
+                    "orig": result.orig,
+                }
                 for (card, result) in fuzzy_results
             ]
             return jsonify(search_results)
@@ -154,10 +159,7 @@ def handle_join(data):
     room = store.join_room(request.sid, room_id, nickname, side)
     if room:
         join_room(room_id)
-        payload = {
-            "room": room,
-            "joiner": room["members"][nickname]
-        }
+        payload = {"room": room, "joiner": room["members"][nickname]}
         socketio.emit("joined", payload, to=room_id)
         logger.info(f"join: [{request.sid}] {room_id} {nickname} {side}")
     else:
@@ -175,10 +177,7 @@ def handle_disconnect():
     if member:
         room_id = member["room_id"]
         room = store.get_room(room_id)
-        payload = {
-            "room": room,
-            "exiter": member
-        }
+        payload = {"room": room, "exiter": member}
         socketio.emit("exited", payload, to=room_id)
         nickname = member["nickname"]
         logger.info(f"disconnect: [{request.sid}] {nickname}")

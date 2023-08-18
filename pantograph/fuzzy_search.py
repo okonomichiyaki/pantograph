@@ -89,7 +89,11 @@ class FuzzySearch:
 
         results = [self._extract(text, self._titles[fmt][side]) for text in texts]
         results = [result[0] for result in results]
-        results = [result for result in results if len(result.orig) > result.dist and len(result.title) > result.dist]
+        results = [
+            result
+            for result in results
+            if len(result.orig) > result.dist and len(result.title) > result.dist
+        ]
         results = sorted(results, key=lambda result: result.dist)
         results = [(self.cards[result.title], result) for result in results]
         return results

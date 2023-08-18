@@ -10,12 +10,15 @@ import json
 
 logger = logging.getLogger("pantograph")
 
+
 def get_database():
     connection = os.environ.get("MONGO_CONNECTION_STRING")
-    client = MongoClient(connection, server_api=ServerApi('1'))
+    client = MongoClient(connection, server_api=ServerApi("1"))
     return client["pantograph"]
 
+
 db = get_database()
+
 
 def delete_connection(sid):
     coll = db["connections"]
@@ -76,6 +79,7 @@ def join_room(sid, room_id, nickname, side):
     coll.insert_one({"sid": sid, "member": member})
     room["members"][nickname] = member
     return room
+
 
 def cleanup():
     db["rooms"].delete_many({})

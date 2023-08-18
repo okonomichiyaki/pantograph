@@ -31,7 +31,7 @@ def create_room(room_id):
             "roomName": room_id,
             "expireUnixSec": expiry,
             "ejectAtRoomExp": True,
-            "deleteOnExp": True
+            "deleteOnExp": True,
         },
     )
     if r.status_code == 200:
