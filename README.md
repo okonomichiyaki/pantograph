@@ -28,3 +28,15 @@ To run end-to-end tests:
 
 - install cypress via `npm install`
 - then run the tests via `npx cypress run` or through the cypress UI (`npx cypress open`)
+
+## contributing
+
+set up [pre-commit](https://pre-commit.com/) to automatically format with [black](https://black.readthedocs.io/en/stable/)
+
+## updating for new releases
+
+steps to manually update to support new releases from NSG:
+
+1. download images: `mkdir /tmp/images; poetry run python pantograph/nrdb.py --download-pack <pack code> --download-path /tmp/images`
+2. upload to Google: `gcloud storage cp --recursive /tmp/images gs://<netrunner-cards>`
+3. update card pool for Startup in `./pantograph/nrdb.py` (Standard relies on NRDB rotation)
