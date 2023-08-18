@@ -1,20 +1,6 @@
 import {showModal} from './modals.js';
 import {StatusEvent} from './events.js';
 
-function startPlaying(stream, which, container, side) {
-  const video = document.createElement('video');
-  video.id = which + '-video';
-  video.autoPlay = true;
-  video.playsInline = true;
-  video.srcObject = stream;
-  video.classList.add('live');
-  video.classList.add(side);
-  video.side = side;
-  video.play();
-  document.getElementById(container).append(video);
-  document.body.classList.add(which + '-playing');
-}
-
 function stopPlaying(which) {
   document.getElementById(which + '-video').remove();
   document.body.classList.remove(which + '-playing');
