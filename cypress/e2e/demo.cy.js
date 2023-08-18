@@ -1,5 +1,5 @@
-describe('card search via click in demo mode', () => {
-  it('passes', () => {
+describe('demo mode', () => {
+  it('card search via click', () => {
     cy.viewport(1920, 1080);
     cy.visit('http://localhost:8000/app/demo/?runner=esâ&corp=thule&local=0');
     cy.get('#remote-video').should('have.prop', 'ended', true);
