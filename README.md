@@ -8,8 +8,8 @@ see the demo live [here](https://pantograph.cbgpnck.net/app/demo/)
 
 dependencies:
 
-- install python and poetry
-- [install and start MongoDB](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/)
+- install [Python 3.10](https://realpython.com/intro-to-pyenv/) and [Poetry](https://python-poetry.org/)
+- install and start [MongoDB](https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-os-x/)
 - get an API key from [Metered](https://www.metered.ca/)
 - get an API key from [Google Vision](https://cloud.google.com/vision/)
 
