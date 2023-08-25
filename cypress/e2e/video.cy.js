@@ -13,6 +13,9 @@ describe('video call', () => {
     cy.localVideo("/video/padma-720p.mp4");
     cy.contains('start camera').click();
     cy.contains('swap video').click();
+    cy.get('#local-video')
+      .invoke('css', 'width')
+      .should('match', /1280.*px/);
     cy.get('#local-video').clickByPercentage(540 / 1280, 365 / 720);
     cy.get('img[alt="Endurance"]').should('be.visible');
   });
