@@ -1,6 +1,6 @@
 describe('demo mode', () => {
   it('card search via click', () => {
-    cy.visit('http://localhost:8000/app/demo/?runner=esâ&corp=thule&local=0');
+    cy.visit('/app/demo/?runner=esa%CC%82&corp=thule&local=0');
     cy.get('#remote-video').should('have.prop', 'ended', true);
     cy.get('#local-video').should('have.prop', 'ended', true);
     cy.get('#remote-placeholder').should('not.be.visible');

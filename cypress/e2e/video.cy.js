@@ -10,7 +10,7 @@ describe('video call', () => {
     cy.contains('share this link with your opponent').should('be.visible');
     cy.get('dialog#share-link-modal button.confirm-modal').click();
 
-    cy.localVideo("http://localhost:8000/video/padma-720p.mp4");
+    cy.localVideo("/video/padma-720p.mp4");
     cy.contains('start camera').click();
     cy.contains('swap video').click();
     cy.get('#local-video').clickByPercentage(540 / 1280, 365 / 720);

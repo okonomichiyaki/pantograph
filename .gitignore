@@ -1,4 +1,6 @@
 cypress/videos/
+cypress/screenshots/
+
 card*.jpg
 search-target.jpg
 data/

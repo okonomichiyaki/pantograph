@@ -80,7 +80,7 @@ Cypress.Commands.add('localVideo', (url) => {
 
 // command for creating and joining a room as a specific side:
 Cypress.Commands.add('createAndJoin', (nick, side) => {
-  cy.visit('http://localhost:8000/');
+  cy.visit('/');
   // should be able to stub room API to avoid repeating this: (?)
   cy.get('button#new-room-button').click();
   cy.contains('choose a nickname for yourself').should('be.visible');
