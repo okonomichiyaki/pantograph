@@ -7,13 +7,15 @@ from pantograph.click_search import search
 
 
 def main():
-    parser = argparse.ArgumentParser(description="TODO")
-    parser.add_argument("--log-level", type=str, default="info")
+    parser = argparse.ArgumentParser(
+        description="Command-line interface to Pantograph card search"
+    )
+    parser.add_argument("--log", action="store_true")
     parser.add_argument(
-        "--fmt",
+        "--format",
         type=str,
         help="Specify which format (startup or standard) to search through",
-        default="startup",
+        default="standard",
     )
     parser.add_argument(
         "--side",
@@ -29,10 +31,10 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.log_level.lower() == "debug":
+    if args.log:
         logging.basicConfig(level=logging.DEBUG)
     else:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.ERROR)
     logger = logging.getLogger("pantograph")
 
     fuzzy = FuzzySearch()
@@ -42,7 +44,7 @@ def main():
         with io.open(filename, "rb") as image_file:
             image_bytes = image_file.read()
         texts = search(image_bytes, visual_debug=True)
-        results = fuzzy.search_multiple(texts, args.side, args.fmt)
+        results = fuzzy.search_multiple(texts, args.side, args.format)
         if len(results) > 0:
             for card, dist in results:
                 print(f"{card.title} ({card.code}) [{dist}]")
@@ -51,7 +53,7 @@ def main():
         exit(0)
 
     if args.fuzzy:
-        results = fuzzy.search(args.fuzzy, args.side, args.fmt)
+        results = fuzzy.search(args.fuzzy, args.side, args.format)
         if len(results) > 0:
             for card, dist in results:
                 print(f"{card.title} ({card.code}) [{dist}]")

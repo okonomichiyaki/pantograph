@@ -458,7 +458,7 @@ function setupDemo(pantograph, view) {
   };
   const room = {members: {runnerNick: runner, corpNick: corp}};
   pantograph.updateRoom({room: room});
-  pantograph.updateFormat('startup');
+  pantograph.updateFormat('standard');
   pantograph.updateSide('spectator');
 
   // between corp/runner, randomly determine local/remote, unless passed in query params:
@@ -549,7 +549,7 @@ window.addEventListener('load', async (event) => {
 
   if (roomId === 'demo' || pantograph.isModeOn('demo')) {
     setupDemo(pantograph, view);
-    initAutoComplete(view, 'startup');
+    initAutoComplete(view, 'standard');
     return;
   }
 

@@ -14,7 +14,17 @@ def test_fuzzy_search_makers_eye():
     makers = "The Maker's Eye"
     titles = ["Synthetic Systems: The World Re-imagined", makers]
     fuzzy = FuzzySearch(
-        [NrdbCard(title, 123, None, None, None, ["startup"]) for title in titles]
+        [
+            NrdbCard(
+                title,
+                123,
+                "http://example.com/image.jpg",
+                "runner",
+                "type",
+                ["startup"],
+            )
+            for title in titles
+        ]
     )
     result = fuzzy.search(text)
     assert len(result) > 0
@@ -27,7 +37,17 @@ def test_fuzzy_search_zenit():
     zenit = "Zenit Chip JZ-2MJ"
     titles = ["Brain Chip", "Security Chip", "Friday Chip", zenit, "Unity"]
     fuzzy = FuzzySearch(
-        [NrdbCard(title, 123, None, None, None, ["startup"]) for title in titles]
+        [
+            NrdbCard(
+                title,
+                123,
+                "http://example.com/image.jpg",
+                "runner",
+                "type",
+                ["startup"],
+            )
+            for title in titles
+        ]
     )
     logger = logging.getLogger("pantograph")
     logger.debug(fuzzy.cards)
@@ -42,7 +62,17 @@ def test_fuzzy_search_wake_implant():
     wake = "WAKE Implant v2A-JRJ"
     titles = ["Imp", "Wake Up Call", wake]
     fuzzy = FuzzySearch(
-        [NrdbCard(title, 123, None, None, None, ["startup"]) for title in titles]
+        [
+            NrdbCard(
+                title,
+                123,
+                "http://example.com/image.jpg",
+                "runner",
+                "type",
+                ["startup"],
+            )
+            for title in titles
+        ]
     )
     result = fuzzy.search(text)
     assert len(result) > 0

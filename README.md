@@ -40,6 +40,6 @@ set up [pre-commit](https://pre-commit.com/) to automatically format with [black
 
 steps to manually update to support new releases from NSG:
 
-1. download images: `mkdir /tmp/images; poetry run python pantograph/nrdb.py --download-pack <pack code> --download-path /tmp/images`
+1. download images: `mkdir /tmp/images; poetry run python pantograph/nrdb.py --download-set <set> --download-path /tmp/images`
 2. upload to Google: `gcloud storage cp --recursive /tmp/images gs://netrunner-cards`
-3. update card pool for Startup in `./pantograph/nrdb.py` (Standard relies on NRDB rotation)
+3. ~~update card pool for Startup in `./pantograph/nrdb.py` (Standard relies on NRDB rotation)~~
