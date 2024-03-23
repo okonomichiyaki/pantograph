@@ -10,10 +10,9 @@ from dataclasses import dataclass
 from pathlib import Path
 import urllib.request
 
-API_URL = "https://netrunnerdb.com/api/2.0/public/"
-IMG_URL = "https://card-images.netrunnerdb.com/v1/large/{code}.jpg"
+APIv3_URL = "https://api-preview.netrunnerdb.com/api/v3/public/"
+IMG_URL = "https://card-images.netrunnerdb.com/v2/large/{code}.jpg"
 CORP_FACTIONS = ["NBN", "Jinteki", "Haas-Bioroid", "Weyland Consortium"]
-STARTUP = ["ph", "ms", "msbp", "su21", "sg", "tai"]  # pack codes
 
 logger = logging.getLogger("pantograph")
 
@@ -39,20 +38,20 @@ class NrdbCard:
             return [self.title]
 
 
-def get_formats(card):
-    if card["pack_code"] in STARTUP:
+def get_card_formats(pools, card):
+    if card["id"] in pools["startup"]["attributes"]["card_ids"]:
         return ["startup", "standard"]
     else:
         return ["standard"]
 
 
-def from_hash(card):
-    title = card["title"]
-    code = card["code"]
+def from_hash(pools, card):
+    title = card["attributes"]["title"]
+    code = card["attributes"]["printing_ids"][0]  # TODO first or last? (eg for SU21)
     img_url = IMG_URL.replace("{code}", code)
-    type_code = card["type_code"]
-    side_code = card["side_code"]
-    fmts = get_formats(card)
+    type_code = card["attributes"]["card_type_id"]
+    side_code = card["attributes"]["side_id"]
+    fmts = get_card_formats(pools, card)
     return NrdbCard(title, int(code), img_url, side_code, type_code, fmts)
 
 
@@ -80,77 +79,84 @@ def load_or_request(url, filename):
         return json.loads(text)
 
 
-def fetch(base, path, tail):
-    filename = "data/" + path + tail
-    url = base + path + tail
-    Path("data/" + path).mkdir(parents=True, exist_ok=True)
+def fetch(base, path):
+    filename = "data/" + path.replace("/", "_")
+    url = base + path
+    Path("data/").mkdir(parents=True, exist_ok=True)
     return load_or_request(url, filename)
 
 
-def get_card(code):
-    path = "card/"
-    tail = str(code)
-    data = fetch(API_URL, path, tail)
-    return data["data"][0]
-
-
 def get_all_cards():
-    path = ""
-    tail = "cards"
-    data = fetch(API_URL, path, tail)
-    return data["data"]
+    i = 0
+    filename = f"data/all_cards_page_{i}"
+    url = APIv3_URL + "/cards"
+    Path(f"data/ALLCARDS/").mkdir(parents=True, exist_ok=True)
+    page = load_or_request(url, filename)
+    results = page["data"]
+    while "next" in page["links"]:
+        i = i + 1
+        filename = f"data/all_cards_page_{i}"
+        url = page["links"]["next"]
+        page = load_or_request(url, filename)
+        results.extend(page["data"])
+    return [card for card in results]
 
 
-def get_pack(code):
-    path = "pack/"
-    tail = str(code)
-    data = fetch(API_URL, path, tail)
-    return data["data"][0]
+def get_latest_card_pool(format):
+    path = f"formats/{format}/card_pools"
+    data = fetch(APIv3_URL, path)
+    pools = data["data"]
+    return pools[-1]
 
 
-def get_all_cycles():
-    filename = "data/cycles"
-    url = API_URL + "cycles"
-    data = load_or_request(url, filename)
-    return data["data"]
+def get_formats():
+    path = "formats"
+    data = fetch(APIv3_URL, path)
+    return data
 
 
-def get_active_cycles():
-    cycles = get_all_cycles()
-    # filter out draft and napd multiplayer, which are not marked as rotated:
-    cycles = [c for c in cycles if c["code"] not in ["draft", "napd"]]
-    return [c["code"] for c in cycles if not c["rotated"]]
+def get_format(format):
+    formats = get_formats()
+    return [f for f in formats["data"] if f["attributes"]["name"] == format]
 
 
-def get_all_packs():
-    filename = "data/packs"
-    url = API_URL + "packs"
-    data = load_or_request(url, filename)
-    return data["data"]
+def get_format_names():
+    formats = get_formats()
+    return [f["attributes"]["name"] for f in formats["data"]]
 
 
-def get_active_packs():
-    active_cycles = get_active_cycles()
-    packs = get_all_packs()
-    return [pack for pack in packs if pack["cycle_code"] in active_cycles]
+def get_latest_card_pools():
+    return {
+        "startup": get_latest_card_pool("startup"),
+        "standard": get_latest_card_pool("standard"),
+    }
+
+
+def get_card_sets():
+    path = "card_sets"
+    data = fetch(APIv3_URL, path)
+    return sorted(data["data"], key=lambda s: s["attributes"]["date_release"])
 
 
 def get_active_cards(raw=False):
+    pools = get_latest_card_pools()
     cards = get_all_cards()
-    active_packs = get_active_packs()
-    active_pack_codes = [pack["code"] for pack in active_packs]
-    active_cards = [card for card in cards if card["pack_code"] in active_pack_codes]
+    active_cards = [
+        card
+        for card in cards
+        if card["id"] in pools["standard"]["attributes"]["card_ids"]
+    ]
     if raw:
         return active_cards
     else:
-        return [from_hash(card) for card in active_cards]
+        return [from_hash(pools, card) for card in active_cards]
 
 
-def download_images(pack_code, path="."):
+def download_images(set_id, path="."):
     cards = get_all_cards()
-    cards = [card for card in cards if card["pack_code"] == pack_code]
+    cards = [card for card in cards if set_id in card["attributes"]["card_set_ids"]]
     for card in cards:
-        code = card["code"]
+        code = card["attributes"]["printing_ids"][0]  # TODO
         img_url = IMG_URL.replace("{code}", code)
         filename = path + "/" + code + ".jpg"
         if Path(filename).is_file():
@@ -166,9 +172,9 @@ if __name__ == "__main__":
         description="utility script for interacting with the NRDB API"
     )
     parser.add_argument(
-        "--download-pack",
+        "--download-set",
         type=str,
-        help='Specify pack code (eg "tai" for "The Automata Initiative") to download images',
+        help='Specify set ID (eg "the_automata_initiative" for "The Automata Initiative") to download images',
     )
     parser.add_argument(
         "--download-path", type=str, help="Specified path to save images", default="."
@@ -179,32 +185,64 @@ if __name__ == "__main__":
         help="Search for a card by title (exact match), pretty print JSON",
     )
     parser.add_argument(
-        "--list-legal-packs",
+        "--raw",
         action="store_true",
-        help="List pack codes not marked for rotation (standard legal)",
+        help="If present, pretty print raw JSON from the API",
+    )
+    parser.add_argument(
+        "--list-all-card-sets", action="store_true", help="List all card set names"
+    )
+    parser.add_argument(
+        "--list-format",
+        type=str,
+        help="List formats and their details",
+    )
+    parser.add_argument(
+        "--list-card-pool",
+        type=str,
+        help="List the card pool for a format",
     )
     args = parser.parse_args()
+    pp = pprint.PrettyPrinter(indent=4)
 
-    if args.download_pack:
-        download_images(args.download_pack, args.download_path)
+    if args.download_set:
+        download_images(args.download_set, args.download_path)
         exit(0)
 
-    if args.search:
-        pp = pprint.PrettyPrinter(indent=4)
+    if args.search and args.raw:
         cards = get_active_cards(raw=True)
-        cards = [card for card in cards if args.search.lower() in card["title"].lower()]
+        cards = [
+            card
+            for card in cards
+            if args.search.lower() in card["attributes"]["title"].lower()
+        ]
         for card in cards:
             pp.pprint(card)
         exit(0)
 
-    if args.list_legal_packs:
-        active_cycles = get_active_cycles()
-        packs = get_all_packs()
-        for pack in packs:
-            if pack["cycle_code"] in active_cycles:
-                name = pack["name"]
-                code = pack["code"]
-                cycle = pack["cycle_code"]
-                print(f"{name} - {code} - {cycle}")
+    if args.search:
+        cards = get_active_cards(raw=False)
+        cards = [card for card in cards if args.search.lower() in card.title.lower()]
+        for card in cards:
+            pp.pprint(card)
+        exit(0)
 
+    if args.list_all_card_sets:
+        sets = get_card_sets()
+        for sid in [s["id"] for s in sets]:
+            print(sid)
+        exit(0)
+
+    if args.list_format:
+        fs = get_format(args.list_format)
+        if len(fs) > 0:
+            pp.pprint(fs[0])
+        else:
+            print("Format not found:", args.list_format)
+            print("Valid formats:", ", ".join(get_format_names()))
+        exit(0)
+
+    if args.list_card_pool:
+        pool = get_latest_card_pool(args.list_card_pool)
+        pp.pprint(pool)
         exit(0)
