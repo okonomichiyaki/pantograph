@@ -39,7 +39,7 @@ class NrdbCard:
 
 
 def get_card_formats(pools, card):
-    if card["id"] in pools["startup"]["attributes"]["card_ids"]:
+    if "startup" in card["attributes"]["format_ids"]:
         return ["startup", "standard"]
     else:
         return ["standard"]
@@ -90,7 +90,6 @@ def get_all_cards():
     i = 0
     filename = f"data/all_cards_page_{i}"
     url = APIv3_URL + "/cards"
-    Path(f"data/ALLCARDS/").mkdir(parents=True, exist_ok=True)
     page = load_or_request(url, filename)
     results = page["data"]
     while "next" in page["links"]:
@@ -102,11 +101,15 @@ def get_all_cards():
     return [card for card in results]
 
 
+def get_card_pool(id):
+    path = f"card_pools/{id}"
+    return fetch(APIv3_URL, path)
+
+
 def get_latest_card_pool(format):
-    path = f"formats/{format}/card_pools"
-    data = fetch(APIv3_URL, path)
-    pools = data["data"]
-    return pools[-1]
+    format = get_format(format)
+    id = format["attributes"]["active_card_pool_id"]
+    return get_card_pool(id)
 
 
 def get_formats():
@@ -117,7 +120,13 @@ def get_formats():
 
 def get_format(format):
     formats = get_formats()
-    return [f for f in formats["data"] if f["attributes"]["name"] == format]
+    filtered = [
+        f for f in formats["data"] if f["attributes"]["name"].lower() == format.lower()
+    ]
+    if len(filtered) > 0:
+        return filtered[0]
+    else:
+        return None
 
 
 def get_format_names():
@@ -142,9 +151,7 @@ def get_active_cards(raw=False):
     pools = get_latest_card_pools()
     cards = get_all_cards()
     active_cards = [
-        card
-        for card in cards
-        if card["id"] in pools["standard"]["attributes"]["card_ids"]
+        card for card in cards if "standard" in card["attributes"]["format_ids"]
     ]
     if raw:
         return active_cards
@@ -234,9 +241,9 @@ if __name__ == "__main__":
         exit(0)
 
     if args.list_format:
-        fs = get_format(args.list_format)
-        if len(fs) > 0:
-            pp.pprint(fs[0])
+        format = get_format(args.list_format)
+        if format:
+            pp.pprint(format)
         else:
             print("Format not found:", args.list_format)
             print("Valid formats:", ", ".join(get_format_names()))
